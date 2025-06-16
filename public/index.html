@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucro Certo - Empoderamento Financeiro Feminino</title>
+    <meta name="description" content="O primeiro app de gestão financeira criado especialmente para mulheres empreendedoras. Intuitivo, inteligente e empoderador.">
+    
+    <!-- PWA & Mobile Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Lucro Certo">
+    <meta name="apple-mobile-web-app-title" content="Lucro Certo">
+    <meta name="theme-color" content="#E91E63">
+    <meta name="msapplication-navbutton-color" content="#E91E63">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="start_url" content="/">
+    <link rel="manifest" href="data:application/json;base64,ewogICAgIm5hbWUiOiAiTHVjcm8gQ2VydG8iLAogICAgInNob3J0X25hbWUiOiAiTHVjcm8gQ2VydG8iLAogICAgImRlc2NyaXB0aW9uIjogIk8gcHJpbWVpcm8gYXBwIGRlIGdlc3TDo28gZmluYW5jZWlyYSBjcmphZG8gZXNwZWNpYWxtZW50ZSBwYXJhIG11bGhlcmVzIGVtcHJlZW5kZWRvcmFzLiIsCiAgICAiaWNvbnMiOiBbCiAgICAgICAgewogICAgICAgICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEg0c0lBQXdJREFnNEtoNk0wZ0FCSUdOQmxZU0Z3QUFBUVVCQUFvZ0lCZGNKRlJvTENCaVlYUmxjaUJrUFNKaGRYUnZjbWxqWVhScGIyNGdkR2x1Y21WemFYUW9JSGh0Ykc5bloybGtaWElnTHo0S0lRPT0iLAogICAgICAgICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICAgICAgfSwKICAgICAgICB7CiAgICAgICAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSDRzSUFEd0lEQWc0S2g2TTBnQUJOSUdaR2x6YVhwbGMzUnZjV1Z5TGdBRUFBazRDaUFrS1NjZ0pTNDhMMlJsYzNRZ2JHRjVJR2hsSUdScGJXbDBJRkpsY21sbGNpQW5QQzlrWFNCNWNtbHVaU0FvSURJPSIsCiAgICAgICAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgICAgICB9CiAgICBdLAogICAgInN0YXJ0X3VybCI6ICIuIiwKICAgICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICAgInRoZW1lX2NvbG9yIjogIiNFOTFFNjMiLAogICAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y4ZjhmYyIKfQ==">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+    <style>
+        /* CSS ARCHITECTURE MODULAR */
+        :root {
+            /* Cores Estratégicas */
+            --primary: #E91E63;
+            --primary-light: #F06292;
+            --primary-gradient: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+            
+            --secondary: #9C27B0;
+            --secondary-light: #BA68C8;
+            --secondary-gradient: linear-gradient(135deg, #9C27B0 0%, #BA68C8 100%);
+
+            --success: #FFD700;
+            --success-light: #FFF176;
+            --success-gradient: linear-gradient(135deg, #FFD700 0%, #FFF176 100%);
+            
+            --growth: #4CAF50;
+            --alert: #FF5722;
+            --info: #2196F3;
+            --elegant-gray: #607D8B;
+            --light-gray: #f4f6f8;
+            --dark-gray: #37474F;
+            --white: #ffffff;
+            --background: #f8f8fc;
+
+            /* Sombras Neurológicas */
+            --shadow-soft: 0 4px 20px rgba(233, 30, 99, 0.1);
+            --shadow-medium: 0 8px 30px rgba(233, 30, 99, 0.15);
+            --shadow-strong: 0 12px 40px rgba(233, 30, 99, 0.2);
+
+            /* Animações Científicas */
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+            /* Tipografia */
+            --font-main: 'Poppins', sans-serif;
+        }
+
+        /* RESET & BASE STYLES */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background);
+            color: var(--elegant-gray);
+            font-size: 16px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* LAYOUT */
+        #app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        main {
+            flex-grow: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 24px 16px 100px 16px; /* Padding bottom to clear nav */
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .page.active {
+            display: block;
+        }
+
+        /* BOTTOM NAVIGATION */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background-color: var(--white);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+            border-top-left-radius: 20px;
+            border-top-right-radius: 20px;
+            z-index: 1000;
+        }
+
+        .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: var(--elegant-gray);
+            font-family: var(--font-main);
+            font-size: 10px;
+            font-weight: 600;
+            transition: var(--transition-smooth);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 12px;
+        }
+        
+        .nav-button .lucide {
+            margin-bottom: 4px;
+        }
+        
+        .nav-button.active {
+            color: var(--primary);
+            transform: translateY(-5px);
+        }
+
+        /* TYPOGRAPHY */
+        h1 { font-size: 32px; font-weight: 700; color: var(--dark-gray); line-height: 1.2; margin-bottom: 8px; }
+        h2 { font-size: 26px; font-weight: 600; color: var(--dark-gray); line-height: 1.3; margin-bottom: 16px; background: var(--secondary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        h3 { font-size: 22px; font-weight: 600; color: var(--dark-gray); margin-bottom: 12px; }
+        .sub-header { font-size: 16px; color: var(--elegant-gray); margin-bottom: 24px; }
+        .financial-value { font-size: 20px; font-weight: 700; }
+
+        /* CARD COMPONENT */
+        .card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: var(--shadow-soft);
+            transition: var(--transition-smooth);
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-medium);
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .card-icon {
+            margin-right: 12px;
+            background: var(--primary-gradient);
+            color: var(--white);
+            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            display: grid;
+            place-items: center;
+        }
+        .card-title { font-size: 18px; font-weight: 600; color: var(--dark-gray); }
+
+        /* BUTTONS */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-family: var(--font-main);
+            font-weight: 600;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition-bounce);
+            min-height: 48px;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: var(--white);
+            box-shadow: var(--shadow-soft);
+        }
+        .btn-secondary {
+            background: var(--secondary-gradient);
+            color: var(--white);
+            box-shadow: 0 4px 20px rgba(156, 39, 176, 0.2);
+        }
+        .btn-full { width: 100%; }
+
+        /* FORMS & INPUTS */
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
+        }
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-family: var(--font-main);
+            font-size: 16px;
+            transition: var(--transition-smooth);
+        }
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.2);
+            outline: none;
+        }
+        .slider-container { margin-top: 10px; }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 3px solid var(--white);
+            box-shadow: var(--shadow-soft);
+        }
+        
+        /* DASHBOARD SPECIFIC STYLES */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .action-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: var(--white);
+            border-radius: 16px;
+            box-shadow: var(--shadow-soft);
+            color: var(--dark-gray);
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition-bounce);
+        }
+        .action-button .lucide {
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+
+        .progress-ring-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+        }
+        .progress-ring-svg {
+            transform: rotate(-90deg);
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.8s ease-out;
+        }
+        .progress-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .progress-ring-percentage {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark-gray);
+        }
+        .progress-ring-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--elegant-gray);
+        }
+
+        .emotional-panel {
+            background: var(--secondary-gradient);
+            color: var(--white);
+            text-align: center;
+            padding: 20px;
+            border-radius: 16px;
+            font-style: italic;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .emotional-panel .lucide {
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .weather-business {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+        .weather-business .lucide {
+            margin-right: 8px;
+        }
+
+        /* PRODUCT LIST STYLES */
+        .product-list {
+            display: grid;
+            gap: 16px;
+        }
+        .product-card {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+        }
+        .product-card-image {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            margin-right: 16px;
+            object-fit: cover;
+            background-color: var(--light-gray);
+        }
+        .product-card-info {
+            flex-grow: 1;
+        }
+        .product-card-name {
+            font-weight: 600;
+            color: var(--dark-gray);
+        }
+        .product-card-details {
+            font-size: 14px;
+        }
+        .product-card-stock {
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+        .stock-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        /* ACHIEVEMENT MODAL */
+        .achievement-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .achievement-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .achievement-content {
+            background: var(--white);
+            padding: 40px 30px;
+            border-radius: 24px;
+            text-align: center;
+            width: 90%;
+            max-width: 350px;
+            transform: scale(0.7);
+            transition: transform 0.4s var(--transition-bounce);
+        }
+        .achievement-modal.visible .achievement-content {
+            transform: scale(1);
+        }
+        .achievement-icon {
+            font-size: 60px;
+            line-height: 1;
+            margin-bottom: 16px;
+        }
+        .achievement-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
+        }
+        .achievement-description {
+            font-size: 16px;
+            color: var(--elegant-gray);
+            margin-bottom: 24px;
+        }
+        
+        /* ANIMATIONS */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes empowermentPulse {
+            0% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.7; }
+        }
+        .loading-empowerment {
+            animation: empowermentPulse 2s ease-in-out infinite;
+        }
+
+        /* RESPONSIVENESS */
+        @media (min-width: 768px) {
+            main {
+                padding: 40px 40px 100px 40px;
+            }
+            .grid-desktop-2 {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 24px;
+            }
+            h1 { font-size: 36px; }
+            h2 { font-size: 30px; }
+            .quick-actions {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            #app-container {
+                flex-direction: row;
+            }
+            .bottom-nav { /* Becomes a sidebar */
+                position: static;
+                flex-direction: column;
+                justify-content: flex-start;
+                height: 100vh;
+                width: 240px;
+                padding-top: 40px;
+                border-radius: 0;
+                box-shadow: 4px 0 20px rgba(0,0,0,0.05);
+                border-right: 1px solid #eee;
+            }
+            .nav-button {
+                flex-direction: row;
+                justify-content: flex-start;
+                width: 80%;
+                padding: 16px;
+                font-size: 16px;
+                margin-bottom: 10px;
+            }
+            .nav-button .lucide {
+                margin-right: 16px;
+                margin-bottom: 0;
+            }
+            main {
+                padding: 40px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <!-- Main content area where pages are rendered -->
+        <main id="main-content">
+            <!-- PÁGINA: DASHBOARD -->
+            <div id="dashboard" class="page"></div>
+            
+            <!-- PÁGINA: PRODUTOS -->
+            <div id="produtos" class="page"></div>
+
+            <!-- PÁGINA: PRECIFICAR -->
+            <div id="precificar" class="page"></div>
+
+            <!-- PÁGINA: METAS -->
+            <div id="metas" class="page"></div>
+
+            <!-- PÁGINA: RELATÓRIOS -->
+            <div id="relatorios" class="page"></div>
+
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" id="bottom-nav">
+             <!-- Navigation buttons will be injected by JS -->
+        </nav>
+    </div>
+
+    <!-- Achievement Modal -->
+    <div id="achievement-modal" class="achievement-modal">
+        <div class="achievement-content">
+            <div id="achievement-icon" class="achievement-icon"></div>
+            <h3 id="achievement-title" class="achievement-title"></h3>
+            <p id="achievement-description"></p>
+            <button id="achievement-close-btn" class="btn btn-primary">Continuar Arrasando!</button>
+        </div>
+    </div>
+
+
+    <script>
+    // JAVASCRIPT ARCHITECTURE AVANÇADA
+    const LucroCertoApp = (function() {
+        'use strict';
+
+        //==================================
+        // 1. STATE MANAGER
+        // Centralized state management
+        //==================================
+        const StateManager = {
+            state: {
+                user: {},
+                products: [],
+                salesData: [],
+                achievements: [],
+                currentPage: 'dashboard',
+            },
+            subscribers: [],
+
+            getState() {
+                return this.state;
+            },
+
+            setState(newState) {
+                this.state = { ...this.state, ...newState };
+                console.log('State Updated:', this.state);
+                this.notifySubscribers();
+                DataManager.save('appState', this.state);
+            },
+            
+            subscribe(callback) {
+                this.subscribers.push(callback);
+            },
+
+            notifySubscribers() {
+                this.subscribers.forEach(callback => callback());
+            }
+        };
+
+        //==================================
+        // 2. DATA MANAGER
+        // Handles data persistence with LocalStorage
+        //==================================
+        const DataManager = {
+            save(key, data) {
+                try {
+                    const serialized = JSON.stringify({
+                        data: data,
+                        timestamp: Date.now(),
+                        version: '1.0'
+                    });
+                    localStorage.setItem(`lucrocerto_${key}`, serialized);
+                } catch (error) {
+                    console.error('Erro ao salvar dados:', error);
+                }
+            },
+            
+            load(key) {
+                try {
+                    const item = localStorage.getItem(`lucrocerto_${key}`);
+                    if (item) {
+                        const parsed = JSON.parse(item);
+                        return parsed.data;
+                    }
+                } catch (error) {
+                    console.error('Erro ao carregar dados:', error);
+                }
+                return null;
+            }
+        };
+
+        //==================================
+        // 3. UI RENDERER & ROUTER
+        // Handles navigation and rendering pages
+        //==================================
+        const UIManager = {
+            pages: ['dashboard', 'produtos', 'precificar', 'metas', 'relatorios'],
+            navButtons: [
+                { id: 'dashboard', icon: 'layout-dashboard', label: 'Início' },
+                { id: 'produtos', icon: 'package-search', label: 'Produtos' },
+                { id: 'precificar', icon: 'calculator', label: 'Precificar' },
+                { id: 'metas', icon: 'target', label: 'Metas' },
+                { id: 'relatorios', icon: 'bar-chart-3', label: 'Relatórios' },
+            ],
+
+            init() {
+                this.renderNav();
+                StateManager.subscribe(this.updateActiveContent);
+                StateManager.subscribe(this.updateNav);
+            },
+            
+            renderNav() {
+                const navContainer = document.getElementById('bottom-nav');
+                navContainer.innerHTML = this.navButtons.map(btn => `
+                    <button class="nav-button" data-action="navigate" data-route="${btn.id}">
+                        <i data-lucide="${btn.icon}"></i>
+                        <span>${btn.label}</span>
+                    </button>
+                `).join('');
+                lucide.createIcons();
+            },
+
+            updateNav() {
+                const { currentPage } = StateManager.getState();
+                document.querySelectorAll('.nav-button').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.route === currentPage);
+                });
+            },
+            
+            updateActiveContent() {
+                const { currentPage } = StateManager.getState();
+                UIManager.pages.forEach(pageId => {
+                    const pageElement = document.getElementById(pageId);
+                    if (pageElement) {
+                        pageElement.classList.toggle('active', pageId === currentPage);
+                        if (pageId === currentPage) {
+                            UIManager.renderPage(currentPage);
+                        }
+                    }
+                });
+            },
+
+            renderPage(pageId) {
+                const container = document.getElementById(pageId);
+                if (!container) return;
+                
+                // Render the content for the specific page
+                switch (pageId) {
+                    case 'dashboard':
+                        container.innerHTML = this.getDashboardHTML();
+                        this.renderDashboardCharts();
+                        break;
+                    case 'produtos':
+                        container.innerHTML = this.getProdutosHTML();
+                        break;
+                    case 'precificar':
+                        container.innerHTML = this.getPrecificarHTML();
+                        this.bindPrecificarEvents();
+                        break;
+                    case 'metas':
+                        container.innerHTML = this.getMetasHTML();
+                        break;
+                    case 'relatorios':
+                        container.innerHTML = this.getRelatoriosHTML();
+                        this.renderRelatoriosChart();
+                        break;
+                }
+                lucide.createIcons();
+            },
+            
+            getDashboardHTML() {
+                const { user } = StateManager.getState();
+                const now = new Date();
+                const hour = now.getHours();
+                let saudacao;
+                if (hour < 12) saudacao = 'Bom dia';
+                else if (hour < 18) saudacao = 'Boa tarde';
+                else saudacao = 'Boa noite';
+
+                const percentage = Math.round((user.currentRevenue / user.monthlyGoal) * 100);
+
+                return `
+                    <h1>${saudacao}, ${user.name.split(' ')[0]}!</h1>
+                    <p class="sub-header">Pronta para conquistar o mundo hoje?</p>
+
+                    <div class="emotional-panel">
+                        <i data-lucide="sparkles"></i>
+                        <span id="emotional-insight">${EmotionalIA.generateInsight()}</span>
+                    </div>
+
+                    <div class="grid-desktop-2">
+                        <div class="card">
+                           <div class="card-header">
+                               <div class="card-icon" style="background: var(--success-gradient);"><i data-lucide="gem"></i></div>
+                               <h3 class="card-title">Meta Mensal</h3>
+                           </div>
+                           <div class="progress-ring-container">
+                               <svg class="progress-ring-svg" width="150" height="150">
+                                   <circle stroke="#e6e6e6" stroke-width="12" fill="transparent" r="69" cx="75" cy="75"/>
+                                   <circle class="progress-ring-circle" stroke="url(#goalGradient)" stroke-linecap="round" stroke-width="12" fill="transparent" r="69" cx="75" cy="75"/>
+                                   <defs>
+                                       <linearGradient id="goalGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                           <stop offset="0%" stop-color="${getComputedStyle(document.documentElement).getPropertyValue('--success-light').trim()}" />
+                                           <stop offset="100%" stop-color="${getComputedStyle(document.documentElement).getPropertyValue('--success').trim()}" />
+                                       </linearGradient>
+                                   </defs>
+                               </svg>
+                               <div class="progress-ring-text">
+                                   <div class="progress-ring-percentage">${percentage}%</div>
+                                   <div class="progress-ring-label">Concluído</div>
+                               </div>
+                           </div>
+                           <p class="text-center"><b>R$ ${user.currentRevenue.toFixed(2)}</b> de R$ ${user.monthlyGoal.toFixed(2)}</p>
+                        </div>
+                        <div class="card">
+                           <div class="card-header">
+                               <div class="card-icon"><i data-lucide="landmark"></i></div>
+                               <h3 class="card-title">Despesas Fixas</h3>
+                           </div>
+                           <p class="financial-value" style="color: var(--alert);">R$ ${user.fixedCosts.toFixed(2)}</p>
+                           <p>Comparado ao mês passado: <span style="color: var(--growth); font-weight: 600;"><i data-lucide="arrow-down-right" style="width:16px; height:16px;"></i> 5%</span></p>
+                           <hr style="margin: 15px 0; border: 1px solid #eee;">
+                           <h4 style="font-weight:600; font-size: 16px; margin-bottom: 8px;">Clima do Negócio</h4>
+                           <div class="weather-business" style="color: #f59e0b;">
+                               <i data-lucide="sun"></i>
+                               <span>Ensolarado - Boas vendas!</span>
+                           </div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-top: 30px;">Ações Rápidas</h3>
+                    <div class="quick-actions">
+                        <a href="#" class="action-button" data-action="navigate" data-route="precificar">
+                            <i data-lucide="calculator"></i>
+                            <span>Precificar</span>
+                        </a>
+                        <a href="#" class="action-button" data-action="navigate" data-route="produtos">
+                            <i data-lucide="package-plus"></i>
+                            <span>Novo Produto</span>
+                        </a>
+                        <a href="#" class="action-button" data-action="navigate" data-route="metas">
+                            <i data-lucide="target"></i>
+                            <span>Ver Metas</span>
+                        </a>
+                        <a href="#" class="action-button" data-action="navigate" data-route="relatorios">
+                            <i data-lucide="bar-chart-3"></i>
+                            <span>Relatórios</span>
+                        </a>
+                    </div>
+                `;
+            },
+            
+            renderDashboardCharts() {
+                const ring = document.querySelector('.progress-ring-circle');
+                if (!ring) return;
+                
+                const { user } = StateManager.getState();
+                const radius = ring.r.baseVal.value;
+                const circumference = 2 * Math.PI * radius;
+                const offset = circumference - (user.currentRevenue / user.monthlyGoal) * circumference;
+
+                ring.style.strokeDasharray = `${circumference} ${circumference}`;
+                // Timeout to allow the element to be rendered before starting transition
+                setTimeout(() => {
+                    ring.style.strokeDashoffset = isNaN(offset) ? circumference : offset;
+                }, 100);
+            },
+            
+            getProdutosHTML() {
+                const { products } = StateManager.getState();
+                const productCards = products.map(p => {
+                    const stockLevel = p.stock > 10 ? 'high' : p.stock > 5 ? 'medium' : 'low';
+                    const stockColor = { high: '#4CAF50', medium: '#FFC107', low: '#F44336' };
+                    
+                    return `
+                    <div class="card product-card">
+                        <img src="https://placehold.co/60x60/f06292/ffffff?text=${p.name.charAt(0)}" class="product-card-image" alt="Imagem do produto ${p.name}">
+                        <div class="product-card-info">
+                            <div class="product-card-name">${p.name}</div>
+                            <div class="product-card-details">
+                                Custo: R$ ${p.cost.toFixed(2)} | Preço: R$ ${p.price.toFixed(2)}
+                            </div>
+                        </div>
+                        <div class="product-card-stock">
+                             <span class="stock-light" style="background-color: ${stockColor[stockLevel]}"></span>
+                             ${p.stock} un.
+                        </div>
+                    </div>
+                    `;
+                }).join('');
+                
+                return `
+                    <h2>Meus Produtos</h2>
+                    <p class="sub-header">Gerencie seus produtos e veja a performance de cada um.</p>
+                    <div class="product-list">
+                        ${productCards}
+                    </div>
+                    <button class="btn btn-primary btn-full" style="margin-top:24px;"><i data-lucide="plus" style="margin-right:8px;"></i> Adicionar Novo Produto</button>
+                `;
+            },
+
+            getPrecificarHTML() {
+                return `
+                    <h2>Precificação Inteligente ✨</h2>
+                    <p class="sub-header">Calcule o preço de venda ideal e maximize seu lucro.</p>
+                    <div class="card">
+                        <div class="form-group">
+                            <label for="product-cost">Custo do Produto (R$)</label>
+                            <input type="number" id="product-cost" class="form-input" placeholder="Ex: 25.50">
+                        </div>
+                        <div class="form-group">
+                            <label for="profit-margin">Margem de Lucro (%)</label>
+                            <input type="range" id="profit-margin" min="10" max="300" value="100" class="slider">
+                            <div style="display:flex; justify-content: space-between; margin-top: 8px; font-weight:600;">
+                                <span>10%</span>
+                                <span id="profit-margin-value">100%</span>
+                                <span>300%</span>
+                            </div>
+                        </div>
+                        <div id="smart-suggestion" class="emotional-panel" style="background: var(--info); font-style: normal; display:none; justify-content: flex-start;"></div>
+                    </div>
+                    <div class="card">
+                        <h3>Resultado da Precificação</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <span>Preço de Venda Sugerido:</span>
+                            <span id="selling-price" class="financial-value" style="color:var(--growth);">R$ 0,00</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Lucro Bruto por Unidade:</span>
+                            <span id="gross-profit" class="financial-value" style="color:var(--success);">R$ 0,00</span>
+                        </div>
+                        <hr style="margin: 20px 0; border: 1px solid #eee;">
+                        <h4>Calculadora de Impacto</h4>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="units-sold">Se eu vender X unidades:</label>
+                             <input type="number" id="units-sold" class="form-input" placeholder="Ex: 10">
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>Lucro total será:</span>
+                            <span id="total-profit" class="financial-value" style="background: var(--success-gradient);-webkit-background-clip: text;-webkit-text-fill-color: transparent;">R$ 0,00</span>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            bindPrecificarEvents() {
+                const costInput = document.getElementById('product-cost');
+                const marginSlider = document.getElementById('profit-margin');
+                const unitsInput = document.getElementById('units-sold');
+
+                const updateCalculation = () => {
+                    const cost = parseFloat(costInput.value) || 0;
+                    const margin = parseInt(marginSlider.value);
+                    const units = parseInt(unitsInput.value) || 0;
+
+                    document.getElementById('profit-margin-value').textContent = `${margin}%`;
+
+                    const { price, profit } = SmartPricing.calculate(cost, margin);
+                    
+                    document.getElementById('selling-price').textContent = `R$ ${price.toFixed(2)}`;
+                    document.getElementById('gross-profit').textContent = `R$ ${profit.toFixed(2)}`;
+                    document.getElementById('total-profit').textContent = `R$ ${(profit * units).toFixed(2)}`;
+                    
+                    const suggestion = SmartPricing.suggestMargin('roupas', cost, {});
+                    const suggestionPanel = document.getElementById('smart-suggestion');
+                    if(cost > 0) {
+                        suggestionPanel.style.display = 'flex';
+                        suggestionPanel.innerHTML = `<i data-lucide="lightbulb" style="margin-right:10px;"></i> <span>Para este custo, sugerimos uma margem entre <strong>${suggestion.min}% e ${suggestion.max}%.</strong> A ideal é <strong>${suggestion.ideal}%.</strong></span>`;
+                        lucide.createIcons();
+                    } else {
+                        suggestionPanel.style.display = 'none';
+                    }
+                };
+
+                costInput.addEventListener('input', updateCalculation);
+                marginSlider.addEventListener('input', updateCalculation);
+                unitsInput.addEventListener('input', updateCalculation);
+            },
+            
+            getMetasHTML() {
+                 return `
+                    <h2>Metas e Coaching 👑</h2>
+                    <p class="sub-header">Defina seus objetivos e receba motivação para alcançá-los.</p>
+                     <div class="card">
+                        <div class="card-header">
+                           <div class="card-icon" style="background: var(--success-gradient);"><i data-lucide="gem"></i></div>
+                           <h3 class="card-title">Sua Grande Meta</h3>
+                        </div>
+                        <p>Defina uma meta de faturamento mensal que te inspire a crescer!</p>
+                        <div class="form-group" style="margin-top:1rem;">
+                            <label for="monthly-goal">Meta de Faturamento Mensal (R$)</label>
+                            <input type="number" id="monthly-goal" class="form-input" placeholder="Ex: 8000" value="${StateManager.getState().user.monthlyGoal}">
+                        </div>
+                        <button class="btn btn-primary btn-full" data-action="save-goal">Salvar Meta</button>
+                    </div>
+                     <div class="card">
+                        <div class="card-header">
+                           <div class="card-icon" style="background: var(--secondary-gradient);"><i data-lucide="swords"></i></div>
+                           <h3 class="card-title">Modo Desafio</h3>
+                        </div>
+                        <p><strong>Desafio do Mês:</strong> Aumentar o lucro em 15%.</p>
+                        <div style="width: 100%; background: #e0e0e0; border-radius: 8px; height: 10px; margin-top: 10px;">
+                            <div style="width: 45%; background: var(--secondary-gradient); height: 10px; border-radius: 8px;"></div>
+                        </div>
+                        <p style="font-size:14px; text-align: right; margin-top: 5px;">45% Concluído</p>
+                    </div>
+                `;
+            },
+            
+            getRelatoriosHTML() {
+                return `
+                    <h2>Relatórios Visuais 📈</h2>
+                    <p class="sub-header">Seus dados contando a história do seu sucesso.</p>
+                    <div class="card">
+                        <h3>Jornada de Crescimento</h3>
+                        <p>Evolução do seu faturamento nos últimos meses.</p>
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                    <div class="card">
+                         <h3>Saúde Financeira</h3>
+                         <div class="financial-health-meter" style="text-align:center;">
+                             <span style="font-size: 50px;"> healthier, a font from your computer </span>
+                             <p style="font-size: 24px; font-weight: 700; background: var(--primary-gradient);-webkit-background-clip: text;-webkit-text-fill-color: transparent;">Excelente</p>
+                             <p>Seu negócio está próspero e com lucros saudáveis. Continue assim!</p>
+                         </div>
+                    </div>
+                `;
+            },
+            
+            renderRelatoriosChart() {
+                const chartEl = document.getElementById('growthChart');
+                if (!chartEl) return;
+                
+                const { salesData } = StateManager.getState();
+                const labels = salesData.map(d => d.month);
+                const data = salesData.map(d => d.value);
+
+                new Chart(chartEl, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Faturamento Mensal',
+                            data: data,
+                            borderColor: 'rgba(233, 30, 99, 1)',
+                            backgroundColor: 'rgba(233, 30, 99, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: 'rgba(233, 30, 99, 1)',
+                            pointHoverRadius: 7,
+                            pointRadius: 5,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    callback: function(value) { return 'R$ ' + value/1000 + 'k' }
+                                }
+                            }
+                        }
+                    }
+                });
+            },
+
+            showAchievement(badgeId) {
+                const badge = AchievementSystem.badges[badgeId];
+                if (!badge) return;
+
+                document.getElementById('achievement-icon').innerHTML = badge.icon;
+                document.getElementById('achievement-icon').style.color = badge.color;
+                document.getElementById('achievement-title').textContent = badge.title;
+                document.getElementById('achievement-description').textContent = badge.description;
+                
+                document.getElementById('achievement-modal').classList.add('visible');
+                
+                // Confetti time!
+                confetti({
+                    particleCount: 150,
+                    spread: 90,
+                    origin: { y: 0.6 }
+                });
+            },
+
+            hideAchievement() {
+                 document.getElementById('achievement-modal').classList.remove('visible');
+            }
+        };
+
+        //==================================
+        // 4. FUNCTIONAL MODULES
+        // AI, Pricing, Achievements, etc.
+        //==================================
+        const EmotionalIA = {
+            generateInsight(userPattern = 'confident') {
+                const insights = {
+                    stressed: "Respire fundo! Seus números mostram que você está no caminho certo. �",
+                    confident: "Você está arrasando! Continue assim, empreendedora! ✨",
+                    learning: "Cada cálculo te deixa mais expert. Parabéns pelo crescimento! 📈"
+                };
+                const keys = Object.keys(insights);
+                return insights[keys[Math.floor(Math.random() * keys.length)]];
+            }
+        };
+
+        const SmartPricing = {
+            calculate(cost, marginPercentage) {
+                const margin = marginPercentage / 100;
+                const price = cost / (1 - margin);
+                const profit = price - cost;
+                return {
+                    price: isNaN(price) || !isFinite(price) ? 0 : price,
+                    profit: isNaN(profit) || !isFinite(profit) ? 0 : profit,
+                }
+            },
+            suggestMargin(productType, cost, marketData) {
+                const suggestions = {
+                    'calçados': { min: 60, ideal: 80, max: 120 },
+                    'acessórios': { min: 100, ideal: 150, max: 200 },
+                    'roupas': { min: 80, ideal: 100, max: 150 }
+                };
+                return suggestions[productType] || suggestions['roupas'];
+            }
+        };
+
+        const AchievementSystem = {
+            badges: {
+                'primeiro_acesso': { title: 'Bem-vinda, Poderosa!', description: 'Você deu o primeiro passo para o controle total do seu negócio!', icon: '👋', color: '#FFD700' },
+                'meta_definida': { title: 'Sonho Grande!', description: 'Meta definida! Agora é foco na conquista.', icon: '🎯', color: '#E91E63' }
+            },
+            checkAndAward(action) {
+                const { achievements } = StateManager.getState();
+                if (!achievements.includes(action)) {
+                    StateManager.setState({ achievements: [...achievements, action] });
+                    UIManager.showAchievement(action);
+                }
+            }
+        };
+        
+        const PWAManager = {
+            registerServiceWorker: function() {
+                // FIX: Registering a service worker from a blob URL is not supported in all environments
+                // and was causing a security error. This functionality is disabled to ensure the app runs.
+                /*
+                if ('serviceWorker' in navigator) {
+                    const swCode = `
+                        self.addEventListener('install', event => {
+                            console.log('Lucro Certo PWA instalado!');
+                        });
+                        self.addEventListener('fetch', event => {
+                            // Offline cache strategy can be implemented here
+                        });
+                    `;
+                    const blob = new Blob([swCode], { type: 'application/javascript' });
+                    const swUrl = URL.createObjectURL(blob);
+                    navigator.serviceWorker.register(swUrl)
+                        .then(reg => console.log('Service Worker registrado com sucesso:', reg.scope))
+                        .catch(err => console.error('Falha ao registrar Service Worker:', err));
+                }
+                */
+            }
+        };
+        
+        //==================================
+        // 5. EVENT BINDING
+        //==================================
+        function bindEvents() {
+            const appContainer = document.getElementById('app-container');
+            
+            appContainer.addEventListener('click', e => {
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+                
+                const action = target.dataset.action;
+                
+                switch(action) {
+                    case 'navigate':
+                        const route = target.dataset.route;
+                        StateManager.setState({ currentPage: route });
+                        break;
+                    case 'save-goal':
+                         const newGoal = document.getElementById('monthly-goal').value;
+                         const user = { ...StateManager.getState().user, monthlyGoal: parseFloat(newGoal) };
+                         StateManager.setState({ user });
+                         AchievementSystem.checkAndAward('meta_definida');
+                        break;
+                }
+            });
+
+            document.getElementById('achievement-close-btn').addEventListener('click', UIManager.hideAchievement);
+        }
+
+        //==================================
+        // 6. INITIALIZATION
+        //==================================
+        function init() {
+            // Load initial data
+            const savedState = DataManager.load('appState');
+            if (savedState) {
+                StateManager.setState(savedState);
+            } else {
+                // Use demo data if no saved state
+                const DemoData = {
+                    user: { name: 'Maria Empreendedora', businessType: 'Moda Feminina', monthlyGoal: 8000, currentRevenue: 5200, fixedCosts: 2150 },
+                    products: [
+                        { id: 1, name: 'Rasteirinha Comfort', cost: 15.00, price: 35.00, stock: 25, category: 'calçados', trend: 'up' },
+                        { id: 2, name: 'Sandália Premium', cost: 22.00, price: 48.00, stock: 8, category: 'calçados', trend: 'stable' },
+                        { id: 3, name: 'Bolsa Essencial', cost: 45.00, price: 99.00, stock: 12, category: 'acessórios', trend: 'up' },
+                        { id: 4, name: 'Vestido Floral', cost: 55.00, price: 120.00, stock: 5, category: 'roupas', trend: 'down' }
+                    ],
+                    salesData: [
+                        { month: 'Jan', value: 4200 }, { month: 'Fev', value: 4800 }, { month: 'Mar', value: 5200 },
+                        { month: 'Abr', value: 5800 }, { month: 'Mai', value: 6200 }, { month: 'Jun', value: 7100 }
+                    ],
+                    achievements: [],
+                    currentPage: 'dashboard'
+                };
+                StateManager.setState(DemoData);
+            }
+            
+            // Initial UI setup
+            UIManager.init();
+            
+            // Set initial page and render
+            UIManager.updateActiveContent();
+            UIManager.updateNav();
+
+            bindEvents();
+            
+            // FIX: Call to the service worker registration is disabled.
+            // PWAManager.registerServiceWorker();
+            
+            // Award first access achievement
+            AchievementSystem.checkAndAward('primeiro_acesso');
+        }
+
+        // Public API
+        return {
+            init: init
+        };
+
+    })();
+
+    document.addEventListener('DOMContentLoaded', LucroCertoApp.init);
+    </script>
+</body>
+</html>
+�
