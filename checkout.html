@@ -1138,7 +1138,7 @@
                 icon: 'rocket',
                 iconClass: 'starter',
                 monthlyPrice: 19.90,
-                annualPrice: 11.90,
+                annualPrice: 19.90 * 0.6, // 40% desconto = R$ 11,94/mês
                 features: [
                     '20 produtos',
                     '20 clientes',
@@ -1152,7 +1152,7 @@
                 icon: 'crown',
                 iconClass: 'pro',
                 monthlyPrice: 34.90,
-                annualPrice: 20.90,
+                annualPrice: 34.90 * 0.6, // 40% desconto = R$ 20,94/mês
                 features: [
                     'Produtos ilimitados',
                     'Clientes ilimitados',
@@ -1166,7 +1166,7 @@
                 icon: 'gem',
                 iconClass: 'premium',
                 monthlyPrice: 49.90,
-                annualPrice: 29.90,
+                annualPrice: 49.90 * 0.6, // 40% desconto = R$ 29,94/mês
                 features: [
                     'Tudo do Profissional',
                     'Múltiplos catálogos',
@@ -1204,21 +1204,27 @@
         // Update price display
         function updatePrice() {
             const plan = plans[currentPlan] || plans.pro;
-            const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
+            const monthlyPrice = plan.monthlyPrice;
+            const annualMonthlyPrice = plan.annualPrice;
+            const annualTotalPrice = plan.annualPrice * 12;
+            
             const period = isAnnual ? 'Anual' : 'Mensal';
             
             document.getElementById('billing-period').textContent = period;
-            document.getElementById('price-subtotal').textContent = `R$ ${plan.monthlyPrice.toFixed(2).replace('.', ',')}`;
             
             if (isAnnual) {
+                // Show annual pricing
+                document.getElementById('price-subtotal').textContent = `R$ ${(monthlyPrice * 12).toFixed(2).replace('.', ',')}`;
                 document.getElementById('discount-row').style.display = 'flex';
-                const discount = plan.monthlyPrice - plan.annualPrice;
+                const discount = (monthlyPrice * 12) - annualTotalPrice;
                 document.getElementById('discount-value').textContent = `- R$ ${discount.toFixed(2).replace('.', ',')}`;
+                document.getElementById('price-total').innerHTML = `R$ ${annualTotalPrice.toFixed(2).replace('.', ',')}<small>/ano</small>`;
             } else {
+                // Show monthly pricing
+                document.getElementById('price-subtotal').textContent = `R$ ${monthlyPrice.toFixed(2).replace('.', ',')}`;
                 document.getElementById('discount-row').style.display = 'none';
+                document.getElementById('price-total').innerHTML = `R$ ${monthlyPrice.toFixed(2).replace('.', ',')}<small>/mês</small>`;
             }
-            
-            document.getElementById('price-total').innerHTML = `R$ ${price.toFixed(2).replace('.', ',')}<small>/mês</small>`;
         }
 
         // Billing toggle

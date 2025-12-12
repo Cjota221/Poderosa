@@ -639,6 +639,259 @@
             line-height: 1.7;
         }
 
+        /* Lead Capture Popup */
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .popup-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .popup-card {
+            background: var(--white);
+            border-radius: 24px;
+            max-width: 480px;
+            width: 100%;
+            padding: 40px 32px;
+            position: relative;
+            animation: slideUp 0.4s ease;
+            text-align: center;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .popup-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: var(--light-gray);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-smooth);
+        }
+
+        .popup-close:hover {
+            background: #e0e0e0;
+        }
+
+        .popup-close svg {
+            width: 20px;
+            height: 20px;
+            color: var(--elegant-gray);
+        }
+
+        .popup-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFE082 100%);
+            color: #FF8F00;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .popup-badge svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .popup-card h2 {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--dark-gray);
+            margin-bottom: 12px;
+        }
+
+        .popup-card h2 span {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .popup-card > p {
+            color: var(--elegant-gray);
+            font-size: 15px;
+            margin-bottom: 28px;
+        }
+
+        .popup-form .form-group {
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .popup-form label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--dark-gray);
+            margin-bottom: 6px;
+        }
+
+        .popup-form input, .popup-form select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            transition: var(--transition-smooth);
+        }
+
+        .popup-form input:focus, .popup-form select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .popup-btn {
+            width: 100%;
+            padding: 16px 24px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            margin-top: 8px;
+        }
+
+        .popup-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .popup-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .popup-subtitle {
+            font-size: 16px;
+            color: var(--elegant-gray);
+            margin-bottom: 24px;
+        }
+
+        .popup-subtitle strong {
+            color: var(--primary);
+        }
+
+        .popup-input-group {
+            position: relative;
+            margin-bottom: 16px;
+        }
+
+        .popup-input-group i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--elegant-gray);
+        }
+
+        .popup-input-group .popup-input {
+            padding-left: 48px;
+        }
+
+        .popup-terms {
+            font-size: 12px;
+            color: var(--elegant-gray);
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .popup-success {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .popup-success .success-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .popup-success .success-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--success);
+        }
+
+        .popup-success h3 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+
+        .popup-success p {
+            color: var(--elegant-gray);
+            margin-bottom: 8px;
+        }
+
+        .popup-success p strong {
+            color: var(--primary);
+        }
+
+        .popup-success .success-detail {
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .popup-success .popup-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .popup-footer {
+            margin-top: 16px;
+            font-size: 12px;
+            color: var(--elegant-gray);
+        }
+
         /* CTA Final */
         .cta-section {
             background: var(--primary-gradient);
@@ -778,6 +1031,10 @@
                 <span class="logo-text">Lucro Certo</span>
             </a>
             <div class="header-actions">
+                <a href="admin.html" class="btn-login" style="margin-right: 8px; background: var(--primary); color: white;">
+                    <i data-lucide="settings" style="width: 16px; height: 16px; margin-right: 4px; vertical-align: middle;"></i>
+                    Admin
+                </a>
                 <a href="login.html" class="btn-login">Entrar</a>
             </div>
         </div>
@@ -1208,6 +1465,198 @@
                 }
             });
         });
+
+        // ========== Lead Capture Popup ==========
+        const popup = document.getElementById('leadPopup');
+        const popupClose = document.getElementById('popupClose');
+        const popupForm = document.getElementById('popupForm');
+        const hasSeenPopup = localStorage.getItem('lucrocerto_popup_seen');
+        const hasSubscribed = localStorage.getItem('lucrocerto_lead_captured');
+
+        // Função global para testar o popup (pode chamar no console: testarPopup())
+        window.testarPopup = function() {
+            localStorage.removeItem('lucrocerto_popup_seen');
+            localStorage.removeItem('lucrocerto_lead_captured');
+            showPopup();
+        };
+
+        // Mostrar popup após 8 segundos OU quando tentar sair da página
+        if (!hasSeenPopup && !hasSubscribed) {
+            // Timer de 8 segundos (era 15, reduzido para aparecer mais rápido)
+            setTimeout(() => {
+                showPopup();
+            }, 8000);
+
+            // Exit intent (apenas desktop)
+            document.addEventListener('mouseout', (e) => {
+                if (e.clientY < 10 && !popup.classList.contains('active')) {
+                    showPopup();
+                }
+            });
+        }
+
+        function showPopup() {
+            if (!hasSubscribed) {
+                popup.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closePopup() {
+            popup.classList.remove('active');
+            document.body.style.overflow = '';
+            localStorage.setItem('lucrocerto_popup_seen', 'true');
+        }
+
+        popupClose.addEventListener('click', closePopup);
+        
+        popup.addEventListener('click', (e) => {
+            if (e.target === popup) {
+                closePopup();
+            }
+        });
+
+        // Form submission
+        popupForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const leadData = {
+                nome: document.getElementById('leadNome').value,
+                email: document.getElementById('leadEmail').value,
+                telefone: document.getElementById('leadTelefone').value,
+                cupom: 'LUCRO10',
+                dataCaptura: new Date().toISOString(),
+                origem: 'popup_planos'
+            };
+
+            // Salvar no localStorage
+            const leads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
+            leads.push(leadData);
+            localStorage.setItem('lucrocerto_leads', JSON.stringify(leads));
+            localStorage.setItem('lucrocerto_lead_captured', 'true');
+            localStorage.setItem('lucrocerto_cupom', 'LUCRO10');
+
+            // Mostrar sucesso
+            popup.querySelector('.popup-card').innerHTML = `
+                <div class="popup-success">
+                    <div class="success-icon">
+                        <i data-lucide="check-circle"></i>
+                    </div>
+                    <h3>Parabéns! 🎉</h3>
+                    <p>Seu cupom <strong>LUCRO10</strong> foi ativado!</p>
+                    <p class="success-detail">Use na hora do pagamento e ganhe <strong>10% OFF</strong> na primeira mensalidade.</p>
+                    <a href="checkout.html?plano=starter&cupom=LUCRO10" class="popup-btn">
+                        <i data-lucide="shopping-cart"></i>
+                        Usar Cupom Agora
+                    </a>
+                </div>
+            `;
+            lucide.createIcons();
+
+            // Fechar após 5 segundos
+            setTimeout(closePopup, 8000);
+        });
+
+        // Máscara de telefone
+        document.getElementById('leadTelefone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            
+            if (value.length > 6) {
+                value = `(${value.slice(0,2)}) ${value.slice(2,7)}-${value.slice(7)}`;
+            } else if (value.length > 2) {
+                value = `(${value.slice(0,2)}) ${value.slice(2)}`;
+            } else if (value.length > 0) {
+                value = `(${value}`;
+            }
+            e.target.value = value;
+        });
     </script>
+
+    <!-- Lead Capture Popup -->
+    <div class="popup-overlay" id="leadPopup">
+        <div class="popup-card">
+            <button class="popup-close" id="popupClose">
+                <i data-lucide="x"></i>
+            </button>
+            
+            <div class="popup-badge">
+                <i data-lucide="gift"></i>
+                OFERTA ESPECIAL
+            </div>
+            
+            <h2 class="popup-title">Espera! 🎁</h2>
+            <p class="popup-subtitle">
+                Ganhe <strong>10% de desconto</strong> na sua primeira mensalidade!
+            </p>
+            
+            <form class="popup-form" id="popupForm">
+                <div class="popup-input-group">
+                    <i data-lucide="user"></i>
+                    <input 
+                        type="text" 
+                        id="leadNome"
+                        class="popup-input" 
+                        placeholder="Seu nome" 
+                        required
+                    >
+                </div>
+                
+                <div class="popup-input-group">
+                    <i data-lucide="mail"></i>
+                    <input 
+                        type="email" 
+                        id="leadEmail"
+                        class="popup-input" 
+                        placeholder="Seu melhor e-mail" 
+                        required
+                    >
+                </div>
+                
+                <div class="popup-input-group">
+                    <i data-lucide="smartphone"></i>
+                    <input 
+                        type="tel" 
+                        id="leadTelefone"
+                        class="popup-input" 
+                        placeholder="(00) 00000-0000" 
+                        required
+                    >
+                </div>
+                
+                <button type="submit" class="popup-btn">
+                    <i data-lucide="ticket"></i>
+                    Garantir Meu Cupom
+                </button>
+                
+                <p class="popup-terms">
+                    Ao enviar, você concorda em receber novidades e promoções.
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Botão de teste do popup (remover em produção) -->
+    <button onclick="testarPopup()" style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--primary-gradient);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 50px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+        z-index: 99;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    ">
+        <i data-lucide="gift" style="width: 18px; height: 18px;"></i>
+        Ver Cupom
+    </button>
 </body>
 </html>

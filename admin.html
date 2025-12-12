@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Lucro Certo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --primary: #E91E63;
+            --primary-dark: #C2185B;
+            --primary-light: #F8BBD9;
+            --primary-gradient: linear-gradient(135deg, #E91E63 0%, #FF6B9D 100%);
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --danger: #F44336;
+            --info: #2196F3;
+            --text-primary: #1A1A2E;
+            --text-secondary: #4A4A68;
+            --elegant-gray: #6B7280;
+            --light-gray: #F5F5F7;
+            --background: #FAFBFC;
+            --white: #FFFFFF;
+            --border: rgba(0, 0, 0, 0.08);
+            --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-medium: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: var(--white);
+            border-right: 1px solid var(--border);
+            padding: 24px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--primary-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .logo-badge {
+            font-size: 10px;
+            background: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: auto;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin-bottom: 4px;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: var(--elegant-gray);
+            text-decoration: none;
+            border-radius: 10px;
+            transition: var(--transition-smooth);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .sidebar-nav a:hover {
+            background: var(--light-gray);
+            color: var(--text-primary);
+        }
+
+        .sidebar-nav a.active {
+            background: rgba(233, 30, 99, 0.1);
+            color: var(--primary);
+        }
+
+        .sidebar-nav a svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .nav-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--elegant-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 20px 16px 10px;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            padding: 32px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .page-subtitle {
+            font-size: 14px;
+            color: var(--elegant-gray);
+            margin-top: 4px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .btn-secondary {
+            background: var(--light-gray);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #EBEBED;
+        }
+
+        .btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            transition: var(--transition-smooth);
+        }
+
+        .stat-card:hover {
+            box-shadow: var(--shadow-medium);
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-icon svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .stat-icon.primary {
+            background: rgba(233, 30, 99, 0.1);
+            color: var(--primary);
+        }
+
+        .stat-icon.success {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success);
+        }
+
+        .stat-icon.warning {
+            background: rgba(255, 152, 0, 0.1);
+            color: var(--warning);
+        }
+
+        .stat-icon.info {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--info);
+        }
+
+        .stat-trend {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .stat-trend.up {
+            color: var(--success);
+        }
+
+        .stat-trend.down {
+            color: var(--danger);
+        }
+
+        .stat-trend svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--elegant-gray);
+        }
+
+        /* Content Grid */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .card-action {
+            font-size: 13px;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-action svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        /* Leads Table */
+        .leads-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leads-table th,
+        .leads-table td {
+            text-align: left;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .leads-table th {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--elegant-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: var(--light-gray);
+        }
+
+        .leads-table td {
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .leads-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .leads-table tr:hover td {
+            background: var(--light-gray);
+        }
+
+        .lead-name {
+            font-weight: 600;
+        }
+
+        .lead-email {
+            color: var(--elegant-gray);
+            font-size: 13px;
+        }
+
+        .lead-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .lead-badge.new {
+            background: rgba(233, 30, 99, 0.1);
+            color: var(--primary);
+        }
+
+        .lead-badge.contacted {
+            background: rgba(33, 150, 243, 0.1);
+            color: var(--info);
+        }
+
+        .lead-badge.converted {
+            background: rgba(76, 175, 80, 0.1);
+            color: var(--success);
+        }
+
+        .lead-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .lead-action-btn {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--light-gray);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--elegant-gray);
+            transition: var(--transition-smooth);
+        }
+
+        .lead-action-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .lead-action-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Niches Chart */
+        .niches-list {
+            list-style: none;
+        }
+
+        .niche-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .niche-item:last-child {
+            border-bottom: none;
+        }
+
+        .niche-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .niche-info {
+            flex: 1;
+        }
+
+        .niche-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .niche-bar {
+            height: 6px;
+            background: var(--light-gray);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .niche-bar-fill {
+            height: 100%;
+            background: var(--primary-gradient);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .niche-count {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--light-gray);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .empty-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--elegant-gray);
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-text {
+            font-size: 14px;
+            color: var(--elegant-gray);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+        }
+
+        /* Tabela responsiva */
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        /* Search Bar */
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 10px 16px;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .search-bar input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            outline: none;
+            color: var(--text-primary);
+        }
+
+        .search-bar input::placeholder {
+            color: var(--elegant-gray);
+        }
+
+        .search-bar svg {
+            width: 20px;
+            height: 20px;
+            color: var(--elegant-gray);
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            color: var(--elegant-gray);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-icon">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <span class="logo-text">Lucro Certo</span>
+                <span class="logo-badge">Admin</span>
+            </div>
+
+            <ul class="sidebar-nav">
+                <li>
+                    <a href="#" class="active">
+                        <i data-lucide="layout-dashboard"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i data-lucide="users"></i>
+                        Leads
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i data-lucide="user-check"></i>
+                        Assinantes
+                    </a>
+                </li>
+                
+                <li class="nav-section-title">Marketing</li>
+                
+                <li>
+                    <a href="#">
+                        <i data-lucide="mail"></i>
+                        Campanhas
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i data-lucide="tag"></i>
+                        Cupons
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i data-lucide="megaphone"></i>
+                        Remarketing
+                    </a>
+                </li>
+
+                <li class="nav-section-title">Relatórios</li>
+                
+                <li>
+                    <a href="#">
+                        <i data-lucide="bar-chart-3"></i>
+                        Métricas
+                    </a>
+                </li>
+                <li>
+                    <a href="#">
+                        <i data-lucide="pie-chart"></i>
+                        Por Nicho
+                    </a>
+                </li>
+
+                <li class="nav-section-title">Sistema</li>
+
+                <li>
+                    <a href="#">
+                        <i data-lucide="settings"></i>
+                        Configurações
+                    </a>
+                </li>
+                <li>
+                    <a href="index.html">
+                        <i data-lucide="arrow-left"></i>
+                        Voltar ao App
+                    </a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-subtitle">Visão geral dos seus leads e conversões</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="exportBtn">
+                        <i data-lucide="download"></i>
+                        Exportar
+                    </button>
+                    <button class="btn btn-primary" id="refreshBtn">
+                        <i data-lucide="refresh-cw"></i>
+                        Atualizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon primary">
+                            <i data-lucide="users"></i>
+                        </div>
+                        <div class="stat-trend up">
+                            <i data-lucide="trending-up"></i>
+                            +12%
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalLeads">0</div>
+                    <div class="stat-label">Total de Leads</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon success">
+                            <i data-lucide="user-check"></i>
+                        </div>
+                        <div class="stat-trend up">
+                            <i data-lucide="trending-up"></i>
+                            +8%
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalConversions">0</div>
+                    <div class="stat-label">Conversões</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon warning">
+                            <i data-lucide="ticket"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="totalCupons">0</div>
+                    <div class="stat-label">Cupons Gerados</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon info">
+                            <i data-lucide="percent"></i>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="conversionRate">0%</div>
+                    <div class="stat-label">Taxa de Conversão</div>
+                </div>
+            </div>
+
+            <!-- Content Grid -->
+            <div class="content-grid">
+                <!-- Leads Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Leads Recentes</h2>
+                        <a href="#" class="card-action">
+                            Ver todos
+                            <i data-lucide="arrow-right"></i>
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="search-bar">
+                            <i data-lucide="search"></i>
+                            <input type="text" placeholder="Buscar por nome ou email..." id="searchLeads">
+                        </div>
+
+                        <div class="filters">
+                            <button class="filter-btn active" data-filter="all">Todos</button>
+                            <button class="filter-btn" data-filter="new">Novos</button>
+                            <button class="filter-btn" data-filter="contacted">Contatados</button>
+                            <button class="filter-btn" data-filter="converted">Convertidos</button>
+                        </div>
+
+                        <div class="table-wrapper">
+                            <table class="leads-table">
+                                <thead>
+                                    <tr>
+                                        <th>Lead</th>
+                                        <th>Telefone</th>
+                                        <th>Cupom</th>
+                                        <th>Data</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leadsTableBody">
+                                    <!-- Leads serão inseridos aqui -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="empty-state" id="emptyState" style="display: none;">
+                            <div class="empty-icon">
+                                <i data-lucide="inbox"></i>
+                            </div>
+                            <h3 class="empty-title">Nenhum lead ainda</h3>
+                            <p class="empty-text">Os leads capturados no popup aparecerão aqui.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Niches -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Leads por Nicho</h2>
+                    </div>
+                    <div class="card-body">
+                        <ul class="niches-list" id="nichesList">
+                            <li class="niche-item">
+                                <div class="niche-icon">👗</div>
+                                <div class="niche-info">
+                                    <div class="niche-name">Moda & Acessórios</div>
+                                    <div class="niche-bar">
+                                        <div class="niche-bar-fill" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                                <div class="niche-count">45</div>
+                            </li>
+                            <li class="niche-item">
+                                <div class="niche-icon">💄</div>
+                                <div class="niche-info">
+                                    <div class="niche-name">Cosméticos</div>
+                                    <div class="niche-bar">
+                                        <div class="niche-bar-fill" style="width: 60%"></div>
+                                    </div>
+                                </div>
+                                <div class="niche-count">36</div>
+                            </li>
+                            <li class="niche-item">
+                                <div class="niche-icon">🏠</div>
+                                <div class="niche-info">
+                                    <div class="niche-name">Casa & Decoração</div>
+                                    <div class="niche-bar">
+                                        <div class="niche-bar-fill" style="width: 45%"></div>
+                                    </div>
+                                </div>
+                                <div class="niche-count">27</div>
+                            </li>
+                            <li class="niche-item">
+                                <div class="niche-icon">🍰</div>
+                                <div class="niche-info">
+                                    <div class="niche-name">Alimentação</div>
+                                    <div class="niche-bar">
+                                        <div class="niche-bar-fill" style="width: 35%"></div>
+                                    </div>
+                                </div>
+                                <div class="niche-count">21</div>
+                            </li>
+                            <li class="niche-item">
+                                <div class="niche-icon">📚</div>
+                                <div class="niche-info">
+                                    <div class="niche-name">Outros</div>
+                                    <div class="niche-bar">
+                                        <div class="niche-bar-fill" style="width: 20%"></div>
+                                    </div>
+                                </div>
+                                <div class="niche-count">12</div>
+                            </li>
+                        </ul>
+
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                            <p style="font-size: 12px; color: var(--elegant-gray); margin-bottom: 8px;">
+                                💡 Dica de Remarketing
+                            </p>
+                            <p style="font-size: 14px; color: var(--text-primary);">
+                                <strong>Moda & Acessórios</strong> é o nicho com mais interesse. Considere campanhas específicas!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        // Load leads from localStorage
+        function loadLeads() {
+            const leads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
+            const tbody = document.getElementById('leadsTableBody');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Update stats
+            document.getElementById('totalLeads').textContent = leads.length;
+            document.getElementById('totalCupons').textContent = leads.filter(l => l.cupom).length;
+            
+            // Calculate conversions (example - in real app would check subscriptions)
+            const conversions = Math.floor(leads.length * 0.15);
+            document.getElementById('totalConversions').textContent = conversions;
+            
+            // Conversion rate
+            const rate = leads.length > 0 ? Math.round((conversions / leads.length) * 100) : 0;
+            document.getElementById('conversionRate').textContent = rate + '%';
+
+            if (leads.length === 0) {
+                tbody.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            
+            // Sort by date (newest first)
+            leads.sort((a, b) => new Date(b.dataCaptura) - new Date(a.dataCaptura));
+            
+            tbody.innerHTML = leads.map((lead, index) => {
+                const date = new Date(lead.dataCaptura);
+                const formattedDate = date.toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                // Determine status based on some criteria
+                let status = 'new';
+                let statusText = 'Novo';
+                if (lead.contacted) {
+                    status = 'contacted';
+                    statusText = 'Contatado';
+                }
+                if (lead.converted) {
+                    status = 'converted';
+                    statusText = 'Convertido';
+                }
+                
+                return `
+                    <tr data-status="${status}">
+                        <td>
+                            <div class="lead-name">${lead.nome}</div>
+                            <div class="lead-email">${lead.email}</div>
+                        </td>
+                        <td>${lead.telefone || '-'}</td>
+                        <td>${lead.cupom || '-'}</td>
+                        <td>${formattedDate}</td>
+                        <td>
+                            <span class="lead-badge ${status}">${statusText}</span>
+                        </td>
+                        <td>
+                            <div class="lead-actions">
+                                <button class="lead-action-btn" title="WhatsApp" onclick="openWhatsApp('${lead.telefone}')">
+                                    <i data-lucide="message-circle"></i>
+                                </button>
+                                <button class="lead-action-btn" title="Email" onclick="sendEmail('${lead.email}')">
+                                    <i data-lucide="mail"></i>
+                                </button>
+                                <button class="lead-action-btn" title="Marcar como contatado" onclick="markContacted(${index})">
+                                    <i data-lucide="check"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+
+        // Open WhatsApp
+        function openWhatsApp(phone) {
+            if (!phone) return alert('Telefone não informado');
+            const cleanPhone = phone.replace(/\D/g, '');
+            const phoneWithCountry = cleanPhone.length === 11 ? '55' + cleanPhone : cleanPhone;
+            window.open(`https://wa.me/${phoneWithCountry}?text=Olá! Vi que você se interessou pelo Lucro Certo 😊`, '_blank');
+        }
+
+        // Send email
+        function sendEmail(email) {
+            if (!email) return alert('Email não informado');
+            window.location.href = `mailto:${email}?subject=Seu cupom LUCRO10 está esperando!&body=Olá! Não deixe seu cupom de 10%25 de desconto expirar. Assine agora!`;
+        }
+
+        // Mark as contacted
+        function markContacted(index) {
+            const leads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
+            if (leads[index]) {
+                leads[index].contacted = true;
+                localStorage.setItem('lucrocerto_leads', JSON.stringify(leads));
+                loadLeads();
+            }
+        }
+
+        // Export leads to CSV
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const leads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
+            
+            if (leads.length === 0) {
+                alert('Nenhum lead para exportar');
+                return;
+            }
+            
+            const headers = ['Nome', 'Email', 'Telefone', 'Cupom', 'Data', 'Origem'];
+            const csvContent = [
+                headers.join(','),
+                ...leads.map(lead => [
+                    `"${lead.nome}"`,
+                    lead.email,
+                    lead.telefone || '',
+                    lead.cupom || '',
+                    lead.dataCaptura,
+                    lead.origem || ''
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `leads_lucrocerto_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        });
+
+        // Refresh
+        document.getElementById('refreshBtn').addEventListener('click', loadLeads);
+
+        // Search
+        document.getElementById('searchLeads').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#leadsTableBody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+
+        // Filters
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const filter = btn.dataset.filter;
+                const rows = document.querySelectorAll('#leadsTableBody tr');
+                
+                rows.forEach(row => {
+                    if (filter === 'all') {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = row.dataset.status === filter ? '' : 'none';
+                    }
+                });
+            });
+        });
+
+        // Load on page load
+        loadLeads();
+
+        // Add some demo data if empty (for testing)
+        function addDemoData() {
+            const existingLeads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
+            if (existingLeads.length === 0) {
+                const demoLeads = [
+                    { nome: 'Maria Silva', email: 'maria@email.com', telefone: '(11) 99999-1234', cupom: 'LUCRO10', dataCaptura: new Date(Date.now() - 3600000).toISOString(), origem: 'popup_planos' },
+                    { nome: 'Ana Costa', email: 'ana.costa@gmail.com', telefone: '(21) 98888-5678', cupom: 'LUCRO10', dataCaptura: new Date(Date.now() - 86400000).toISOString(), origem: 'popup_planos' },
+                    { nome: 'Juliana Santos', email: 'ju.santos@email.com', telefone: '(31) 97777-9012', cupom: 'LUCRO10', dataCaptura: new Date(Date.now() - 172800000).toISOString(), origem: 'popup_planos', contacted: true }
+                ];
+                localStorage.setItem('lucrocerto_leads', JSON.stringify(demoLeads));
+                loadLeads();
+            }
+        }
+        
+        // Uncomment to add demo data:
+        // addDemoData();
+    </script>
+</body>
+</html>
