@@ -11,8 +11,11 @@ const LucroCertoApp = (function() {
             products: [],
             costs: {},
             achievements: [],
+            clients: [],
+            sales: [],
             currentPage: 'dashboard',
-            editingProductId: null
+            editingProductId: null,
+            editingClientId: null
         },
         subscribers: [],
 
@@ -52,13 +55,13 @@ const LucroCertoApp = (function() {
     // 3. UI RENDERER & ROUTER
     //==================================
     const UIManager = {
-        pages: ['dashboard', 'produtos', 'add-edit-product', 'despesas', 'precificar', 'metas', 'relatorios'],
+        pages: ['dashboard', 'produtos', 'add-edit-product', 'despesas', 'precificar', 'metas', 'relatorios', 'configuracoes', 'clientes', 'vendas', 'nova-venda'],
         navButtons: [
             { id: 'dashboard', icon: 'layout-dashboard', label: 'Início' },
+            { id: 'vendas', icon: 'shopping-cart', label: 'Vendas' },
             { id: 'produtos', icon: 'package-search', label: 'Produtos' },
-            { id: 'despesas', icon: 'wallet', label: 'Despesas' },
-            { id: 'precificar', icon: 'calculator', label: 'Precificar' },
-            { id: 'metas', icon: 'target', label: 'Metas' }
+            { id: 'clientes', icon: 'users', label: 'Clientes' },
+            { id: 'configuracoes', icon: 'settings', label: 'Config' }
         ],
 
         init() {
@@ -111,6 +114,10 @@ const LucroCertoApp = (function() {
                 precificar: () => { container.innerHTML = this.getPrecificarHTML(); this.bindPrecificarEvents(); },
                 metas: () => { container.innerHTML = this.getMetasHTML(); },
                 relatorios: () => { container.innerHTML = this.getRelatoriosHTML(); },
+                configuracoes: () => { container.innerHTML = this.getConfiguracoesHTML(); this.bindConfiguracoesEvents(); },
+                clientes: () => { container.innerHTML = this.getClientesHTML(); this.bindClientesEvents(); },
+                vendas: () => { container.innerHTML = this.getVendasHTML(); this.bindVendasEvents(); },
+                'nova-venda': () => { container.innerHTML = this.getNovaVendaHTML(); this.bindNovaVendaEvents(); },
             };
 
             if (pageRenderers[pageId]) {
@@ -123,7 +130,7 @@ const LucroCertoApp = (function() {
         },
         
         getDashboardHTML() {
-             const { user } = StateManager.getState();
+            const { user, sales } = StateManager.getState();
             const now = new Date();
             const hour = now.getHours();
             let saudacao;
@@ -132,11 +139,63 @@ const LucroCertoApp = (function() {
             else saudacao = 'Boa noite';
 
             const percentage = Math.round((user.currentRevenue / user.monthlyGoal) * 100);
+            
+            // Vendas do dia
+            const today = new Date().toDateString();
+            const todaySales = (sales || []).filter(s => new Date(s.date).toDateString() === today);
+            const todayRevenue = todaySales.reduce((acc, s) => acc + s.total, 0);
+            const todayCount = todaySales.length;
+
+            // Foto do perfil
+            const profilePhoto = user.profilePhoto || '';
+            const profilePhotoHTML = profilePhoto 
+                ? `<img src="${profilePhoto}" alt="${user.name}" class="dashboard-profile-photo">`
+                : `<div class="dashboard-profile-placeholder"><i data-lucide="user" style="width: 32px; height: 32px;"></i></div>`;
 
             return `
-                <h1>${saudacao}, ${user.name.split(' ')[0]}!</h1>
-                <p class="sub-header">Pronta para conquistar o mundo hoje?</p>
+                <div class="dashboard-header">
+                    <div class="dashboard-greeting">
+                        ${profilePhotoHTML}
+                        <div>
+                            <h1>${saudacao}, ${user.name ? user.name.split(' ')[0] : 'Empreendedora'}!</h1>
+                            <p class="sub-header">Pronta para conquistar o mundo hoje?</p>
+                        </div>
+                    </div>
+                    <button class="btn-icon" data-action="navigate" data-route="configuracoes" title="Configurações">
+                        <i data-lucide="settings"></i>
+                    </button>
+                </div>
+                
+                ${user.routine ? `
+                    <div class="routine-card">
+                        <div class="routine-header">
+                            <i data-lucide="clipboard-list"></i>
+                            <span>Minha Rotina de Hoje</span>
+                        </div>
+                        <p class="routine-text">${user.routine}</p>
+                    </div>
+                ` : ''}
+                
                 <div class="emotional-panel"><i data-lucide="sparkles"></i><span id="emotional-insight">${EmotionalIA.generateInsight()}</span></div>
+                
+                <!-- Resumo do Dia -->
+                <div class="day-summary">
+                    <div class="day-summary-item">
+                        <i data-lucide="shopping-bag" style="color: var(--primary);"></i>
+                        <div>
+                            <span class="day-summary-value">${todayCount}</span>
+                            <span class="day-summary-label">Vendas Hoje</span>
+                        </div>
+                    </div>
+                    <div class="day-summary-item">
+                        <i data-lucide="trending-up" style="color: var(--success);"></i>
+                        <div>
+                            <span class="day-summary-value">R$ ${todayRevenue.toFixed(2)}</span>
+                            <span class="day-summary-label">Faturado Hoje</span>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="grid-desktop-2">
                     <div class="card">
                        <div class="card-header"><div class="card-icon" style="background: var(--success-gradient);"><i data-lucide="gem"></i></div><h3 class="card-title">Meta Mensal</h3></div>
@@ -148,7 +207,7 @@ const LucroCertoApp = (function() {
                            </svg>
                            <div class="progress-ring-text"><div class="progress-ring-percentage">${isNaN(percentage) ? 0 : percentage}%</div><div class="progress-ring-label">Concluído</div></div>
                        </div>
-                       <p class="text-center"><b>R$ ${user.currentRevenue.toFixed(2)}</b> de R$ ${user.monthlyGoal.toFixed(2)}</p>
+                       <p class="text-center"><b>R$ ${(user.currentRevenue || 0).toFixed(2)}</b> de R$ ${(user.monthlyGoal || 0).toFixed(2)}</p>
                     </div>
                     <div class="card">
                        <div class="card-header"><div class="card-icon"><i data-lucide="landmark"></i></div><h3 class="card-title">Resumo de Custos</h3></div>
@@ -161,10 +220,10 @@ const LucroCertoApp = (function() {
                 </div>
                 <h3 style="margin-top: 30px;">Ações Rápidas</h3>
                 <div class="quick-actions">
-                     <a href="#" class="action-button" data-action="navigate" data-route="precificar"> <i data-lucide="calculator"></i> <span>Precificar</span> </a>
+                    <a href="#" class="action-button" data-action="navigate" data-route="nova-venda"> <i data-lucide="plus-circle"></i> <span>Nova Venda</span> </a>
                     <a href="#" class="action-button" data-action="add-new-product"> <i data-lucide="package-plus"></i> <span>Novo Produto</span> </a>
-                    <a href="#" class="action-button" data-action="navigate" data-route="despesas"> <i data-lucide="wallet"></i> <span>Despesas</span> </a>
-                    <a href="#" class="action-button" data-action="navigate" data-route="metas"> <i data-lucide="target"></i> <span>Ver Metas</span> </a>
+                    <a href="#" class="action-button" data-action="navigate" data-route="clientes"> <i data-lucide="user-plus"></i> <span>Clientes</span> </a>
+                    <a href="#" class="action-button" data-action="navigate" data-route="precificar"> <i data-lucide="calculator"></i> <span>Precificar</span> </a>
                 </div>
             `;
         },
@@ -1342,6 +1401,811 @@ const LucroCertoApp = (function() {
         },
         
         getRelatoriosHTML() { return `<h2>Relatórios Visuais</h2> <p>Em breve, gráficos incríveis sobre seu negócio!</p>`; },
+
+        // ========== PÁGINA DE CONFIGURAÇÕES ==========
+        getConfiguracoesHTML() {
+            const { user } = StateManager.getState();
+            const profilePhoto = user.profilePhoto || '';
+            
+            return `
+                <h2>⚙️ Configurações</h2>
+                <p class="sub-header">Personalize seu app e gerencie seu perfil</p>
+                
+                <div class="card">
+                    <h3><i data-lucide="user" style="width: 20px; height: 20px; vertical-align: middle;"></i> Meu Perfil</h3>
+                    
+                    <div class="profile-photo-section">
+                        <label class="profile-photo-upload">
+                            <input type="file" id="profile-photo-input" accept="image/*" style="display: none;">
+                            <div class="profile-photo-preview" id="profile-photo-preview">
+                                ${profilePhoto 
+                                    ? `<img src="${profilePhoto}" alt="Foto de perfil">`
+                                    : `<i data-lucide="camera" style="width: 40px; height: 40px; color: var(--elegant-gray);"></i>
+                                       <span>Adicionar Foto</span>`
+                                }
+                            </div>
+                        </label>
+                        <p style="font-size: 12px; color: var(--elegant-gray); margin-top: 8px;">Toque para ${profilePhoto ? 'alterar' : 'adicionar'} sua foto</p>
+                    </div>
+                    
+                    <form id="profile-form">
+                        <div class="form-group">
+                            <label for="profile-name">
+                                <i data-lucide="user" style="width: 16px; height: 16px;"></i> Nome Completo
+                            </label>
+                            <input type="text" id="profile-name" class="form-input" placeholder="Seu nome" value="${user.name || ''}">
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="profile-phone">
+                                    <i data-lucide="phone" style="width: 16px; height: 16px;"></i> Telefone/WhatsApp
+                                </label>
+                                <input type="tel" id="profile-phone" class="form-input" placeholder="(00) 00000-0000" value="${user.phone || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label for="profile-email">
+                                    <i data-lucide="mail" style="width: 16px; height: 16px;"></i> E-mail
+                                </label>
+                                <input type="email" id="profile-email" class="form-input" placeholder="seu@email.com" value="${user.email || ''}">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profile-cpf">
+                                <i data-lucide="credit-card" style="width: 16px; height: 16px;"></i> CPF/CNPJ
+                            </label>
+                            <input type="text" id="profile-cpf" class="form-input" placeholder="000.000.000-00" value="${user.cpf || ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profile-business">
+                                <i data-lucide="store" style="width: 16px; height: 16px;"></i> Nome do Negócio
+                            </label>
+                            <input type="text" id="profile-business" class="form-input" placeholder="Ex: Maria Bijuterias" value="${user.businessName || ''}">
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <h3><i data-lucide="clipboard-list" style="width: 20px; height: 20px; vertical-align: middle;"></i> Minha Rotina</h3>
+                    <p style="font-size: 14px; color: var(--elegant-gray); margin-bottom: 16px;">
+                        Escreva sua rotina diária ou metas do dia. Isso aparecerá na tela inicial!
+                    </p>
+                    <div class="form-group">
+                        <textarea id="profile-routine" class="form-input" rows="4" placeholder="Ex: Segunda a Sexta: Manhã - Preparar pedidos. Tarde - Postar no Instagram. Noite - Responder clientes...">${user.routine || ''}</textarea>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3><i data-lucide="target" style="width: 20px; height: 20px; vertical-align: middle;"></i> Metas</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="profile-monthly-goal">Meta de Faturamento (R$/mês)</label>
+                            <input type="number" id="profile-monthly-goal" class="form-input" placeholder="8000" value="${user.monthlyGoal || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-sales-goal">Meta de Vendas (un./mês)</label>
+                            <input type="number" id="profile-sales-goal" class="form-input" placeholder="100" value="${user.monthlySalesGoal || ''}">
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="btn btn-primary btn-full" data-action="save-profile" style="margin-top: 20px;">
+                    <i data-lucide="check" style="width: 18px; height: 18px;"></i> Salvar Configurações
+                </button>
+                
+                <div class="card" style="margin-top: 30px; background: var(--light-gray);">
+                    <h3><i data-lucide="link" style="width: 20px; height: 20px; vertical-align: middle;"></i> Acesso Rápido</h3>
+                    <div class="settings-links">
+                        <a href="#" class="settings-link" data-action="navigate" data-route="despesas">
+                            <i data-lucide="wallet"></i> Gerenciar Despesas
+                        </a>
+                        <a href="#" class="settings-link" data-action="navigate" data-route="precificar">
+                            <i data-lucide="calculator"></i> Precificação
+                        </a>
+                        <a href="#" class="settings-link" data-action="navigate" data-route="metas">
+                            <i data-lucide="trophy"></i> Metas e Conquistas
+                        </a>
+                    </div>
+                </div>
+            `;
+        },
+        
+        bindConfiguracoesEvents() {
+            const { user } = StateManager.getState();
+            let currentProfilePhoto = user.profilePhoto || '';
+            
+            // Upload de foto
+            const photoInput = document.getElementById('profile-photo-input');
+            const photoPreview = document.getElementById('profile-photo-preview');
+            
+            if (photoInput) {
+                photoInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        if (file.size > 2 * 1024 * 1024) {
+                            alert('❌ Imagem muito grande! Máximo 2MB.');
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            currentProfilePhoto = event.target.result;
+                            photoPreview.innerHTML = `<img src="${currentProfilePhoto}" alt="Foto de perfil">`;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            
+            // Salvar perfil
+            document.querySelector('[data-action="save-profile"]')?.addEventListener('click', () => {
+                const updatedUser = {
+                    ...user,
+                    name: document.getElementById('profile-name').value.trim(),
+                    phone: document.getElementById('profile-phone').value.trim(),
+                    email: document.getElementById('profile-email').value.trim(),
+                    cpf: document.getElementById('profile-cpf').value.trim(),
+                    businessName: document.getElementById('profile-business').value.trim(),
+                    routine: document.getElementById('profile-routine').value.trim(),
+                    monthlyGoal: parseFloat(document.getElementById('profile-monthly-goal').value) || 0,
+                    monthlySalesGoal: parseFloat(document.getElementById('profile-sales-goal').value) || 0,
+                    profilePhoto: currentProfilePhoto
+                };
+                
+                StateManager.setState({ user: updatedUser });
+                alert('✅ Configurações salvas com sucesso!');
+            });
+        },
+
+        // ========== PÁGINA DE CLIENTES (MINI CRM) ==========
+        getClientesHTML() {
+            const { clients } = StateManager.getState();
+            
+            const clientCards = (clients || []).map(c => {
+                const totalPurchases = c.purchases || 0;
+                const totalSpent = c.totalSpent || 0;
+                
+                return `
+                    <div class="client-card" data-client-id="${c.id}">
+                        <div class="client-avatar">
+                            ${c.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div class="client-info">
+                            <h4 class="client-name">${c.name}</h4>
+                            <p class="client-phone">
+                                <i data-lucide="phone" style="width: 14px; height: 14px;"></i>
+                                ${c.phone || 'Sem telefone'}
+                            </p>
+                            <div class="client-stats">
+                                <span><i data-lucide="shopping-bag"></i> ${totalPurchases} compras</span>
+                                <span><i data-lucide="dollar-sign"></i> R$ ${totalSpent.toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <div class="client-actions">
+                            <button class="btn-icon-small" data-action="whatsapp-client" data-phone="${c.phone}" title="WhatsApp">
+                                <i data-lucide="message-circle"></i>
+                            </button>
+                            <button class="btn-icon-small" data-action="edit-client" data-id="${c.id}" title="Editar">
+                                <i data-lucide="pencil"></i>
+                            </button>
+                            <button class="btn-icon-small danger" data-action="delete-client" data-id="${c.id}" title="Excluir">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            return `
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h2>👥 Meus Clientes</h2>
+                        <p class="sub-header">Gerencie sua carteira de clientes</p>
+                    </div>
+                    <button class="btn btn-primary" data-action="add-new-client">
+                        <i data-lucide="user-plus" style="width: 18px; height: 18px;"></i> Novo Cliente
+                    </button>
+                </div>
+                
+                ${(clients || []).length > 0 ? `
+                    <div class="clients-summary">
+                        <div class="summary-item">
+                            <i data-lucide="users" style="color: var(--primary);"></i>
+                            <div>
+                                <span class="summary-value">${clients.length}</span>
+                                <span class="summary-label">Clientes</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="search-box">
+                        <i data-lucide="search"></i>
+                        <input type="text" id="search-clients" class="form-input" placeholder="Buscar cliente...">
+                    </div>
+                    
+                    <div class="clients-list">
+                        ${clientCards}
+                    </div>
+                ` : `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i data-lucide="users" style="width: 64px; height: 64px; color: var(--elegant-gray);"></i>
+                        </div>
+                        <h3>Nenhum cliente cadastrado</h3>
+                        <p>Cadastre seus clientes para acompanhar o histórico de compras!</p>
+                        <button class="btn btn-primary btn-lg" data-action="add-new-client">
+                            <i data-lucide="user-plus"></i> Cadastrar Primeiro Cliente
+                        </button>
+                    </div>
+                `}
+                
+                <!-- Modal Adicionar/Editar Cliente -->
+                <div id="client-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="client-modal-title"><i data-lucide="user-plus"></i> Novo Cliente</h3>
+                            <button class="modal-close" data-action="close-client-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="client-form">
+                                <div class="form-group">
+                                    <label for="client-name">Nome Completo *</label>
+                                    <input type="text" id="client-name" class="form-input" placeholder="Nome do cliente" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="client-phone">Telefone/WhatsApp</label>
+                                    <input type="tel" id="client-phone" class="form-input" placeholder="(00) 00000-0000">
+                                </div>
+                                <div class="form-group">
+                                    <label for="client-email">E-mail</label>
+                                    <input type="email" id="client-email" class="form-input" placeholder="email@exemplo.com">
+                                </div>
+                                <div class="form-group">
+                                    <label for="client-notes">Observações</label>
+                                    <textarea id="client-notes" class="form-input" rows="3" placeholder="Preferências, tamanhos, datas importantes..."></textarea>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-action="close-client-modal">Cancelar</button>
+                            <button class="btn btn-primary" data-action="save-client">
+                                <i data-lucide="check"></i> Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        },
+        
+        bindClientesEvents() {
+            let editingClientId = null;
+            
+            // Abrir modal novo cliente
+            document.querySelectorAll('[data-action="add-new-client"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    editingClientId = null;
+                    document.getElementById('client-modal-title').innerHTML = '<i data-lucide="user-plus"></i> Novo Cliente';
+                    document.getElementById('client-form').reset();
+                    document.getElementById('client-modal').style.display = 'flex';
+                    lucide.createIcons({ nodes: [document.getElementById('client-modal')] });
+                });
+            });
+            
+            // Editar cliente
+            document.querySelectorAll('[data-action="edit-client"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const clientId = btn.dataset.id;
+                    editingClientId = clientId;
+                    const { clients } = StateManager.getState();
+                    const client = clients.find(c => c.id === clientId);
+                    if (!client) return;
+                    
+                    document.getElementById('client-modal-title').innerHTML = '<i data-lucide="pencil"></i> Editar Cliente';
+                    document.getElementById('client-name').value = client.name || '';
+                    document.getElementById('client-phone').value = client.phone || '';
+                    document.getElementById('client-email').value = client.email || '';
+                    document.getElementById('client-notes').value = client.notes || '';
+                    document.getElementById('client-modal').style.display = 'flex';
+                    lucide.createIcons({ nodes: [document.getElementById('client-modal')] });
+                });
+            });
+            
+            // Salvar cliente
+            document.querySelector('[data-action="save-client"]')?.addEventListener('click', () => {
+                const name = document.getElementById('client-name').value.trim();
+                if (!name) {
+                    alert('❌ Digite o nome do cliente');
+                    return;
+                }
+                
+                const clientData = {
+                    id: editingClientId || `cli_${Date.now()}`,
+                    name: name,
+                    phone: document.getElementById('client-phone').value.trim(),
+                    email: document.getElementById('client-email').value.trim(),
+                    notes: document.getElementById('client-notes').value.trim(),
+                    purchases: 0,
+                    totalSpent: 0,
+                    createdAt: new Date().toISOString()
+                };
+                
+                const { clients } = StateManager.getState();
+                let updatedClients;
+                
+                if (editingClientId) {
+                    const existing = clients.find(c => c.id === editingClientId);
+                    clientData.purchases = existing?.purchases || 0;
+                    clientData.totalSpent = existing?.totalSpent || 0;
+                    clientData.createdAt = existing?.createdAt || clientData.createdAt;
+                    updatedClients = clients.map(c => c.id === editingClientId ? clientData : c);
+                } else {
+                    updatedClients = [...(clients || []), clientData];
+                }
+                
+                StateManager.setState({ clients: updatedClients });
+                document.getElementById('client-modal').style.display = 'none';
+                editingClientId = null;
+            });
+            
+            // Excluir cliente
+            document.querySelectorAll('[data-action="delete-client"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const clientId = btn.dataset.id;
+                    const { clients } = StateManager.getState();
+                    const client = clients.find(c => c.id === clientId);
+                    
+                    if (confirm(`❌ Excluir cliente "${client?.name}"?`)) {
+                        const updatedClients = clients.filter(c => c.id !== clientId);
+                        StateManager.setState({ clients: updatedClients });
+                    }
+                });
+            });
+            
+            // WhatsApp
+            document.querySelectorAll('[data-action="whatsapp-client"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const phone = btn.dataset.phone?.replace(/\D/g, '');
+                    if (phone) {
+                        window.open(`https://wa.me/55${phone}`, '_blank');
+                    } else {
+                        alert('❌ Cliente sem telefone cadastrado');
+                    }
+                });
+            });
+            
+            // Fechar modal
+            document.querySelectorAll('[data-action="close-client-modal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('client-modal').style.display = 'none';
+                    editingClientId = null;
+                });
+            });
+            
+            // Busca
+            const searchInput = document.getElementById('search-clients');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const query = e.target.value.toLowerCase();
+                    document.querySelectorAll('.client-card').forEach(card => {
+                        const name = card.querySelector('.client-name').textContent.toLowerCase();
+                        card.style.display = name.includes(query) ? 'flex' : 'none';
+                    });
+                });
+            }
+            
+            // Click fora do modal
+            document.getElementById('client-modal')?.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    e.target.style.display = 'none';
+                    editingClientId = null;
+                }
+            });
+        },
+
+        // ========== PÁGINA DE VENDAS ==========
+        getVendasHTML() {
+            const { sales } = StateManager.getState();
+            const sortedSales = [...(sales || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Estatísticas
+            const today = new Date().toDateString();
+            const todaySales = sortedSales.filter(s => new Date(s.date).toDateString() === today);
+            const todayRevenue = todaySales.reduce((acc, s) => acc + s.total, 0);
+            
+            const thisMonth = new Date().getMonth();
+            const thisYear = new Date().getFullYear();
+            const monthSales = sortedSales.filter(s => {
+                const d = new Date(s.date);
+                return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+            });
+            const monthRevenue = monthSales.reduce((acc, s) => acc + s.total, 0);
+            
+            const salesHTML = sortedSales.slice(0, 20).map(s => {
+                const date = new Date(s.date);
+                const formattedDate = date.toLocaleDateString('pt-BR');
+                const formattedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                
+                return `
+                    <div class="sale-card">
+                        <div class="sale-header">
+                            <div class="sale-date">
+                                <i data-lucide="calendar" style="width: 14px; height: 14px;"></i>
+                                ${formattedDate} às ${formattedTime}
+                            </div>
+                            <span class="sale-total">R$ ${s.total.toFixed(2)}</span>
+                        </div>
+                        <div class="sale-details">
+                            ${s.clientName ? `<span class="sale-client"><i data-lucide="user"></i> ${s.clientName}</span>` : ''}
+                            <span class="sale-items">${s.items.length} ${s.items.length === 1 ? 'item' : 'itens'}</span>
+                            <span class="sale-payment"><i data-lucide="credit-card"></i> ${s.paymentMethod || 'Não informado'}</span>
+                        </div>
+                        <div class="sale-products">
+                            ${s.items.map(item => `<span class="sale-product-tag">${item.quantity}x ${item.productName}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            return `
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h2>🛒 Minhas Vendas</h2>
+                        <p class="sub-header">Histórico e controle de vendas</p>
+                    </div>
+                    <button class="btn btn-primary" data-action="navigate" data-route="nova-venda">
+                        <i data-lucide="plus-circle" style="width: 18px; height: 18px;"></i> Nova Venda
+                    </button>
+                </div>
+                
+                <div class="sales-summary">
+                    <div class="summary-card today">
+                        <div class="summary-icon"><i data-lucide="sun"></i></div>
+                        <div class="summary-info">
+                            <span class="summary-label">Hoje</span>
+                            <span class="summary-value">R$ ${todayRevenue.toFixed(2)}</span>
+                            <span class="summary-count">${todaySales.length} vendas</span>
+                        </div>
+                    </div>
+                    <div class="summary-card month">
+                        <div class="summary-icon"><i data-lucide="calendar"></i></div>
+                        <div class="summary-info">
+                            <span class="summary-label">Este Mês</span>
+                            <span class="summary-value">R$ ${monthRevenue.toFixed(2)}</span>
+                            <span class="summary-count">${monthSales.length} vendas</span>
+                        </div>
+                    </div>
+                </div>
+                
+                ${sortedSales.length > 0 ? `
+                    <h3 style="margin-top: 24px;">Últimas Vendas</h3>
+                    <div class="sales-list">
+                        ${salesHTML}
+                    </div>
+                ` : `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i data-lucide="shopping-cart" style="width: 64px; height: 64px; color: var(--elegant-gray);"></i>
+                        </div>
+                        <h3>Nenhuma venda registrada</h3>
+                        <p>Registre sua primeira venda e acompanhe seu faturamento!</p>
+                        <button class="btn btn-primary btn-lg" data-action="navigate" data-route="nova-venda">
+                            <i data-lucide="plus-circle"></i> Registrar Primeira Venda
+                        </button>
+                    </div>
+                `}
+            `;
+        },
+        
+        bindVendasEvents() {
+            // Eventos básicos - navegação já funciona pelo sistema global
+        },
+
+        // ========== PÁGINA NOVA VENDA ==========
+        getNovaVendaHTML() {
+            const { products, clients } = StateManager.getState();
+            
+            const clientOptions = (clients || []).map(c => 
+                `<option value="${c.id}">${c.name}</option>`
+            ).join('');
+            
+            return `
+                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                    <button class="btn-icon" data-action="navigate" data-route="vendas" style="margin-right: 12px;">
+                        <i data-lucide="arrow-left"></i>
+                    </button>
+                    <h2 style="margin: 0;">🛒 Nova Venda</h2>
+                </div>
+                
+                <div class="card">
+                    <h3><i data-lucide="user" style="width: 20px; height: 20px; vertical-align: middle;"></i> Cliente</h3>
+                    <div class="form-group">
+                        <select id="sale-client" class="form-input">
+                            <option value="">-- Selecionar cliente (opcional) --</option>
+                            ${clientOptions}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3><i data-lucide="package" style="width: 20px; height: 20px; vertical-align: middle;"></i> Produtos</h3>
+                    
+                    <div id="sale-items-list"></div>
+                    
+                    <button class="btn btn-secondary btn-full" data-action="add-sale-item" style="margin-top: 16px;">
+                        <i data-lucide="plus"></i> Adicionar Produto
+                    </button>
+                </div>
+                
+                <div class="card">
+                    <h3><i data-lucide="credit-card" style="width: 20px; height: 20px; vertical-align: middle;"></i> Pagamento</h3>
+                    <div class="payment-methods">
+                        <label class="payment-option">
+                            <input type="radio" name="payment-method" value="Dinheiro" checked>
+                            <span><i data-lucide="banknote"></i> Dinheiro</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment-method" value="PIX">
+                            <span><i data-lucide="qr-code"></i> PIX</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment-method" value="Cartão Débito">
+                            <span><i data-lucide="credit-card"></i> Débito</span>
+                        </label>
+                        <label class="payment-option">
+                            <input type="radio" name="payment-method" value="Cartão Crédito">
+                            <span><i data-lucide="credit-card"></i> Crédito</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="sale-total-bar">
+                    <div class="sale-total-info">
+                        <span class="sale-total-label">Total da Venda</span>
+                        <span class="sale-total-value" id="sale-total">R$ 0,00</span>
+                    </div>
+                    <button class="btn btn-primary btn-lg" data-action="finish-sale">
+                        <i data-lucide="check-circle"></i> Finalizar Venda
+                    </button>
+                </div>
+                
+                <!-- Modal Selecionar Produto -->
+                <div id="product-select-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i data-lucide="package"></i> Selecionar Produto</h3>
+                            <button class="modal-close" data-action="close-product-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="search-box" style="margin-bottom: 16px;">
+                                <i data-lucide="search"></i>
+                                <input type="text" id="search-sale-products" class="form-input" placeholder="Buscar produto...">
+                            </div>
+                            <div id="sale-products-list" class="sale-products-grid">
+                                ${products.map(p => `
+                                    <div class="sale-product-item" data-product-id="${p.id}">
+                                        <img src="${p.imageUrl || `https://placehold.co/60x60/f06292/ffffff?text=${p.name.charAt(0)}`}" alt="${p.name}">
+                                        <div class="sale-product-info">
+                                            <span class="sale-product-name">${p.name}</span>
+                                            <span class="sale-product-price">R$ ${p.finalPrice.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        },
+        
+        bindNovaVendaEvents() {
+            const { products, clients } = StateManager.getState();
+            let saleItems = [];
+            let currentItemIndex = null;
+            
+            const updateSaleTotal = () => {
+                const total = saleItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+                document.getElementById('sale-total').textContent = `R$ ${total.toFixed(2)}`;
+            };
+            
+            const renderSaleItems = () => {
+                const container = document.getElementById('sale-items-list');
+                if (saleItems.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-sale-items">
+                            <i data-lucide="package-open" style="width: 32px; height: 32px; color: var(--elegant-gray);"></i>
+                            <p>Nenhum produto adicionado</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = saleItems.map((item, index) => `
+                        <div class="sale-item-row">
+                            <div class="sale-item-info">
+                                <span class="sale-item-name">${item.productName}</span>
+                                ${item.variation ? `<span class="sale-item-variation">${item.variation}</span>` : ''}
+                                <span class="sale-item-price">R$ ${item.price.toFixed(2)}</span>
+                            </div>
+                            <div class="sale-item-quantity">
+                                <button class="qty-btn" data-action="decrease-qty" data-index="${index}">-</button>
+                                <span>${item.quantity}</span>
+                                <button class="qty-btn" data-action="increase-qty" data-index="${index}">+</button>
+                            </div>
+                            <button class="btn-icon-small danger" data-action="remove-sale-item" data-index="${index}">
+                                <i data-lucide="trash-2"></i>
+                            </button>
+                        </div>
+                    `).join('');
+                }
+                lucide.createIcons({ nodes: [container] });
+                updateSaleTotal();
+                
+                // Bind quantity buttons
+                container.querySelectorAll('[data-action="decrease-qty"]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = parseInt(btn.dataset.index);
+                        if (saleItems[idx].quantity > 1) {
+                            saleItems[idx].quantity--;
+                            renderSaleItems();
+                        }
+                    });
+                });
+                
+                container.querySelectorAll('[data-action="increase-qty"]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = parseInt(btn.dataset.index);
+                        saleItems[idx].quantity++;
+                        renderSaleItems();
+                    });
+                });
+                
+                container.querySelectorAll('[data-action="remove-sale-item"]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = parseInt(btn.dataset.index);
+                        saleItems.splice(idx, 1);
+                        renderSaleItems();
+                    });
+                });
+            };
+            
+            // Inicializa lista vazia
+            renderSaleItems();
+            
+            // Adicionar produto
+            document.querySelector('[data-action="add-sale-item"]')?.addEventListener('click', () => {
+                document.getElementById('product-select-modal').style.display = 'flex';
+                lucide.createIcons({ nodes: [document.getElementById('product-select-modal')] });
+            });
+            
+            // Selecionar produto do modal
+            document.querySelectorAll('.sale-product-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const productId = item.dataset.productId;
+                    const product = products.find(p => p.id === productId);
+                    if (!product) return;
+                    
+                    // Verifica se tem variação
+                    if (product.variationType === 'simple' && product.variations[0]) {
+                        // TODO: Modal para selecionar variação
+                        const variation = product.variations[0].options[0]; // Pega primeira opção por enquanto
+                        saleItems.push({
+                            productId: product.id,
+                            productName: product.name,
+                            variation: variation,
+                            price: product.finalPrice,
+                            quantity: 1
+                        });
+                    } else {
+                        saleItems.push({
+                            productId: product.id,
+                            productName: product.name,
+                            variation: null,
+                            price: product.finalPrice,
+                            quantity: 1
+                        });
+                    }
+                    
+                    document.getElementById('product-select-modal').style.display = 'none';
+                    renderSaleItems();
+                });
+            });
+            
+            // Fechar modal
+            document.querySelectorAll('[data-action="close-product-modal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('product-select-modal').style.display = 'none';
+                });
+            });
+            
+            // Busca de produtos
+            const searchInput = document.getElementById('search-sale-products');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    const query = e.target.value.toLowerCase();
+                    document.querySelectorAll('.sale-product-item').forEach(item => {
+                        const name = item.querySelector('.sale-product-name').textContent.toLowerCase();
+                        item.style.display = name.includes(query) ? 'flex' : 'none';
+                    });
+                });
+            }
+            
+            // Finalizar venda
+            document.querySelector('[data-action="finish-sale"]')?.addEventListener('click', () => {
+                if (saleItems.length === 0) {
+                    alert('❌ Adicione pelo menos um produto à venda');
+                    return;
+                }
+                
+                const clientId = document.getElementById('sale-client').value;
+                const client = clients?.find(c => c.id === clientId);
+                const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
+                const total = saleItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+                
+                const sale = {
+                    id: `sale_${Date.now()}`,
+                    date: new Date().toISOString(),
+                    clientId: clientId || null,
+                    clientName: client?.name || null,
+                    items: saleItems,
+                    paymentMethod: paymentMethod,
+                    total: total
+                };
+                
+                // Atualiza estoque dos produtos
+                const { products: currentProducts, sales: currentSales, user } = StateManager.getState();
+                const updatedProducts = currentProducts.map(p => {
+                    const soldItems = saleItems.filter(item => item.productId === p.id);
+                    if (soldItems.length === 0) return p;
+                    
+                    const updatedProduct = { ...p };
+                    soldItems.forEach(item => {
+                        if (p.variationType === 'none') {
+                            updatedProduct.stock.total = Math.max(0, (updatedProduct.stock.total || 0) - item.quantity);
+                        } else if (item.variation) {
+                            updatedProduct.stock[item.variation] = Math.max(0, (updatedProduct.stock[item.variation] || 0) - item.quantity);
+                        }
+                    });
+                    return updatedProduct;
+                });
+                
+                // Atualiza cliente se selecionado
+                let updatedClients = StateManager.getState().clients || [];
+                if (clientId) {
+                    updatedClients = updatedClients.map(c => {
+                        if (c.id === clientId) {
+                            return {
+                                ...c,
+                                purchases: (c.purchases || 0) + 1,
+                                totalSpent: (c.totalSpent || 0) + total
+                            };
+                        }
+                        return c;
+                    });
+                }
+                
+                // Atualiza faturamento
+                const updatedUser = {
+                    ...user,
+                    currentRevenue: (user.currentRevenue || 0) + total
+                };
+                
+                StateManager.setState({
+                    sales: [...(currentSales || []), sale],
+                    products: updatedProducts,
+                    clients: updatedClients,
+                    user: updatedUser,
+                    currentPage: 'vendas'
+                });
+                
+                alert(`✅ Venda de R$ ${total.toFixed(2)} registrada com sucesso!`);
+            });
+            
+            // Click fora do modal
+            document.getElementById('product-select-modal')?.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    e.target.style.display = 'none';
+                }
+            });
+        },
 
         showAchievement(badgeId) {
             const badge = AchievementSystem.badges[badgeId];
