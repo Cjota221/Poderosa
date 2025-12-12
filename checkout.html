@@ -1180,6 +1180,10 @@
         const urlParams = new URLSearchParams(window.location.search);
         let currentPlan = urlParams.get('plano') || 'pro';
         let isAnnual = false;
+        
+        // Verificar cupom (da URL ou localStorage)
+        let cupomAtivo = urlParams.get('cupom') || localStorage.getItem('lucrocerto_cupom') || null;
+        const cupomDesconto = cupomAtivo === 'LUCRO10' ? 0.10 : 0; // 10% de desconto
 
         // Initialize plan
         function initPlan() {
@@ -1197,8 +1201,34 @@
                 `<li><i data-lucide="check"></i> ${f}</li>`
             ).join('');
             
+            // Mostrar cupom se ativo
+            if (cupomAtivo) {
+                showCouponBanner();
+            }
+            
             updatePrice();
             lucide.createIcons();
+        }
+        
+        // Mostrar banner do cupom
+        function showCouponBanner() {
+            const summaryCard = document.querySelector('.summary-card');
+            if (summaryCard && !document.getElementById('coupon-banner')) {
+                const banner = document.createElement('div');
+                banner.id = 'coupon-banner';
+                banner.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #E8F5E9, #C8E6C9); border-radius: 12px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                        <i data-lucide="ticket" style="color: #4CAF50; width: 20px; height: 20px;"></i>
+                        <div style="flex: 1;">
+                            <span style="font-weight: 600; color: #2E7D32;">Cupom LUCRO10 aplicado!</span>
+                            <span style="font-size: 12px; color: #4CAF50; display: block;">10% OFF na primeira mensalidade</span>
+                        </div>
+                        <i data-lucide="check-circle" style="color: #4CAF50; width: 20px; height: 20px;"></i>
+                    </div>
+                `;
+                summaryCard.insertBefore(banner, summaryCard.firstChild);
+                lucide.createIcons();
+            }
         }
 
         // Update price display
@@ -1218,12 +1248,27 @@
                 document.getElementById('discount-row').style.display = 'flex';
                 const discount = (monthlyPrice * 12) - annualTotalPrice;
                 document.getElementById('discount-value').textContent = `- R$ ${discount.toFixed(2).replace('.', ',')}`;
-                document.getElementById('price-total').innerHTML = `R$ ${annualTotalPrice.toFixed(2).replace('.', ',')}<small>/ano</small>`;
+                
+                // Aplicar cupom se tiver
+                let finalPrice = annualTotalPrice;
+                if (cupomAtivo && cupomDesconto > 0) {
+                    finalPrice = annualTotalPrice * (1 - cupomDesconto);
+                }
+                document.getElementById('price-total').innerHTML = `R$ ${finalPrice.toFixed(2).replace('.', ',')}<small>/ano</small>`;
             } else {
                 // Show monthly pricing
                 document.getElementById('price-subtotal').textContent = `R$ ${monthlyPrice.toFixed(2).replace('.', ',')}`;
-                document.getElementById('discount-row').style.display = 'none';
-                document.getElementById('price-total').innerHTML = `R$ ${monthlyPrice.toFixed(2).replace('.', ',')}<small>/mês</small>`;
+                
+                // Aplicar cupom se tiver (só na primeira mensalidade)
+                let finalPrice = monthlyPrice;
+                if (cupomAtivo && cupomDesconto > 0) {
+                    finalPrice = monthlyPrice * (1 - cupomDesconto);
+                    document.getElementById('discount-row').style.display = 'flex';
+                    document.getElementById('discount-value').textContent = `- R$ ${(monthlyPrice * cupomDesconto).toFixed(2).replace('.', ',')}`;
+                } else {
+                    document.getElementById('discount-row').style.display = 'none';
+                }
+                document.getElementById('price-total').innerHTML = `R$ ${finalPrice.toFixed(2).replace('.', ',')}<small>/mês</small>`;
             }
         }
 
