@@ -105,7 +105,7 @@ const LucroCertoApp = (function() {
             
             const pageRenderers = {
                 dashboard: () => { container.innerHTML = this.getDashboardHTML(); this.renderDashboardCharts(); },
-                produtos: () => { container.innerHTML = this.getProdutosHTML(); },
+                produtos: () => { container.innerHTML = this.getProdutosHTML(); this.bindProdutosEvents(); },
                 'add-edit-product': () => { container.innerHTML = this.getAddEditProductHTML(); this.bindAddEditProductEvents(); },
                 despesas: () => { container.innerHTML = this.getDespesasHTML(); this.bindDespesasEvents(); },
                 precificar: () => { container.innerHTML = this.getPrecificarHTML(); this.bindPrecificarEvents(); },
@@ -185,33 +185,415 @@ const LucroCertoApp = (function() {
         
         getProdutosHTML() {
             const { products } = StateManager.getState();
+            
             const productCards = products.map(p => {
                 const totalStock = ProductManager.getTotalStock(p);
+                const stockStatus = totalStock === 0 ? 'out' : totalStock <= 5 ? 'low' : 'ok';
+                const stockStatusColor = stockStatus === 'out' ? 'var(--alert)' : stockStatus === 'low' ? 'var(--warning)' : 'var(--growth)';
+                const stockStatusText = stockStatus === 'out' ? '❌ Sem estoque' : stockStatus === 'low' ? '⚠️ Estoque baixo' : '✅ Em estoque';
+                const profit = p.finalPrice - (SmartPricing.getTotalUnitCost(p.baseCost).total);
+                
+                // Variações display
+                let variationsText = '';
+                if (p.variationType === 'simple' && p.variations[0]) {
+                    variationsText = `${p.variations[0].name}: ${p.variations[0].options.join(', ')}`;
+                } else if (p.variationType === 'combined' && p.variations.length >= 2) {
+                    variationsText = `${p.variations[0].name} × ${p.variations[1].name}`;
+                }
+
                 return `
-                <div class="card product-card" data-action="edit-product" data-id="${p.id}">
-                    <img src="${p.imageUrl || `https://placehold.co/60x60/f06292/ffffff?text=${p.name.charAt(0)}`}" class="product-card-image" alt="Imagem do produto ${p.name}">
-                    <div class="product-card-info">
-                        <div class="product-card-name">${p.name}</div>
-                        <div class="product-card-details">
-                            <span>Preço: R$ ${p.finalPrice.toFixed(2)}</span>
-                            <span class="product-stock-badge">Estoque: ${totalStock}</span>
+                <div class="product-card-new" data-product-id="${p.id}">
+                    <div class="product-card-main">
+                        <img 
+                            src="${p.imageUrl || `https://placehold.co/80x80/f06292/ffffff?text=${p.name.charAt(0).toUpperCase()}`}" 
+                            class="product-img" 
+                            alt="${p.name}"
+                        >
+                        <div class="product-info">
+                            <h3 class="product-name">${p.name}</h3>
+                            ${variationsText ? `<span class="product-variations">${variationsText}</span>` : ''}
+                            <div class="product-metrics">
+                                <div class="metric">
+                                    <span class="metric-label">Preço</span>
+                                    <span class="metric-value price">R$ ${p.finalPrice.toFixed(2)}</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Lucro</span>
+                                    <span class="metric-value profit">R$ ${profit.toFixed(2)}</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Estoque</span>
+                                    <span class="metric-value stock" style="color: ${stockStatusColor};">${totalStock}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                     <i data-lucide="chevron-right"></i>
+                    
+                    <div class="product-status-bar" style="background: ${stockStatusColor}15;">
+                        <span style="color: ${stockStatusColor}; font-size: 13px;">${stockStatusText}</span>
+                        <span style="color: var(--elegant-gray); font-size: 12px;">Margem: ${p.profitMargin || 100}%</span>
+                    </div>
+                    
+                    <div class="product-actions">
+                        <button class="action-btn-small" data-action="quick-edit-stock" data-id="${p.id}" title="Editar estoque">
+                            <i data-lucide="package"></i>
+                            <span>Estoque</span>
+                        </button>
+                        <button class="action-btn-small" data-action="quick-edit-price" data-id="${p.id}" title="Editar preço">
+                            <i data-lucide="tag"></i>
+                            <span>Preço</span>
+                        </button>
+                        <button class="action-btn-small primary" data-action="edit-product" data-id="${p.id}" title="Editar tudo">
+                            <i data-lucide="pencil"></i>
+                            <span>Editar</span>
+                        </button>
+                        <button class="action-btn-small danger" data-action="delete-product" data-id="${p.id}" title="Excluir">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
                 </div>
                 `;
             }).join('');
             
+            // Resumo de estoque
+            const totalProducts = products.length;
+            const totalStock = products.reduce((acc, p) => acc + ProductManager.getTotalStock(p), 0);
+            const totalValue = products.reduce((acc, p) => acc + (ProductManager.getTotalStock(p) * p.finalPrice), 0);
+            const lowStockCount = products.filter(p => {
+                const stock = ProductManager.getTotalStock(p);
+                return stock > 0 && stock <= 5;
+            }).length;
+            const outOfStockCount = products.filter(p => ProductManager.getTotalStock(p) === 0).length;
+
             return `
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2>Meus Produtos</h2>
-                    <button class="btn btn-primary" data-action="add-new-product"><i data-lucide="plus" style="margin-right:8px;"></i> Novo</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <h2 style="margin: 0;">📦 Meus Produtos</h2>
+                        <p class="sub-header" style="margin: 4px 0 0 0;">Gerencie seu catálogo e estoque</p>
+                    </div>
+                    <button class="btn btn-primary" data-action="add-new-product">
+                        <i data-lucide="plus" style="width: 18px; height: 18px;"></i> Novo Produto
+                    </button>
                 </div>
-                <p class="sub-header">Gerencie seu estoque e veja a performance de cada item.</p>
-                <div class="product-list">
-                    ${products.length > 0 ? productCards : '<p>Você ainda não cadastrou nenhum produto. Comece agora!</p>'}
+                
+                ${products.length > 0 ? `
+                    <!-- RESUMO -->
+                    <div class="products-summary">
+                        <div class="summary-item">
+                            <i data-lucide="package" style="color: var(--primary);"></i>
+                            <div>
+                                <span class="summary-value">${totalProducts}</span>
+                                <span class="summary-label">Produtos</span>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <i data-lucide="layers" style="color: var(--info);"></i>
+                            <div>
+                                <span class="summary-value">${totalStock}</span>
+                                <span class="summary-label">Em estoque</span>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <i data-lucide="dollar-sign" style="color: var(--success);"></i>
+                            <div>
+                                <span class="summary-value">R$ ${totalValue.toFixed(0)}</span>
+                                <span class="summary-label">Valor total</span>
+                            </div>
+                        </div>
+                        ${lowStockCount > 0 ? `
+                            <div class="summary-item warning">
+                                <i data-lucide="alert-triangle" style="color: var(--warning);"></i>
+                                <div>
+                                    <span class="summary-value">${lowStockCount}</span>
+                                    <span class="summary-label">Estoque baixo</span>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${outOfStockCount > 0 ? `
+                            <div class="summary-item danger">
+                                <i data-lucide="alert-circle" style="color: var(--alert);"></i>
+                                <div>
+                                    <span class="summary-value">${outOfStockCount}</span>
+                                    <span class="summary-label">Sem estoque</span>
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- LISTA DE PRODUTOS -->
+                    <div class="product-list-new">
+                        ${productCards}
+                    </div>
+                ` : `
+                    <!-- EMPTY STATE -->
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i data-lucide="package-open" style="width: 64px; height: 64px; color: var(--elegant-gray);"></i>
+                        </div>
+                        <h3>Nenhum produto cadastrado</h3>
+                        <p>Comece adicionando seu primeiro produto e tenha controle total do seu negócio!</p>
+                        <button class="btn btn-primary btn-lg" data-action="add-new-product">
+                            <i data-lucide="plus"></i> Cadastrar Primeiro Produto
+                        </button>
+                    </div>
+                `}
+                
+                <!-- MODAL DE EDIÇÃO RÁPIDA DE ESTOQUE -->
+                <div id="quick-stock-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i data-lucide="package"></i> Atualizar Estoque</h3>
+                            <button class="modal-close" data-action="close-quick-modal">&times;</button>
+                        </div>
+                        <div class="modal-body" id="quick-stock-body">
+                            <!-- Preenchido dinamicamente -->
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-action="close-quick-modal">Cancelar</button>
+                            <button class="btn btn-primary" data-action="save-quick-stock">
+                                <i data-lucide="check"></i> Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- MODAL DE EDIÇÃO RÁPIDA DE PREÇO -->
+                <div id="quick-price-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i data-lucide="tag"></i> Atualizar Preço</h3>
+                            <button class="modal-close" data-action="close-quick-modal">&times;</button>
+                        </div>
+                        <div class="modal-body" id="quick-price-body">
+                            <!-- Preenchido dinamicamente -->
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-action="close-quick-modal">Cancelar</button>
+                            <button class="btn btn-primary" data-action="save-quick-price">
+                                <i data-lucide="check"></i> Salvar
+                            </button>
+                        </div>
+                    </div>
                 </div>
             `;
+        },
+        
+        bindProdutosEvents() {
+            let currentEditingProductId = null;
+            
+            // Quick Edit Stock
+            document.querySelectorAll('[data-action="quick-edit-stock"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const productId = btn.dataset.id;
+                    currentEditingProductId = productId;
+                    const { products } = StateManager.getState();
+                    const product = products.find(p => p.id === productId);
+                    if (!product) return;
+                    
+                    const modal = document.getElementById('quick-stock-modal');
+                    const body = document.getElementById('quick-stock-body');
+                    
+                    let stockHTML = '';
+                    if (product.variationType === 'none') {
+                        stockHTML = `
+                            <div class="form-group">
+                                <label>Estoque de "${product.name}"</label>
+                                <input type="number" class="form-input" id="quick-stock-input" value="${product.stock.total || 0}" min="0">
+                            </div>
+                        `;
+                    } else if (product.variationType === 'simple') {
+                        stockHTML = `
+                            <p style="margin-bottom: 16px; color: var(--dark-gray);">Estoque de <strong>${product.name}</strong> por ${product.variations[0]?.name || 'opção'}:</p>
+                            ${product.variations[0]?.options.map(opt => `
+                                <div class="quick-stock-row">
+                                    <label>${opt}</label>
+                                    <input type="number" class="form-input" data-option="${opt}" value="${product.stock[opt] || 0}" min="0">
+                                </div>
+                            `).join('')}
+                        `;
+                    } else if (product.variationType === 'combined') {
+                        stockHTML = `
+                            <p style="margin-bottom: 16px; color: var(--dark-gray);">Estoque de <strong>${product.name}</strong>:</p>
+                            <div class="quick-stock-grid">
+                            ${product.variations[0]?.options.map(opt1 => `
+                                <div class="quick-stock-section">
+                                    <h5>${opt1}</h5>
+                                    ${product.variations[1]?.options.map(opt2 => `
+                                        <div class="quick-stock-row">
+                                            <label>${opt2}</label>
+                                            <input type="number" class="form-input" data-combined="${opt1}-${opt2}" value="${product.stock[`${opt1}-${opt2}`] || 0}" min="0">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `).join('')}
+                            </div>
+                        `;
+                    }
+                    
+                    body.innerHTML = stockHTML;
+                    modal.style.display = 'flex';
+                    lucide.createIcons({ nodes: [modal] });
+                });
+            });
+            
+            // Quick Edit Price
+            document.querySelectorAll('[data-action="quick-edit-price"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const productId = btn.dataset.id;
+                    currentEditingProductId = productId;
+                    const { products } = StateManager.getState();
+                    const product = products.find(p => p.id === productId);
+                    if (!product) return;
+                    
+                    const modal = document.getElementById('quick-price-modal');
+                    const body = document.getElementById('quick-price-body');
+                    
+                    const currentProfit = product.finalPrice - SmartPricing.getTotalUnitCost(product.baseCost).total;
+                    
+                    body.innerHTML = `
+                        <p style="margin-bottom: 16px; color: var(--dark-gray);">Ajustar preço de <strong>${product.name}</strong></p>
+                        
+                        <div class="form-group">
+                            <label>Custo do Produto</label>
+                            <input type="number" class="form-input" id="quick-cost-input" value="${product.baseCost}" step="0.01" min="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Margem de Lucro: <span id="quick-margin-display">${product.profitMargin || 100}%</span></label>
+                            <input type="range" id="quick-margin-input" class="slider" min="0" max="300" value="${product.profitMargin || 100}">
+                        </div>
+                        
+                        <div class="quick-price-preview">
+                            <div class="preview-row">
+                                <span>Preço de Venda:</span>
+                                <strong id="quick-price-result">R$ ${product.finalPrice.toFixed(2)}</strong>
+                            </div>
+                            <div class="preview-row">
+                                <span>Lucro por Unidade:</span>
+                                <strong id="quick-profit-result" style="color: var(--success);">R$ ${currentProfit.toFixed(2)}</strong>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Bind price calc events
+                    const costInput = document.getElementById('quick-cost-input');
+                    const marginInput = document.getElementById('quick-margin-input');
+                    const marginDisplay = document.getElementById('quick-margin-display');
+                    const priceResult = document.getElementById('quick-price-result');
+                    const profitResult = document.getElementById('quick-profit-result');
+                    
+                    const updateQuickPrice = () => {
+                        const cost = parseFloat(costInput.value) || 0;
+                        const margin = parseInt(marginInput.value) || 100;
+                        marginDisplay.textContent = margin + '%';
+                        
+                        const { price, profit } = SmartPricing.calculate(cost, margin);
+                        priceResult.textContent = `R$ ${price.toFixed(2)}`;
+                        profitResult.textContent = `R$ ${profit.toFixed(2)}`;
+                    };
+                    
+                    costInput.addEventListener('input', updateQuickPrice);
+                    marginInput.addEventListener('input', updateQuickPrice);
+                    
+                    modal.style.display = 'flex';
+                    lucide.createIcons({ nodes: [modal] });
+                });
+            });
+            
+            // Save Quick Stock
+            document.querySelector('[data-action="save-quick-stock"]')?.addEventListener('click', () => {
+                if (!currentEditingProductId) return;
+                
+                const { products } = StateManager.getState();
+                const product = products.find(p => p.id === currentEditingProductId);
+                if (!product) return;
+                
+                const updatedProduct = { ...product };
+                
+                if (product.variationType === 'none') {
+                    const input = document.getElementById('quick-stock-input');
+                    updatedProduct.stock = { total: parseInt(input.value) || 0 };
+                } else if (product.variationType === 'simple') {
+                    document.querySelectorAll('[data-option]').forEach(input => {
+                        updatedProduct.stock[input.dataset.option] = parseInt(input.value) || 0;
+                    });
+                } else if (product.variationType === 'combined') {
+                    document.querySelectorAll('[data-combined]').forEach(input => {
+                        updatedProduct.stock[input.dataset.combined] = parseInt(input.value) || 0;
+                    });
+                }
+                
+                const updatedProducts = products.map(p => p.id === currentEditingProductId ? updatedProduct : p);
+                StateManager.setState({ products: updatedProducts });
+                
+                document.getElementById('quick-stock-modal').style.display = 'none';
+                currentEditingProductId = null;
+            });
+            
+            // Save Quick Price
+            document.querySelector('[data-action="save-quick-price"]')?.addEventListener('click', () => {
+                if (!currentEditingProductId) return;
+                
+                const { products } = StateManager.getState();
+                const product = products.find(p => p.id === currentEditingProductId);
+                if (!product) return;
+                
+                const costInput = document.getElementById('quick-cost-input');
+                const marginInput = document.getElementById('quick-margin-input');
+                
+                const newCost = parseFloat(costInput.value) || 0;
+                const newMargin = parseInt(marginInput.value) || 100;
+                const { price } = SmartPricing.calculate(newCost, newMargin);
+                
+                const updatedProduct = {
+                    ...product,
+                    baseCost: newCost,
+                    profitMargin: newMargin,
+                    finalPrice: price
+                };
+                
+                const updatedProducts = products.map(p => p.id === currentEditingProductId ? updatedProduct : p);
+                StateManager.setState({ products: updatedProducts });
+                
+                document.getElementById('quick-price-modal').style.display = 'none';
+                currentEditingProductId = null;
+            });
+            
+            // Close Modal
+            document.querySelectorAll('[data-action="close-quick-modal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('quick-stock-modal').style.display = 'none';
+                    document.getElementById('quick-price-modal').style.display = 'none';
+                    currentEditingProductId = null;
+                });
+            });
+            
+            // Delete Product
+            document.querySelectorAll('[data-action="delete-product"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const productId = btn.dataset.id;
+                    const { products } = StateManager.getState();
+                    const product = products.find(p => p.id === productId);
+                    
+                    if (confirm(`❌ Tem certeza que deseja excluir "${product?.name}"?\n\nEsta ação não pode ser desfeita.`)) {
+                        const updatedProducts = products.filter(p => p.id !== productId);
+                        StateManager.setState({ products: updatedProducts });
+                    }
+                });
+            });
+            
+            // Click outside modal to close
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.style.display = 'none';
+                        currentEditingProductId = null;
+                    }
+                });
+            });
         },
         
         getAddEditProductHTML() {
