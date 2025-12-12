@@ -1050,7 +1050,7 @@
             <span class="billing-option" id="monthly-label">Mensal</span>
             <div class="toggle-switch" id="billing-toggle"></div>
             <span class="billing-option" id="annual-label">Anual</span>
-            <span class="save-badge">Economize 40%</span>
+            <span class="save-badge">Economize 25%</span>
         </div>
     </section>
 
@@ -1399,18 +1399,18 @@
             premium: '49,90'
         };
 
-        // Preços anuais (com 40% de desconto)
+        // Preços anuais (com 25% de desconto)
         const annualPrices = {
-            starter: '11,90',
-            pro: '20,90',
-            premium: '29,90'
+            starter: '14,93',
+            pro: '26,18',
+            premium: '37,43'
         };
 
         // Totais anuais
         const annualTotals = {
-            starter: 'ou R$ 143,00/ano',
-            pro: 'ou R$ 251,00/ano',
-            premium: 'ou R$ 359,00/ano'
+            starter: 'ou R$ 179,16/ano',
+            pro: 'ou R$ 314,10/ano',
+            premium: 'ou R$ 449,10/ano'
         };
 
         let isAnnual = false;
@@ -1433,9 +1433,9 @@
 
             // Atualizar texto do período anual
             if (isAnnual) {
-                document.getElementById('annual-starter').innerHTML = `<span>R$ ${monthlyPrices.starter}/mês</span> economia de 40%`;
-                document.getElementById('annual-pro').innerHTML = `<span>R$ ${monthlyPrices.pro}/mês</span> economia de 40%`;
-                document.getElementById('annual-premium').innerHTML = `<span>R$ ${monthlyPrices.premium}/mês</span> economia de 40%`;
+                document.getElementById('annual-starter').innerHTML = `<span>R$ ${monthlyPrices.starter}/mês</span> economia de 25%`;
+                document.getElementById('annual-pro').innerHTML = `<span>R$ ${monthlyPrices.pro}/mês</span> economia de 25%`;
+                document.getElementById('annual-premium').innerHTML = `<span>R$ ${monthlyPrices.premium}/mês</span> economia de 25%`;
             } else {
                 document.getElementById('annual-starter').textContent = annualTotals.starter;
                 document.getElementById('annual-pro').textContent = annualTotals.pro;
