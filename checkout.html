@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Lucro Certo</title>
+    <meta name="description" content="Finalize sua assinatura do Lucro Certo">
+    
+    <!-- PWA & Mobile Meta Tags -->
+    <meta name="theme-color" content="#E91E63">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Mercado Pago SDK -->
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+    
+    <style>
+        :root {
+            --primary: #E91E63;
+            --primary-light: #F06292;
+            --primary-dark: #C2185B;
+            --primary-gradient: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+            --secondary: #9C27B0;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --error: #F44336;
+            --dark-gray: #37474F;
+            --elegant-gray: #607D8B;
+            --light-gray: #f4f6f8;
+            --white: #ffffff;
+            --background: #f8f8fc;
+            --shadow-soft: 0 4px 20px rgba(233, 30, 99, 0.1);
+            --shadow-medium: 0 8px 30px rgba(233, 30, 99, 0.15);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--dark-gray);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .checkout-header {
+            background: var(--white);
+            padding: 16px 24px;
+            box-shadow: var(--shadow-soft);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 22px;
+            height: 22px;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .secure-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--success);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .secure-badge svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Main Layout */
+        .checkout-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 40px;
+        }
+
+        /* Steps indicator */
+        .checkout-steps {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            background: var(--light-gray);
+            color: var(--elegant-gray);
+        }
+
+        .step.active .step-number {
+            background: var(--primary);
+            color: white;
+        }
+
+        .step.completed .step-number {
+            background: var(--success);
+            color: white;
+        }
+
+        .step-label {
+            font-size: 14px;
+            color: var(--elegant-gray);
+        }
+
+        .step.active .step-label {
+            color: var(--dark-gray);
+            font-weight: 600;
+        }
+
+        .step-divider {
+            flex: 1;
+            height: 2px;
+            background: var(--light-gray);
+            max-width: 60px;
+        }
+
+        /* Form Sections */
+        .checkout-section {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title svg {
+            width: 24px;
+            height: 24px;
+            color: var(--primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            transition: var(--transition-smooth);
+            background: var(--white);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(233, 30, 99, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #aaa;
+        }
+
+        .form-input.error {
+            border-color: var(--error);
+        }
+
+        .error-text {
+            color: var(--error);
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        /* Payment Methods */
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .payment-method {
+            padding: 16px;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            text-align: center;
+        }
+
+        .payment-method:hover {
+            border-color: var(--primary-light);
+        }
+
+        .payment-method.selected {
+            border-color: var(--primary);
+            background: rgba(233, 30, 99, 0.05);
+        }
+
+        .payment-method input {
+            display: none;
+        }
+
+        .payment-method svg {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 8px;
+            color: var(--elegant-gray);
+        }
+
+        .payment-method.selected svg {
+            color: var(--primary);
+        }
+
+        .payment-method span {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--dark-gray);
+        }
+
+        /* Card Form */
+        .card-form {
+            display: none;
+        }
+
+        .card-form.active {
+            display: block;
+        }
+
+        .card-preview {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 16px;
+            padding: 24px;
+            color: white;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-preview::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+
+        .card-chip {
+            width: 40px;
+            height: 30px;
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            border-radius: 6px;
+            margin-bottom: 24px;
+        }
+
+        .card-number-preview {
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+
+        .card-bottom {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .card-holder-preview {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-expiry-preview {
+            font-size: 12px;
+        }
+
+        /* Card input styling */
+        .card-input-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 100px;
+            gap: 12px;
+        }
+
+        /* PIX Section */
+        .pix-form {
+            display: none;
+            text-align: center;
+        }
+
+        .pix-form.active {
+            display: block;
+        }
+
+        .pix-info {
+            background: var(--light-gray);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .pix-info svg {
+            width: 48px;
+            height: 48px;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .pix-info p {
+            font-size: 14px;
+            color: var(--elegant-gray);
+        }
+
+        /* Boleto Section */
+        .boleto-form {
+            display: none;
+            text-align: center;
+        }
+
+        .boleto-form.active {
+            display: block;
+        }
+
+        .boleto-info {
+            background: var(--light-gray);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .boleto-info svg {
+            width: 48px;
+            height: 48px;
+            color: var(--elegant-gray);
+            margin-bottom: 12px;
+        }
+
+        .boleto-info p {
+            font-size: 14px;
+            color: var(--elegant-gray);
+        }
+
+        /* Order Summary */
+        .order-summary {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: var(--shadow-soft);
+            position: sticky;
+            top: 100px;
+        }
+
+        .summary-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 24px;
+        }
+
+        .plan-summary {
+            background: var(--light-gray);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .plan-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .plan-icon-small {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .plan-icon-small.starter {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            color: #4CAF50;
+        }
+
+        .plan-icon-small.pro {
+            background: linear-gradient(135deg, #FCE4EC 0%, #F8BBD9 100%);
+            color: var(--primary);
+        }
+
+        .plan-icon-small.premium {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFE082 100%);
+            color: #FF8F00;
+        }
+
+        .plan-icon-small svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .plan-info h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark-gray);
+        }
+
+        .plan-info p {
+            font-size: 13px;
+            color: var(--elegant-gray);
+        }
+
+        .plan-features-summary {
+            font-size: 13px;
+            color: var(--elegant-gray);
+        }
+
+        .plan-features-summary li {
+            padding: 4px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .plan-features-summary svg {
+            width: 16px;
+            height: 16px;
+            color: var(--success);
+        }
+
+        /* Billing toggle */
+        .billing-toggle-small {
+            display: flex;
+            background: var(--light-gray);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+
+        .billing-option-small {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--elegant-gray);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .billing-option-small.active {
+            background: var(--white);
+            color: var(--dark-gray);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .billing-option-small .save-tag {
+            display: inline-block;
+            background: var(--success);
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 4px;
+        }
+
+        /* Price breakdown */
+        .price-breakdown {
+            border-top: 1px solid var(--light-gray);
+            padding-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+            color: var(--elegant-gray);
+        }
+
+        .price-row.discount {
+            color: var(--success);
+        }
+
+        .price-row.total {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dark-gray);
+            border-top: 2px solid var(--light-gray);
+            padding-top: 16px;
+            margin-top: 8px;
+        }
+
+        /* CTA Button */
+        .btn-checkout {
+            width: 100%;
+            padding: 18px 24px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-checkout:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .btn-checkout:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-checkout svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Guarantee */
+        .guarantee-small {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+            font-size: 13px;
+            color: var(--elegant-gray);
+        }
+
+        .guarantee-small svg {
+            width: 18px;
+            height: 18px;
+            color: var(--success);
+        }
+
+        /* Secure badges */
+        .secure-badges {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--light-gray);
+        }
+
+        .secure-badges img {
+            height: 28px;
+            opacity: 0.6;
+        }
+
+        /* Coupon */
+        .coupon-section {
+            margin-bottom: 20px;
+        }
+
+        .coupon-toggle {
+            font-size: 14px;
+            color: var(--primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .coupon-toggle svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .coupon-form {
+            display: none;
+            margin-top: 12px;
+        }
+
+        .coupon-form.active {
+            display: flex;
+            gap: 8px;
+        }
+
+        .coupon-form input {
+            flex: 1;
+            padding: 12px 14px;
+            border: 2px solid var(--light-gray);
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+        }
+
+        .coupon-form button {
+            padding: 12px 20px;
+            background: var(--light-gray);
+            border: none;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.95);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--light-gray);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            font-size: 16px;
+            color: var(--dark-gray);
+        }
+
+        /* Success State */
+        .success-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--white);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 24px;
+        }
+
+        .success-overlay.active {
+            display: flex;
+        }
+
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+
+        .success-icon svg {
+            width: 50px;
+            height: 50px;
+            color: var(--success);
+        }
+
+        .success-overlay h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--dark-gray);
+            margin-bottom: 12px;
+        }
+
+        .success-overlay p {
+            font-size: 16px;
+            color: var(--elegant-gray);
+            max-width: 400px;
+            margin-bottom: 32px;
+        }
+
+        .btn-success {
+            padding: 16px 40px;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .checkout-container {
+                grid-template-columns: 1fr;
+            }
+
+            .order-summary {
+                position: static;
+                order: -1;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .checkout-container {
+                padding: 20px 16px;
+            }
+
+            .checkout-section {
+                padding: 24px 20px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .card-input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .payment-methods {
+                grid-template-columns: 1fr;
+            }
+
+            .checkout-steps {
+                flex-wrap: wrap;
+            }
+
+            .step-divider {
+                display: none;
+            }
+
+            .secure-badge {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="checkout-header">
+        <div class="header-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <i data-lucide="trending-up"></i>
+                </div>
+                <span class="logo-text">Lucro Certo</span>
+            </a>
+            <div class="secure-badge">
+                <i data-lucide="shield-check"></i>
+                <span>Pagamento 100% Seguro</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Checkout -->
+    <div class="checkout-container">
+        <!-- Left Column - Forms -->
+        <div class="checkout-forms">
+            <!-- Steps -->
+            <div class="checkout-steps">
+                <div class="step active" id="step-1">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Seus dados</span>
+                </div>
+                <div class="step-divider"></div>
+                <div class="step" id="step-2">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Pagamento</span>
+                </div>
+                <div class="step-divider"></div>
+                <div class="step" id="step-3">
+                    <span class="step-number">3</span>
+                    <span class="step-label">Confirmação</span>
+                </div>
+            </div>
+
+            <!-- Personal Data Section -->
+            <div class="checkout-section" id="section-personal">
+                <h3 class="section-title">
+                    <i data-lucide="user"></i>
+                    Seus Dados
+                </h3>
+
+                <form id="personal-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nome">Nome</label>
+                            <input type="text" id="nome" class="form-input" placeholder="Seu nome" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sobrenome">Sobrenome</label>
+                            <input type="text" id="sobrenome" class="form-input" placeholder="Seu sobrenome" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" class="form-input" placeholder="seu@email.com" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cpf">CPF</label>
+                            <input type="text" id="cpf" class="form-input" placeholder="000.000.000-00" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="telefone">WhatsApp</label>
+                            <input type="tel" id="telefone" class="form-input" placeholder="(11) 99999-9999" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="checkout-section" id="section-payment">
+                <h3 class="section-title">
+                    <i data-lucide="credit-card"></i>
+                    Forma de Pagamento
+                </h3>
+
+                <!-- Payment Methods -->
+                <div class="payment-methods">
+                    <label class="payment-method selected" data-method="card">
+                        <input type="radio" name="payment" value="card" checked>
+                        <i data-lucide="credit-card"></i>
+                        <span>Cartão</span>
+                    </label>
+                    <label class="payment-method" data-method="pix">
+                        <input type="radio" name="payment" value="pix">
+                        <i data-lucide="qr-code"></i>
+                        <span>PIX</span>
+                    </label>
+                    <label class="payment-method" data-method="boleto">
+                        <input type="radio" name="payment" value="boleto">
+                        <i data-lucide="file-text"></i>
+                        <span>Boleto</span>
+                    </label>
+                </div>
+
+                <!-- Card Form -->
+                <div class="card-form active" id="card-form">
+                    <!-- Card Preview -->
+                    <div class="card-preview">
+                        <div class="card-chip"></div>
+                        <div class="card-number-preview" id="card-number-preview">•••• •••• •••• ••••</div>
+                        <div class="card-bottom">
+                            <div>
+                                <small>Titular</small>
+                                <div class="card-holder-preview" id="card-holder-preview">SEU NOME</div>
+                            </div>
+                            <div>
+                                <small>Validade</small>
+                                <div class="card-expiry-preview" id="card-expiry-preview">MM/AA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="card-number">Número do Cartão</label>
+                        <input type="text" id="card-number" class="form-input" placeholder="0000 0000 0000 0000" maxlength="19">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="card-holder">Nome no Cartão</label>
+                        <input type="text" id="card-holder" class="form-input" placeholder="Como está no cartão" style="text-transform: uppercase;">
+                    </div>
+
+                    <div class="card-input-row">
+                        <div class="form-group">
+                            <label for="card-expiry">Validade</label>
+                            <input type="text" id="card-expiry" class="form-input" placeholder="MM/AA" maxlength="5">
+                        </div>
+                        <div class="form-group">
+                            <label for="card-cvv">CVV</label>
+                            <input type="text" id="card-cvv" class="form-input" placeholder="123" maxlength="4">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="installments">Parcelas</label>
+                        <select id="installments" class="form-input">
+                            <option value="1">1x sem juros</option>
+                            <option value="2">2x sem juros</option>
+                            <option value="3">3x sem juros</option>
+                            <option value="6">6x sem juros</option>
+                            <option value="12">12x sem juros</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- PIX Form -->
+                <div class="pix-form" id="pix-form">
+                    <div class="pix-info">
+                        <i data-lucide="qr-code"></i>
+                        <p>Ao finalizar, você receberá um QR Code PIX para pagamento instantâneo.</p>
+                        <p><strong>Aprovação imediata!</strong></p>
+                    </div>
+                </div>
+
+                <!-- Boleto Form -->
+                <div class="boleto-form" id="boleto-form">
+                    <div class="boleto-info">
+                        <i data-lucide="file-text"></i>
+                        <p>O boleto será gerado após a finalização.</p>
+                        <p>Prazo de compensação: até 3 dias úteis.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Order Summary -->
+        <div class="order-summary-container">
+            <div class="order-summary">
+                <h3 class="summary-title">Resumo do Pedido</h3>
+
+                <!-- Plan Summary -->
+                <div class="plan-summary">
+                    <div class="plan-header">
+                        <div class="plan-icon-small pro" id="plan-icon">
+                            <i data-lucide="crown"></i>
+                        </div>
+                        <div class="plan-info">
+                            <h4 id="plan-name">Profissional</h4>
+                            <p id="plan-subtitle">O mais escolhido</p>
+                        </div>
+                    </div>
+                    <ul class="plan-features-summary" id="plan-features">
+                        <li><i data-lucide="check"></i> Produtos ilimitados</li>
+                        <li><i data-lucide="check"></i> Clientes ilimitados</li>
+                        <li><i data-lucide="check"></i> Catálogo digital</li>
+                        <li><i data-lucide="check"></i> Relatórios completos</li>
+                    </ul>
+                </div>
+
+                <!-- Billing Toggle -->
+                <div class="billing-toggle-small">
+                    <button class="billing-option-small active" data-billing="monthly">Mensal</button>
+                    <button class="billing-option-small" data-billing="annual">
+                        Anual <span class="save-tag">-40%</span>
+                    </button>
+                </div>
+
+                <!-- Coupon -->
+                <div class="coupon-section">
+                    <span class="coupon-toggle" id="coupon-toggle">
+                        <i data-lucide="tag"></i>
+                        Tem cupom de desconto?
+                    </span>
+                    <div class="coupon-form" id="coupon-form">
+                        <input type="text" placeholder="Digite o cupom" id="coupon-input">
+                        <button type="button" id="apply-coupon">Aplicar</button>
+                    </div>
+                </div>
+
+                <!-- Price Breakdown -->
+                <div class="price-breakdown">
+                    <div class="price-row">
+                        <span>Plano <span id="billing-period">Mensal</span></span>
+                        <span id="price-subtotal">R$ 34,90</span>
+                    </div>
+                    <div class="price-row discount" id="discount-row" style="display: none;">
+                        <span>Desconto anual</span>
+                        <span id="discount-value">- R$ 14,00</span>
+                    </div>
+                    <div class="price-row total">
+                        <span>Total</span>
+                        <span id="price-total">R$ 34,90<small>/mês</small></span>
+                    </div>
+                </div>
+
+                <!-- CTA -->
+                <button class="btn-checkout" id="btn-checkout">
+                    <i data-lucide="lock"></i>
+                    Finalizar Assinatura
+                </button>
+
+                <!-- Guarantee -->
+                <div class="guarantee-small">
+                    <i data-lucide="shield-check"></i>
+                    <span>7 dias de garantia incondicional</span>
+                </div>
+
+                <!-- Secure Badges -->
+                <div class="secure-badges">
+                    <svg viewBox="0 0 48 48" height="28"><rect fill="#00A1E4" width="48" height="30" rx="4"/><text x="24" y="20" font-size="10" fill="white" text-anchor="middle" font-weight="bold">MERCADO PAGO</text></svg>
+                    <svg viewBox="0 0 48 48" height="28"><rect fill="#1A1F71" width="48" height="30" rx="4"/><text x="24" y="20" font-size="12" fill="white" text-anchor="middle" font-weight="bold" font-style="italic">VISA</text></svg>
+                    <svg viewBox="0 0 48 48" height="28"><circle cx="18" cy="15" r="10" fill="#EB001B"/><circle cx="30" cy="15" r="10" fill="#F79E1B"/></svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Processando pagamento...</p>
+    </div>
+
+    <!-- Success Overlay -->
+    <div class="success-overlay" id="success-overlay">
+        <div class="success-icon">
+            <i data-lucide="check"></i>
+        </div>
+        <h2>Pagamento Confirmado! 🎉</h2>
+        <p>Seja muito bem-vinda ao Lucro Certo! Sua conta já está ativa e pronta para usar.</p>
+        <a href="index.html" class="btn-success">Acessar Minha Conta</a>
+    </div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Plan data
+        const plans = {
+            starter: {
+                name: 'Starter',
+                subtitle: 'Para quem está começando',
+                icon: 'rocket',
+                iconClass: 'starter',
+                monthlyPrice: 19.90,
+                annualPrice: 11.90,
+                features: [
+                    '20 produtos',
+                    '20 clientes',
+                    'Vendas básico',
+                    'Precificação'
+                ]
+            },
+            pro: {
+                name: 'Profissional',
+                subtitle: 'O mais escolhido',
+                icon: 'crown',
+                iconClass: 'pro',
+                monthlyPrice: 34.90,
+                annualPrice: 20.90,
+                features: [
+                    'Produtos ilimitados',
+                    'Clientes ilimitados',
+                    'Catálogo digital',
+                    'Relatórios completos'
+                ]
+            },
+            premium: {
+                name: 'Premium',
+                subtitle: 'Para quem quer o máximo',
+                icon: 'gem',
+                iconClass: 'premium',
+                monthlyPrice: 49.90,
+                annualPrice: 29.90,
+                features: [
+                    'Tudo do Profissional',
+                    'Múltiplos catálogos',
+                    'Exportar PDF',
+                    'Suporte prioritário 24h'
+                ]
+            }
+        };
+
+        // Get plan from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        let currentPlan = urlParams.get('plano') || 'pro';
+        let isAnnual = false;
+
+        // Initialize plan
+        function initPlan() {
+            const plan = plans[currentPlan] || plans.pro;
+            
+            document.getElementById('plan-name').textContent = plan.name;
+            document.getElementById('plan-subtitle').textContent = plan.subtitle;
+            
+            const iconEl = document.getElementById('plan-icon');
+            iconEl.className = `plan-icon-small ${plan.iconClass}`;
+            iconEl.innerHTML = `<i data-lucide="${plan.icon}"></i>`;
+            
+            const featuresList = document.getElementById('plan-features');
+            featuresList.innerHTML = plan.features.map(f => 
+                `<li><i data-lucide="check"></i> ${f}</li>`
+            ).join('');
+            
+            updatePrice();
+            lucide.createIcons();
+        }
+
+        // Update price display
+        function updatePrice() {
+            const plan = plans[currentPlan] || plans.pro;
+            const price = isAnnual ? plan.annualPrice : plan.monthlyPrice;
+            const period = isAnnual ? 'Anual' : 'Mensal';
+            
+            document.getElementById('billing-period').textContent = period;
+            document.getElementById('price-subtotal').textContent = `R$ ${plan.monthlyPrice.toFixed(2).replace('.', ',')}`;
+            
+            if (isAnnual) {
+                document.getElementById('discount-row').style.display = 'flex';
+                const discount = plan.monthlyPrice - plan.annualPrice;
+                document.getElementById('discount-value').textContent = `- R$ ${discount.toFixed(2).replace('.', ',')}`;
+            } else {
+                document.getElementById('discount-row').style.display = 'none';
+            }
+            
+            document.getElementById('price-total').innerHTML = `R$ ${price.toFixed(2).replace('.', ',')}<small>/mês</small>`;
+        }
+
+        // Billing toggle
+        document.querySelectorAll('.billing-option-small').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.billing-option-small').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                isAnnual = btn.dataset.billing === 'annual';
+                updatePrice();
+            });
+        });
+
+        // Payment method toggle
+        document.querySelectorAll('.payment-method').forEach(method => {
+            method.addEventListener('click', () => {
+                document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+                method.classList.add('selected');
+                
+                const paymentType = method.dataset.method;
+                document.getElementById('card-form').classList.toggle('active', paymentType === 'card');
+                document.getElementById('pix-form').classList.toggle('active', paymentType === 'pix');
+                document.getElementById('boleto-form').classList.toggle('active', paymentType === 'boleto');
+            });
+        });
+
+        // Card number formatting
+        document.getElementById('card-number').addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{4})(?=\d)/g, '$1 ');
+            e.target.value = value;
+            
+            // Update preview
+            const preview = value || '•••• •••• •••• ••••';
+            document.getElementById('card-number-preview').textContent = preview;
+        });
+
+        // Card holder
+        document.getElementById('card-holder').addEventListener('input', (e) => {
+            const preview = e.target.value.toUpperCase() || 'SEU NOME';
+            document.getElementById('card-holder-preview').textContent = preview;
+        });
+
+        // Card expiry
+        document.getElementById('card-expiry').addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 2) {
+                value = value.slice(0, 2) + '/' + value.slice(2);
+            }
+            e.target.value = value;
+            
+            const preview = value || 'MM/AA';
+            document.getElementById('card-expiry-preview').textContent = preview;
+        });
+
+        // CPF mask
+        document.getElementById('cpf').addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d)/, '$1.$2');
+            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            e.target.value = value;
+        });
+
+        // Phone mask
+        document.getElementById('telefone').addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length <= 11) {
+                value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+                value = value.replace(/(\d{5})(\d)/, '$1-$2');
+            }
+            e.target.value = value;
+        });
+
+        // Coupon toggle
+        document.getElementById('coupon-toggle').addEventListener('click', () => {
+            document.getElementById('coupon-form').classList.toggle('active');
+        });
+
+        // Apply coupon (placeholder)
+        document.getElementById('apply-coupon').addEventListener('click', () => {
+            const coupon = document.getElementById('coupon-input').value;
+            if (coupon) {
+                alert('🚧 Sistema de cupons em breve!\n\nPor enquanto, aproveite nossos preços especiais.');
+            }
+        });
+
+        // Checkout button
+        document.getElementById('btn-checkout').addEventListener('click', async () => {
+            // Validate form
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
+            const cpf = document.getElementById('cpf').value;
+            
+            if (!nome || !email || !cpf) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            const paymentMethod = document.querySelector('.payment-method.selected').dataset.method;
+            
+            if (paymentMethod === 'card') {
+                const cardNumber = document.getElementById('card-number').value;
+                const cardHolder = document.getElementById('card-holder').value;
+                const cardExpiry = document.getElementById('card-expiry').value;
+                const cardCvv = document.getElementById('card-cvv').value;
+                
+                if (!cardNumber || !cardHolder || !cardExpiry || !cardCvv) {
+                    alert('Por favor, preencha todos os dados do cartão.');
+                    return;
+                }
+            }
+
+            // Show loading
+            document.getElementById('loading-overlay').classList.add('active');
+
+            // Simulate payment processing
+            // In production, this would call Mercado Pago API
+            setTimeout(() => {
+                document.getElementById('loading-overlay').classList.remove('active');
+                
+                // Save user data
+                const authData = {
+                    email: email,
+                    nome: nome,
+                    cpf: cpf,
+                    plano: currentPlan,
+                    billing: isAnnual ? 'annual' : 'monthly',
+                    createdAt: new Date().toISOString()
+                };
+                localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
+                localStorage.setItem('lucrocerto_logged', 'true');
+
+                // Show success
+                document.getElementById('success-overlay').classList.add('active');
+                lucide.createIcons();
+            }, 2500);
+        });
+
+        // Initialize
+        initPlan();
+
+        /*
+        =====================================================
+        INTEGRAÇÃO MERCADO PAGO - CÓDIGO PARA PRODUÇÃO
+        =====================================================
+        
+        // 1. Inicializar SDK do Mercado Pago
+        const mp = new MercadoPago('SUA_PUBLIC_KEY');
+        
+        // 2. Criar Card Token
+        async function createCardToken() {
+            const cardData = {
+                cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
+                cardholderName: document.getElementById('card-holder').value,
+                cardExpirationMonth: document.getElementById('card-expiry').value.split('/')[0],
+                cardExpirationYear: '20' + document.getElementById('card-expiry').value.split('/')[1],
+                securityCode: document.getElementById('card-cvv').value,
+                identificationType: 'CPF',
+                identificationNumber: document.getElementById('cpf').value.replace(/\D/g, '')
+            };
+            
+            const token = await mp.createCardToken(cardData);
+            return token.id;
+        }
+        
+        // 3. Enviar pagamento para seu backend
+        async function processPayment(tokenId) {
+            const response = await fetch('/api/process-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token: tokenId,
+                    email: document.getElementById('email').value,
+                    amount: isAnnual ? plans[currentPlan].annualPrice * 12 : plans[currentPlan].monthlyPrice,
+                    plan: currentPlan,
+                    billing: isAnnual ? 'annual' : 'monthly'
+                })
+            });
+            return response.json();
+        }
+        
+        // 4. Para assinaturas recorrentes, usar Mercado Pago Subscriptions
+        // https://www.mercadopago.com.br/developers/pt/docs/subscriptions/landing
+        
+        =====================================================
+        */
+    </script>
+</body>
+</html>
