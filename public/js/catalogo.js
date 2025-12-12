@@ -17,7 +17,9 @@
     let storeData = {
         businessName: 'Minha Loja',
         phone: '',
-        profilePhoto: ''
+        profilePhoto: '',
+        catalogLogo: '',
+        catalogColor: 'pink'
     };
     
     let products = [];
@@ -54,6 +56,8 @@
                     storeData.businessName = data.user.businessName || 'Minha Loja';
                     storeData.phone = data.user.phone || '';
                     storeData.profilePhoto = data.user.profilePhoto || '';
+                    storeData.catalogLogo = data.user.catalogLogo || '';
+                    storeData.catalogColor = data.user.catalogColor || 'pink';
                 }
                 
                 // Produtos
@@ -64,6 +68,31 @@
         } catch (error) {
             console.error('Erro ao carregar dados da loja:', error);
         }
+        
+        // Aplicar cor personalizada
+        applyCustomColor();
+    }
+    
+    // ==================================
+    // APLICAR COR PERSONALIZADA
+    // ==================================
+    function applyCustomColor() {
+        const colorThemes = {
+            pink: { primary: '#E91E63', primaryDark: '#AD1457', gradient: 'linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #fff1f2 100%)' },
+            purple: { primary: '#9C27B0', primaryDark: '#6A1B9A', gradient: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #ede9fe 100%)' },
+            blue: { primary: '#2196F3', primaryDark: '#1565C0', gradient: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #bfdbfe 100%)' },
+            teal: { primary: '#009688', primaryDark: '#00695C', gradient: 'linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 50%, #99f6e4 100%)' },
+            green: { primary: '#4CAF50', primaryDark: '#2E7D32', gradient: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%)' },
+            orange: { primary: '#FF9800', primaryDark: '#E65100', gradient: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fde68a 100%)' },
+            red: { primary: '#F44336', primaryDark: '#C62828', gradient: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 50%, #fecaca 100%)' },
+            brown: { primary: '#795548', primaryDark: '#4E342E', gradient: 'linear-gradient(135deg, #faf5f3 0%, #f5ebe6 50%, #e8ddd6 100%)' }
+        };
+        
+        const theme = colorThemes[storeData.catalogColor] || colorThemes.pink;
+        
+        document.documentElement.style.setProperty('--primary', theme.primary);
+        document.documentElement.style.setProperty('--primary-dark', theme.primaryDark);
+        document.body.style.background = theme.gradient;
     }
 
     function loadCart() {
@@ -92,7 +121,10 @@
         const logoEl = document.getElementById('store-logo');
         const nameEl = document.getElementById('store-name');
         
-        if (storeData.profilePhoto) {
+        // Prioridade: logo do catálogo > foto de perfil > ícone padrão
+        if (storeData.catalogLogo) {
+            logoEl.innerHTML = `<img src="${storeData.catalogLogo}" alt="Logo">`;
+        } else if (storeData.profilePhoto) {
             logoEl.innerHTML = `<img src="${storeData.profilePhoto}" alt="Logo">`;
         }
         

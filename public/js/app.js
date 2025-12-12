@@ -13,6 +13,9 @@ const LucroCertoApp = (function() {
             achievements: [],
             clients: [],
             sales: [],
+            bills: [],        // Contas a pagar (recorrentes e únicas)
+            debts: [],        // Dívidas (empréstimos, parcelamentos)
+            transactions: [], // Fluxo de caixa (entradas e saídas)
             currentPage: 'dashboard',
             editingProductId: null,
             editingClientId: null
@@ -55,7 +58,7 @@ const LucroCertoApp = (function() {
     // 3. UI RENDERER & ROUTER
     //==================================
     const UIManager = {
-        pages: ['dashboard', 'produtos', 'add-edit-product', 'despesas', 'precificar', 'metas', 'relatorios', 'configuracoes', 'clientes', 'vendas', 'nova-venda'],
+        pages: ['dashboard', 'produtos', 'add-edit-product', 'despesas', 'precificar', 'metas', 'relatorios', 'configuracoes', 'clientes', 'vendas', 'nova-venda', 'financeiro'],
         navButtons: [
             { id: 'dashboard', icon: 'layout-dashboard', label: 'Início' },
             { id: 'vendas', icon: 'shopping-cart', label: 'Vendas' },
@@ -118,6 +121,7 @@ const LucroCertoApp = (function() {
                 clientes: () => { container.innerHTML = this.getClientesHTML(); this.bindClientesEvents(); },
                 vendas: () => { container.innerHTML = this.getVendasHTML(); this.bindVendasEvents(); },
                 'nova-venda': () => { container.innerHTML = this.getNovaVendaHTML(); this.bindNovaVendaEvents(); },
+                financeiro: () => { container.innerHTML = this.getFinanceiroHTML(); this.bindFinanceiroEvents(); },
             };
 
             if (pageRenderers[pageId]) {
@@ -1498,14 +1502,52 @@ const LucroCertoApp = (function() {
                 <div class="card catalog-card" style="margin-top: 30px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border: 2px solid var(--primary-light);">
                     <h3><i data-lucide="shopping-bag" style="width: 20px; height: 20px; vertical-align: middle; color: var(--primary);"></i> Meu Catálogo Digital</h3>
                     <p style="font-size: 14px; color: var(--elegant-gray); margin-bottom: 16px;">
-                        Compartilhe seu catálogo com suas clientes! Elas podem ver seus produtos, adicionar ao carrinho e fazer pedidos direto pelo WhatsApp.
+                        Personalize e compartilhe seu catálogo com suas clientes!
                     </p>
                     
-                    <div class="catalog-link-box" id="catalog-link-box">
-                        <input type="text" id="catalog-link" class="form-input" readonly value="${window.location.origin}/catalogo.html">
-                        <button class="btn btn-primary" data-action="copy-catalog-link" title="Copiar link">
-                            <i data-lucide="copy" style="width: 18px; height: 18px;"></i>
-                        </button>
+                    <!-- Logo do Catálogo -->
+                    <div class="form-group">
+                        <label><i data-lucide="image" style="width: 16px; height: 16px;"></i> Logo da sua Loja</label>
+                        <div class="catalog-logo-upload">
+                            <label class="logo-upload-box" id="catalog-logo-preview">
+                                <input type="file" id="catalog-logo-input" accept="image/*" style="display: none;">
+                                ${user.catalogLogo 
+                                    ? `<img src="${user.catalogLogo}" alt="Logo">`
+                                    : `<i data-lucide="upload" style="width: 32px; height: 32px; color: var(--elegant-gray);"></i>
+                                       <span>Adicionar Logo</span>`
+                                }
+                            </label>
+                            <small>Aparecerá no topo do seu catálogo</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Paleta de Cores -->
+                    <div class="form-group">
+                        <label><i data-lucide="palette" style="width: 16px; height: 16px;"></i> Cor do Catálogo</label>
+                        <p style="font-size: 12px; color: var(--elegant-gray); margin-bottom: 12px;">Escolha a cor que combina com sua marca</p>
+                        <div class="color-palette" id="color-palette">
+                            <button type="button" class="color-option ${(user.catalogColor || 'pink') === 'pink' ? 'active' : ''}" data-color="pink" style="background: linear-gradient(135deg, #E91E63, #AD1457);" title="Rosa"></button>
+                            <button type="button" class="color-option ${user.catalogColor === 'purple' ? 'active' : ''}" data-color="purple" style="background: linear-gradient(135deg, #9C27B0, #6A1B9A);" title="Roxo"></button>
+                            <button type="button" class="color-option ${user.catalogColor === 'blue' ? 'active' : ''}" data-color="blue" style="background: linear-gradient(135deg, #2196F3, #1565C0);" title="Azul"></button>
+                            <button type="button" class="color-option ${user.catalogColor === 'teal' ? 'active' : ''}" data-color="teal" style="background: linear-gradient(135deg, #009688, #00695C);" title="Verde-azulado"></button>
+                            <button type="button" class="color-option ${user.catalogColor === 'green' ? 'active' : ''}" data-color="green" style="background: linear-gradient(135deg, #4CAF50, #2E7D32);" title="Verde"></button>
+                            <button type="button" class="color-option ${user.catalogColor === 'orange' ? 'active' : ''}" data-color="orange" style="background: linear-gradient(135deg, #FF9800, #E65100);" title="Laranja"></button>
+                            <button type="button" class="color-option ${user.catalogColor === 'red' ? 'active' : ''}" data-color="red" style="background: linear-gradient(135deg, #F44336, #C62828);" title="Vermelho"></button>
+                            <button type="button" class="color-option ${user.catalogColor === 'brown' ? 'active' : ''}" data-color="brown" style="background: linear-gradient(135deg, #795548, #4E342E);" title="Marrom"></button>
+                        </div>
+                    </div>
+                    
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
+                    
+                    <!-- Link do Catálogo -->
+                    <div class="form-group">
+                        <label><i data-lucide="link" style="width: 16px; height: 16px;"></i> Link do seu Catálogo</label>
+                        <div class="catalog-link-box" id="catalog-link-box">
+                            <input type="text" id="catalog-link" class="form-input" readonly value="${window.location.origin}/catalogo.html">
+                            <button class="btn btn-primary" data-action="copy-catalog-link" title="Copiar link">
+                                <i data-lucide="copy" style="width: 18px; height: 18px;"></i>
+                            </button>
+                        </div>
                     </div>
                     
                     <div style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
@@ -1516,19 +1558,13 @@ const LucroCertoApp = (function() {
                             <i data-lucide="message-circle" style="width: 18px; height: 18px;"></i> Compartilhar
                         </button>
                     </div>
-                    
-                    <div class="catalog-tips" style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.7); border-radius: 8px;">
-                        <p style="font-size: 13px; color: var(--dark-gray); margin: 0;">
-                            <strong>💡 Dica:</strong> Cadastre seus produtos com fotos bonitas e preços corretos. Seu catálogo atualiza automaticamente!
-                        </p>
-                    </div>
                 </div>
                 
                 <div class="card" style="margin-top: 20px; background: var(--light-gray);">
                     <h3><i data-lucide="link" style="width: 20px; height: 20px; vertical-align: middle;"></i> Acesso Rápido</h3>
                     <div class="settings-links">
-                        <a href="#" class="settings-link" data-action="navigate" data-route="despesas">
-                            <i data-lucide="wallet"></i> Gerenciar Despesas
+                        <a href="#" class="settings-link" data-action="navigate" data-route="financeiro">
+                            <i data-lucide="wallet"></i> Controle Financeiro
                         </a>
                         <a href="#" class="settings-link" data-action="navigate" data-route="precificar">
                             <i data-lucide="calculator"></i> Precificação
@@ -1544,8 +1580,10 @@ const LucroCertoApp = (function() {
         bindConfiguracoesEvents() {
             const { user } = StateManager.getState();
             let currentProfilePhoto = user.profilePhoto || '';
+            let currentCatalogLogo = user.catalogLogo || '';
+            let currentCatalogColor = user.catalogColor || 'pink';
             
-            // Upload de foto
+            // Upload de foto de perfil
             const photoInput = document.getElementById('profile-photo-input');
             const photoPreview = document.getElementById('profile-photo-preview');
             
@@ -1567,6 +1605,41 @@ const LucroCertoApp = (function() {
                 });
             }
             
+            // Upload de logo do catálogo
+            const logoInput = document.getElementById('catalog-logo-input');
+            const logoPreview = document.getElementById('catalog-logo-preview');
+            
+            if (logoInput) {
+                logoInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        if (file.size > 2 * 1024 * 1024) {
+                            alert('❌ Imagem muito grande! Máximo 2MB.');
+                            return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            currentCatalogLogo = event.target.result;
+                            logoPreview.innerHTML = `<img src="${currentCatalogLogo}" alt="Logo">`;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            
+            // Seleção de cor do catálogo
+            const colorPalette = document.getElementById('color-palette');
+            if (colorPalette) {
+                colorPalette.addEventListener('click', (e) => {
+                    const colorBtn = e.target.closest('.color-option');
+                    if (colorBtn) {
+                        colorPalette.querySelectorAll('.color-option').forEach(btn => btn.classList.remove('active'));
+                        colorBtn.classList.add('active');
+                        currentCatalogColor = colorBtn.dataset.color;
+                    }
+                });
+            }
+            
             // Salvar perfil
             document.querySelector('[data-action="save-profile"]')?.addEventListener('click', () => {
                 const updatedUser = {
@@ -1579,7 +1652,9 @@ const LucroCertoApp = (function() {
                     routine: document.getElementById('profile-routine').value.trim(),
                     monthlyGoal: parseFloat(document.getElementById('profile-monthly-goal').value) || 0,
                     monthlySalesGoal: parseFloat(document.getElementById('profile-sales-goal').value) || 0,
-                    profilePhoto: currentProfilePhoto
+                    profilePhoto: currentProfilePhoto,
+                    catalogLogo: currentCatalogLogo,
+                    catalogColor: currentCatalogColor
                 };
                 
                 StateManager.setState({ user: updatedUser });
@@ -2348,6 +2423,474 @@ const LucroCertoApp = (function() {
                 if (e.target.classList.contains('modal')) {
                     e.target.style.display = 'none';
                 }
+            });
+        },
+
+        // ========== PÁGINA CONTROLE FINANCEIRO ==========
+        getFinanceiroHTML() {
+            const { bills, debts, sales, user } = StateManager.getState();
+            
+            // Cálculos financeiros
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            // Vendas do mês (entradas)
+            const monthSales = (sales || []).filter(s => {
+                const d = new Date(s.date);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+            const totalEntradas = monthSales.reduce((acc, s) => acc + s.total, 0);
+            
+            // Contas do mês (saídas)
+            const monthBills = (bills || []).filter(b => {
+                const d = new Date(b.dueDate);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+            const totalSaidas = monthBills.filter(b => b.paid).reduce((acc, b) => acc + b.amount, 0);
+            const pendingBills = monthBills.filter(b => !b.paid);
+            const totalPendente = pendingBills.reduce((acc, b) => acc + b.amount, 0);
+            
+            // Saldo
+            const saldo = totalEntradas - totalSaidas;
+            
+            // Dívidas totais
+            const totalDebts = (debts || []).reduce((acc, d) => acc + (d.totalAmount - d.paidAmount), 0);
+            
+            // Meta de poupança
+            const savingsGoal = user.savingsGoal || 0;
+            const savedThisMonth = user.savedThisMonth || 0;
+            const dailySavingsNeeded = savingsGoal > 0 ? (savingsGoal - savedThisMonth) / (30 - now.getDate()) : 0;
+            
+            // Contas próximas do vencimento (7 dias)
+            const upcomingBills = (bills || []).filter(b => {
+                if (b.paid) return false;
+                const due = new Date(b.dueDate);
+                const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+                return diffDays >= 0 && diffDays <= 7;
+            }).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+            
+            return `
+                <h2>💰 Controle Financeiro</h2>
+                <p class="sub-header">Gerencie suas finanças de forma inteligente</p>
+                
+                <!-- Resumo Financeiro -->
+                <div class="finance-summary">
+                    <div class="finance-card income">
+                        <div class="finance-icon"><i data-lucide="trending-up"></i></div>
+                        <div class="finance-info">
+                            <span class="finance-label">Entradas (mês)</span>
+                            <span class="finance-value">R$ ${totalEntradas.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="finance-card expense">
+                        <div class="finance-icon"><i data-lucide="trending-down"></i></div>
+                        <div class="finance-info">
+                            <span class="finance-label">Saídas (mês)</span>
+                            <span class="finance-value">R$ ${totalSaidas.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="finance-card ${saldo >= 0 ? 'positive' : 'negative'}">
+                        <div class="finance-icon"><i data-lucide="wallet"></i></div>
+                        <div class="finance-info">
+                            <span class="finance-label">Saldo</span>
+                            <span class="finance-value">R$ ${saldo.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Alertas de Vencimento -->
+                ${upcomingBills.length > 0 ? `
+                    <div class="card alert-card">
+                        <h3><i data-lucide="alert-circle" style="width: 20px; height: 20px; color: var(--warning);"></i> Contas Próximas</h3>
+                        <div class="upcoming-bills">
+                            ${upcomingBills.map(b => {
+                                const due = new Date(b.dueDate);
+                                const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+                                const urgency = diffDays <= 2 ? 'urgent' : diffDays <= 5 ? 'warning' : '';
+                                return `
+                                    <div class="upcoming-bill ${urgency}">
+                                        <div class="bill-info">
+                                            <span class="bill-name">${b.name}</span>
+                                            <span class="bill-due">${diffDays === 0 ? 'Hoje!' : diffDays === 1 ? 'Amanhã' : `Em ${diffDays} dias`}</span>
+                                        </div>
+                                        <span class="bill-amount">R$ ${b.amount.toFixed(2)}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Meta de Poupança -->
+                <div class="card">
+                    <h3><i data-lucide="piggy-bank" style="width: 20px; height: 20px; vertical-align: middle;"></i> Meta de Poupança</h3>
+                    ${savingsGoal > 0 ? `
+                        <div class="savings-progress">
+                            <div class="savings-bar">
+                                <div class="savings-fill" style="width: ${Math.min(100, (savedThisMonth / savingsGoal) * 100)}%;"></div>
+                            </div>
+                            <div class="savings-info">
+                                <span>R$ ${savedThisMonth.toFixed(2)} de R$ ${savingsGoal.toFixed(2)}</span>
+                                <span class="savings-percentage">${Math.round((savedThisMonth / savingsGoal) * 100)}%</span>
+                            </div>
+                            ${dailySavingsNeeded > 0 ? `
+                                <p class="savings-tip">💡 Guarde <strong>R$ ${dailySavingsNeeded.toFixed(2)}</strong> por dia para atingir sua meta!</p>
+                            ` : `
+                                <p class="savings-tip success">🎉 Parabéns! Meta atingida!</p>
+                            `}
+                        </div>
+                    ` : `
+                        <p style="color: var(--elegant-gray); margin-bottom: 16px;">Defina uma meta de quanto você quer guardar por mês.</p>
+                    `}
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Meta mensal (R$)</label>
+                            <input type="number" id="savings-goal" class="form-input" placeholder="500" value="${savingsGoal || ''}">
+                        </div>
+                        <div class="form-group">
+                            <label>Já guardei este mês (R$)</label>
+                            <input type="number" id="saved-month" class="form-input" placeholder="0" value="${savedThisMonth || ''}">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" data-action="save-savings-goal">
+                        <i data-lucide="check"></i> Salvar Meta
+                    </button>
+                </div>
+                
+                <!-- Contas a Pagar -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3><i data-lucide="file-text" style="width: 20px; height: 20px; vertical-align: middle;"></i> Contas a Pagar</h3>
+                        <button class="btn btn-secondary btn-sm" data-action="add-bill">
+                            <i data-lucide="plus"></i> Nova Conta
+                        </button>
+                    </div>
+                    
+                    ${pendingBills.length > 0 || monthBills.filter(b => b.paid).length > 0 ? `
+                        <div class="bills-list">
+                            ${monthBills.map(b => `
+                                <div class="bill-item ${b.paid ? 'paid' : ''}">
+                                    <div class="bill-check">
+                                        <button class="check-btn ${b.paid ? 'checked' : ''}" data-action="toggle-bill" data-id="${b.id}">
+                                            <i data-lucide="${b.paid ? 'check-circle' : 'circle'}"></i>
+                                        </button>
+                                    </div>
+                                    <div class="bill-details">
+                                        <span class="bill-name">${b.name}</span>
+                                        <span class="bill-due-date">Venc: ${new Date(b.dueDate).toLocaleDateString('pt-BR')}</span>
+                                        ${b.recurring ? '<span class="bill-badge">Recorrente</span>' : ''}
+                                    </div>
+                                    <span class="bill-amount">R$ ${b.amount.toFixed(2)}</span>
+                                    <button class="btn-icon-small danger" data-action="delete-bill" data-id="${b.id}">
+                                        <i data-lucide="trash-2"></i>
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="bills-total">
+                            <span>Pendente: <strong style="color: var(--warning);">R$ ${totalPendente.toFixed(2)}</strong></span>
+                            <span>Pago: <strong style="color: var(--success);">R$ ${totalSaidas.toFixed(2)}</strong></span>
+                        </div>
+                    ` : `
+                        <p style="color: var(--elegant-gray); text-align: center; padding: 20px;">
+                            Nenhuma conta cadastrada para este mês.
+                        </p>
+                    `}
+                </div>
+                
+                <!-- Dívidas/Empréstimos -->
+                <div class="card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h3><i data-lucide="credit-card" style="width: 20px; height: 20px; vertical-align: middle;"></i> Minhas Dívidas</h3>
+                        <button class="btn btn-secondary btn-sm" data-action="add-debt">
+                            <i data-lucide="plus"></i> Nova Dívida
+                        </button>
+                    </div>
+                    
+                    ${(debts || []).length > 0 ? `
+                        <div class="debts-list">
+                            ${debts.map(d => {
+                                const progress = (d.paidAmount / d.totalAmount) * 100;
+                                const remaining = d.totalAmount - d.paidAmount;
+                                const paidInstallments = d.paidInstallments || 0;
+                                return `
+                                    <div class="debt-item">
+                                        <div class="debt-header">
+                                            <span class="debt-name">${d.name}</span>
+                                            <span class="debt-remaining">Falta: R$ ${remaining.toFixed(2)}</span>
+                                        </div>
+                                        <div class="debt-progress">
+                                            <div class="debt-bar">
+                                                <div class="debt-fill" style="width: ${progress}%;"></div>
+                                            </div>
+                                            <span class="debt-percentage">${Math.round(progress)}%</span>
+                                        </div>
+                                        ${d.totalInstallments ? `
+                                            <div class="debt-installments">
+                                                <span>${paidInstallments} de ${d.totalInstallments} parcelas pagas</span>
+                                                <button class="btn btn-sm btn-success" data-action="pay-installment" data-id="${d.id}" ${paidInstallments >= d.totalInstallments ? 'disabled' : ''}>
+                                                    <i data-lucide="check"></i> Pagar Parcela
+                                                </button>
+                                            </div>
+                                        ` : ''}
+                                        <button class="btn-icon-small danger" data-action="delete-debt" data-id="${d.id}" style="position: absolute; top: 12px; right: 12px;">
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                        <div class="debts-total">
+                            Total em dívidas: <strong style="color: var(--alert);">R$ ${totalDebts.toFixed(2)}</strong>
+                        </div>
+                    ` : `
+                        <p style="color: var(--elegant-gray); text-align: center; padding: 20px;">
+                            🎉 Você não tem dívidas cadastradas!
+                        </p>
+                    `}
+                </div>
+                
+                <!-- Modal Nova Conta -->
+                <div id="bill-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i data-lucide="file-text"></i> Nova Conta</h3>
+                            <button class="modal-close" data-action="close-bill-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Nome da conta *</label>
+                                <input type="text" id="bill-name" class="form-input" placeholder="Ex: Aluguel, Internet...">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Valor (R$) *</label>
+                                    <input type="number" id="bill-amount" class="form-input" placeholder="0.00" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Vencimento *</label>
+                                    <input type="date" id="bill-due" class="form-input">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="bill-recurring">
+                                    <span>Conta recorrente (todo mês)</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-action="close-bill-modal">Cancelar</button>
+                            <button class="btn btn-primary" data-action="save-bill">
+                                <i data-lucide="check"></i> Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Nova Dívida -->
+                <div id="debt-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i data-lucide="credit-card"></i> Nova Dívida</h3>
+                            <button class="modal-close" data-action="close-debt-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Descrição *</label>
+                                <input type="text" id="debt-name" class="form-input" placeholder="Ex: Empréstimo banco, Cartão...">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Valor Total (R$) *</label>
+                                    <input type="number" id="debt-total" class="form-input" placeholder="0.00" step="0.01">
+                                </div>
+                                <div class="form-group">
+                                    <label>Já pago (R$)</label>
+                                    <input type="number" id="debt-paid" class="form-input" placeholder="0.00" step="0.01" value="0">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Número de parcelas (opcional)</label>
+                                <input type="number" id="debt-installments" class="form-input" placeholder="Ex: 12">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-action="close-debt-modal">Cancelar</button>
+                            <button class="btn btn-primary" data-action="save-debt">
+                                <i data-lucide="check"></i> Salvar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        },
+        
+        bindFinanceiroEvents() {
+            const { user } = StateManager.getState();
+            
+            // Salvar meta de poupança
+            document.querySelector('[data-action="save-savings-goal"]')?.addEventListener('click', () => {
+                const savingsGoal = parseFloat(document.getElementById('savings-goal').value) || 0;
+                const savedThisMonth = parseFloat(document.getElementById('saved-month').value) || 0;
+                
+                const updatedUser = { ...user, savingsGoal, savedThisMonth };
+                StateManager.setState({ user: updatedUser });
+                alert('✅ Meta de poupança salva!');
+            });
+            
+            // Modal de conta
+            document.querySelector('[data-action="add-bill"]')?.addEventListener('click', () => {
+                document.getElementById('bill-modal').style.display = 'flex';
+                document.getElementById('bill-name').value = '';
+                document.getElementById('bill-amount').value = '';
+                document.getElementById('bill-due').value = '';
+                document.getElementById('bill-recurring').checked = false;
+                lucide.createIcons({ nodes: [document.getElementById('bill-modal')] });
+            });
+            
+            document.querySelectorAll('[data-action="close-bill-modal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('bill-modal').style.display = 'none';
+                });
+            });
+            
+            // Salvar conta
+            document.querySelector('[data-action="save-bill"]')?.addEventListener('click', () => {
+                const name = document.getElementById('bill-name').value.trim();
+                const amount = parseFloat(document.getElementById('bill-amount').value);
+                const dueDate = document.getElementById('bill-due').value;
+                const recurring = document.getElementById('bill-recurring').checked;
+                
+                if (!name || !amount || !dueDate) {
+                    alert('❌ Preencha todos os campos obrigatórios');
+                    return;
+                }
+                
+                const newBill = {
+                    id: `bill_${Date.now()}`,
+                    name,
+                    amount,
+                    dueDate,
+                    recurring,
+                    paid: false,
+                    createdAt: new Date().toISOString()
+                };
+                
+                const { bills: currentBills } = StateManager.getState();
+                StateManager.setState({ bills: [...(currentBills || []), newBill] });
+                document.getElementById('bill-modal').style.display = 'none';
+                StateManager.setState({ currentPage: 'financeiro' }); // Refresh
+            });
+            
+            // Toggle pago/não pago
+            document.querySelectorAll('[data-action="toggle-bill"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const billId = btn.dataset.id;
+                    const { bills } = StateManager.getState();
+                    const updatedBills = bills.map(b => 
+                        b.id === billId ? { ...b, paid: !b.paid } : b
+                    );
+                    StateManager.setState({ bills: updatedBills });
+                });
+            });
+            
+            // Deletar conta
+            document.querySelectorAll('[data-action="delete-bill"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (confirm('Excluir esta conta?')) {
+                        const billId = btn.dataset.id;
+                        const { bills } = StateManager.getState();
+                        StateManager.setState({ bills: bills.filter(b => b.id !== billId) });
+                    }
+                });
+            });
+            
+            // Modal de dívida
+            document.querySelector('[data-action="add-debt"]')?.addEventListener('click', () => {
+                document.getElementById('debt-modal').style.display = 'flex';
+                document.getElementById('debt-name').value = '';
+                document.getElementById('debt-total').value = '';
+                document.getElementById('debt-paid').value = '0';
+                document.getElementById('debt-installments').value = '';
+                lucide.createIcons({ nodes: [document.getElementById('debt-modal')] });
+            });
+            
+            document.querySelectorAll('[data-action="close-debt-modal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('debt-modal').style.display = 'none';
+                });
+            });
+            
+            // Salvar dívida
+            document.querySelector('[data-action="save-debt"]')?.addEventListener('click', () => {
+                const name = document.getElementById('debt-name').value.trim();
+                const totalAmount = parseFloat(document.getElementById('debt-total').value);
+                const paidAmount = parseFloat(document.getElementById('debt-paid').value) || 0;
+                const totalInstallments = parseInt(document.getElementById('debt-installments').value) || 0;
+                
+                if (!name || !totalAmount) {
+                    alert('❌ Preencha descrição e valor total');
+                    return;
+                }
+                
+                const paidInstallments = totalInstallments > 0 ? Math.round((paidAmount / totalAmount) * totalInstallments) : 0;
+                
+                const newDebt = {
+                    id: `debt_${Date.now()}`,
+                    name,
+                    totalAmount,
+                    paidAmount,
+                    totalInstallments,
+                    paidInstallments,
+                    createdAt: new Date().toISOString()
+                };
+                
+                const { debts: currentDebts } = StateManager.getState();
+                StateManager.setState({ debts: [...(currentDebts || []), newDebt] });
+                document.getElementById('debt-modal').style.display = 'none';
+                StateManager.setState({ currentPage: 'financeiro' }); // Refresh
+            });
+            
+            // Pagar parcela
+            document.querySelectorAll('[data-action="pay-installment"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const debtId = btn.dataset.id;
+                    const { debts } = StateManager.getState();
+                    const updatedDebts = debts.map(d => {
+                        if (d.id === debtId && d.paidInstallments < d.totalInstallments) {
+                            const installmentValue = d.totalAmount / d.totalInstallments;
+                            return {
+                                ...d,
+                                paidInstallments: d.paidInstallments + 1,
+                                paidAmount: Math.min(d.totalAmount, d.paidAmount + installmentValue)
+                            };
+                        }
+                        return d;
+                    });
+                    StateManager.setState({ debts: updatedDebts });
+                });
+            });
+            
+            // Deletar dívida
+            document.querySelectorAll('[data-action="delete-debt"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (confirm('Excluir esta dívida?')) {
+                        const debtId = btn.dataset.id;
+                        const { debts } = StateManager.getState();
+                        StateManager.setState({ debts: debts.filter(d => d.id !== debtId) });
+                    }
+                });
+            });
+            
+            // Click fora dos modais
+            ['bill-modal', 'debt-modal'].forEach(modalId => {
+                document.getElementById(modalId)?.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('modal')) {
+                        e.target.style.display = 'none';
+                    }
+                });
             });
         },
 
