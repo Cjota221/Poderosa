@@ -153,12 +153,21 @@ body {
 
 /* DESKTOP: Menu sempre visível */
 @media (min-width: 1024px) {
+    #app-container {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
     .hamburger-btn {
-        display: none;
+        display: none !important;
     }
     
     .app-header {
-        margin-left: 280px;
+        position: fixed;
+        top: 0;
+        left: 280px;
+        right: 0;
+        margin-left: 0;
     }
     
     .menu-overlay {
@@ -166,6 +175,7 @@ body {
     }
     
     .side-menu {
+        position: fixed;
         left: 0;
         top: 0;
         box-shadow: 2px 0 10px rgba(0,0,0,0.05);
@@ -177,10 +187,14 @@ body {
     
     #main-content {
         margin-left: 280px;
+        margin-top: 56px;
+        width: calc(100% - 280px);
+        min-height: calc(100vh - 56px);
+        padding-bottom: 40px;
     }
     
     .bottom-nav {
-        display: none;
+        display: none !important;
     }
 }
 
