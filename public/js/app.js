@@ -63,11 +63,27 @@ const LucroCertoApp = (function() {
             { id: 'clientes', icon: 'users', label: 'Clientes' },
             { id: 'configuracoes', icon: 'settings', label: 'Config' }
         ],
+        
+        // Função auxiliar para recriar ícones
+        refreshIcons(container = document) {
+            try {
+                if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                    const icons = container.querySelectorAll('[data-lucide]');
+                    if (icons.length > 0) {
+                        lucide.createIcons({ nodes: [...icons] });
+                    }
+                }
+            } catch (e) {
+                console.warn('Erro ao criar ícones:', e);
+            }
+        },
 
         init() {
             this.renderNav();
             StateManager.subscribe(this.updateActiveContent.bind(this));
             StateManager.subscribe(this.updateNav.bind(this));
+            // Criar todos os ícones iniciais
+            setTimeout(() => this.refreshIcons(), 100);
         },
         
         renderNav() {
@@ -78,9 +94,7 @@ const LucroCertoApp = (function() {
                     <span>${btn.label}</span>
                 </button>
             `).join('');
-            setTimeout(() => {
-                lucide.createIcons({ nodes: [...navContainer.querySelectorAll('[data-lucide]')] });
-            }, 0);
+            setTimeout(() => this.refreshIcons(navContainer), 10);
         },
 
         updateNav() {
@@ -124,9 +138,8 @@ const LucroCertoApp = (function() {
                 pageRenderers[pageId]();
             }
             
-            setTimeout(() => {
-                lucide.createIcons({ nodes: [...container.querySelectorAll('[data-lucide]')] });
-            }, 0);
+            // Recriar ícones após renderização
+            setTimeout(() => this.refreshIcons(container), 10);
         },
         
         getDashboardHTML() {
