@@ -172,7 +172,7 @@ body {
     }
     
     .close-menu-btn {
-        display: none;
+        display: none !important;
     }
     
     #main-content {
@@ -180,7 +180,7 @@ body {
     }
     
     .bottom-nav {
-        margin-left: 280px;
+        display: none;
     }
 }
 
