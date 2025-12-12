@@ -431,7 +431,11 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
+        }
+
+        .plan-selector.three-plans {
+            grid-template-columns: 1fr;
         }
 
         .plan-option {
@@ -441,6 +445,14 @@
             border-radius: 14px;
             cursor: pointer;
             transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .plan-selector.three-plans .plan-option {
+            flex-direction: row;
+            justify-content: space-between;
         }
 
         .plan-option:hover {
@@ -469,14 +481,20 @@
             border-radius: 6px;
         }
 
+        .plan-badge.gold {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #333;
+        }
+
         .plan-name {
             font-weight: 600;
             color: var(--dark-gray);
-            margin-bottom: 4px;
+            margin-bottom: 2px;
+            font-size: 15px;
         }
 
         .plan-price {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--primary);
         }
@@ -488,9 +506,24 @@
         }
 
         .plan-features {
-            margin-top: 10px;
-            font-size: 12px;
+            margin-top: 4px;
+            font-size: 11px;
             color: var(--elegant-gray);
+        }
+
+        .plan-link {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .plan-link a {
+            color: var(--primary);
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .plan-link a:hover {
+            text-decoration: underline;
         }
 
         /* Mobile adjustments */
@@ -696,21 +729,31 @@
 
                 <div class="form-group">
                     <label>Escolha seu plano</label>
-                    <div class="plan-selector">
-                        <label class="plan-option selected">
-                            <input type="radio" name="plano" value="mensal" checked>
-                            <div class="plan-name">Mensal</div>
-                            <div class="plan-price">R$ 29,90<span>/mês</span></div>
-                            <div class="plan-features">Cancele quando quiser</div>
+                    <div class="plan-selector three-plans">
+                        <label class="plan-option" data-plan="starter">
+                            <input type="radio" name="plano" value="starter">
+                            <div class="plan-name">Starter</div>
+                            <div class="plan-price">R$ 19,90<span>/mês</span></div>
+                            <div class="plan-features">30 produtos • 50 clientes</div>
                         </label>
-                        <label class="plan-option">
-                            <input type="radio" name="plano" value="anual">
-                            <div class="plan-badge">Economia 40%</div>
-                            <div class="plan-name">Anual</div>
-                            <div class="plan-price">R$ 17,90<span>/mês</span></div>
-                            <div class="plan-features">Cobrado R$ 214,80/ano</div>
+                        <label class="plan-option selected" data-plan="pro">
+                            <input type="radio" name="plano" value="pro" checked>
+                            <div class="plan-badge">⭐ Popular</div>
+                            <div class="plan-name">Profissional</div>
+                            <div class="plan-price">R$ 34,90<span>/mês</span></div>
+                            <div class="plan-features">Ilimitado + Relatórios</div>
+                        </label>
+                        <label class="plan-option" data-plan="premium">
+                            <input type="radio" name="plano" value="premium">
+                            <div class="plan-badge gold">👑 VIP</div>
+                            <div class="plan-name">Premium</div>
+                            <div class="plan-price">R$ 49,90<span>/mês</span></div>
+                            <div class="plan-features">Tudo + Suporte 24h</div>
                         </label>
                     </div>
+                    <p class="plan-link">
+                        <a href="planos.html" target="_blank">Ver detalhes dos planos →</a>
+                    </p>
                 </div>
 
                 <div class="form-group">
@@ -755,6 +798,10 @@
         // Initialize Lucide icons
         lucide.createIcons();
 
+        // Get plan from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const planFromUrl = urlParams.get('plano');
+
         // Form data storage
         let formData = {
             nome: '',
@@ -763,8 +810,20 @@
             telefone: '',
             negocio: '',
             password: '',
-            plano: 'mensal'
+            plano: planFromUrl || 'pro' // Default to pro if not specified
         };
+
+        // Pre-select plan from URL
+        if (planFromUrl) {
+            const planOptions = document.querySelectorAll('.plan-option');
+            planOptions.forEach(option => {
+                option.classList.remove('selected');
+                if (option.dataset.plan === planFromUrl) {
+                    option.classList.add('selected');
+                    option.querySelector('input').checked = true;
+                }
+            });
+        }
 
         // Elements
         const step1 = document.getElementById('register-form-step1');

@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planos e Preços - Lucro Certo</title>
+    <meta name="description" content="Escolha o plano ideal para seu negócio. Lucro Certo - O app de gestão para mulheres empreendedoras.">
+    
+    <!-- PWA & Mobile Meta Tags -->
+    <meta name="theme-color" content="#E91E63">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --primary: #E91E63;
+            --primary-light: #F06292;
+            --primary-dark: #C2185B;
+            --primary-gradient: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+            --secondary: #9C27B0;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --dark-gray: #37474F;
+            --elegant-gray: #607D8B;
+            --light-gray: #f4f6f8;
+            --white: #ffffff;
+            --background: #f8f8fc;
+            --gold: #FFD700;
+            --shadow-soft: 0 4px 20px rgba(233, 30, 99, 0.1);
+            --shadow-medium: 0 8px 30px rgba(233, 30, 99, 0.15);
+            --shadow-strong: 0 15px 50px rgba(233, 30, 99, 0.2);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--dark-gray);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        .header {
+            background: var(--white);
+            box-shadow: var(--shadow-soft);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            background: var(--primary-gradient);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-login {
+            padding: 10px 24px;
+            border: 2px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            text-decoration: none;
+        }
+
+        .btn-login:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 140px 24px 80px;
+            text-align: center;
+            background: linear-gradient(180deg, var(--white) 0%, var(--background) 100%);
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(233, 30, 99, 0.1);
+            color: var(--primary);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .hero-badge svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .hero h1 {
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 800;
+            color: var(--dark-gray);
+            margin-bottom: 16px;
+            line-height: 1.2;
+        }
+
+        .hero h1 span {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: var(--elegant-gray);
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+
+        /* Toggle Billing */
+        .billing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .billing-option {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--elegant-gray);
+            transition: var(--transition-smooth);
+        }
+
+        .billing-option.active {
+            color: var(--dark-gray);
+            font-weight: 600;
+        }
+
+        .toggle-switch {
+            width: 56px;
+            height: 30px;
+            background: var(--light-gray);
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .toggle-switch.active {
+            background: var(--primary);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: var(--transition-smooth);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .toggle-switch.active::after {
+            left: 29px;
+        }
+
+        .save-badge {
+            background: var(--success);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Pricing Section */
+        .pricing-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px 80px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        /* Pricing Card */
+        .pricing-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 32px;
+            position: relative;
+            transition: var(--transition-smooth);
+            border: 2px solid transparent;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-strong);
+        }
+
+        .pricing-card.popular {
+            border-color: var(--primary);
+            transform: scale(1.02);
+        }
+
+        .pricing-card.popular:hover {
+            transform: scale(1.02) translateY(-8px);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-gradient);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .plan-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .plan-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        .plan-icon.starter {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            color: #4CAF50;
+        }
+
+        .plan-icon.pro {
+            background: linear-gradient(135deg, #FCE4EC 0%, #F8BBD9 100%);
+            color: var(--primary);
+        }
+
+        .plan-icon.premium {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFE082 100%);
+            color: #FF8F00;
+        }
+
+        .plan-name {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
+        }
+
+        .plan-description {
+            font-size: 14px;
+            color: var(--elegant-gray);
+            margin-bottom: 24px;
+        }
+
+        .plan-price {
+            margin-bottom: 8px;
+        }
+
+        .price-value {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--dark-gray);
+        }
+
+        .price-currency {
+            font-size: 20px;
+            font-weight: 600;
+            vertical-align: top;
+            margin-right: 4px;
+        }
+
+        .price-period {
+            font-size: 16px;
+            color: var(--elegant-gray);
+            font-weight: 400;
+        }
+
+        .price-annual {
+            font-size: 13px;
+            color: var(--elegant-gray);
+            margin-bottom: 24px;
+        }
+
+        .price-annual span {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        /* Features List */
+        .features-list {
+            list-style: none;
+            margin-bottom: 32px;
+            flex-grow: 1;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 14px;
+            color: var(--dark-gray);
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+
+        .features-list li svg {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .features-list li.included svg {
+            color: var(--success);
+        }
+
+        .features-list li.not-included {
+            color: #999;
+        }
+
+        .features-list li.not-included svg {
+            color: #ccc;
+        }
+
+        .features-list li.highlight {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* CTA Button */
+        .btn-cta {
+            width: 100%;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-cta.primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .btn-cta.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .btn-cta.secondary {
+            background: var(--light-gray);
+            color: var(--dark-gray);
+        }
+
+        .btn-cta.secondary:hover {
+            background: #e8eaed;
+        }
+
+        .btn-cta svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Guarantee Section */
+        .guarantee-section {
+            max-width: 800px;
+            margin: 0 auto 80px;
+            padding: 0 24px;
+        }
+
+        .guarantee-card {
+            background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .guarantee-icon {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .guarantee-icon svg {
+            width: 40px;
+            height: 40px;
+            color: var(--success);
+        }
+
+        .guarantee-card h3 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark-gray);
+            margin-bottom: 12px;
+        }
+
+        .guarantee-card p {
+            font-size: 16px;
+            color: var(--elegant-gray);
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* Features Comparison */
+        .comparison-section {
+            max-width: 1000px;
+            margin: 0 auto 80px;
+            padding: 0 24px;
+        }
+
+        .comparison-title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--dark-gray);
+            margin-bottom: 40px;
+        }
+
+        .comparison-table {
+            background: var(--white);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .comparison-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            background: var(--light-gray);
+            padding: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .comparison-header > div:first-child {
+            text-align: left;
+        }
+
+        .comparison-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--light-gray);
+            align-items: center;
+        }
+
+        .comparison-row:last-child {
+            border-bottom: none;
+        }
+
+        .comparison-row > div {
+            text-align: center;
+        }
+
+        .comparison-row > div:first-child {
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .comparison-row svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .comparison-row .check {
+            color: var(--success);
+        }
+
+        .comparison-row .cross {
+            color: #ccc;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            max-width: 800px;
+            margin: 0 auto 80px;
+            padding: 0 24px;
+        }
+
+        .faq-title {
+            text-align: center;
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--dark-gray);
+            margin-bottom: 40px;
+        }
+
+        .faq-item {
+            background: var(--white);
+            border-radius: 16px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .faq-question {
+            width: 100%;
+            padding: 20px 24px;
+            background: none;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark-gray);
+            cursor: pointer;
+            text-align: left;
+        }
+
+        .faq-question svg {
+            width: 24px;
+            height: 24px;
+            color: var(--elegant-gray);
+            transition: var(--transition-smooth);
+        }
+
+        .faq-item.active .faq-question svg {
+            transform: rotate(180deg);
+            color: var(--primary);
+        }
+
+        .faq-answer {
+            padding: 0 24px;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 0 24px 20px;
+            max-height: 500px;
+        }
+
+        .faq-answer p {
+            color: var(--elegant-gray);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* CTA Final */
+        .cta-section {
+            background: var(--primary-gradient);
+            padding: 80px 24px;
+            text-align: center;
+        }
+
+        .cta-section h2 {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 16px;
+        }
+
+        .cta-section p {
+            font-size: 18px;
+            color: rgba(255,255,255,0.9);
+            max-width: 500px;
+            margin: 0 auto 32px;
+        }
+
+        .btn-cta-white {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 40px;
+            background: white;
+            color: var(--primary);
+            border: none;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            text-decoration: none;
+        }
+
+        .btn-cta-white:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark-gray);
+            color: white;
+            padding: 40px 24px;
+            text-align: center;
+        }
+
+        .footer p {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .footer a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .comparison-header,
+            .comparison-row {
+                grid-template-columns: 1.5fr 1fr 1fr 1fr;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-actions {
+                display: none;
+            }
+
+            .pricing-card.popular {
+                transform: none;
+            }
+
+            .pricing-card.popular:hover {
+                transform: translateY(-8px);
+            }
+
+            .comparison-section {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .hero p {
+                font-size: 16px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .pricing-card {
+                padding: 24px 20px;
+            }
+
+            .price-value {
+                font-size: 40px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .pricing-card {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .pricing-card:nth-child(1) { animation-delay: 0.1s; }
+        .pricing-card:nth-child(2) { animation-delay: 0.2s; }
+        .pricing-card:nth-child(3) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">
+                    <i data-lucide="trending-up"></i>
+                </div>
+                <span class="logo-text">Lucro Certo</span>
+            </a>
+            <div class="header-actions">
+                <a href="login.html" class="btn-login">Entrar</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-badge">
+            <i data-lucide="sparkles"></i>
+            Escolha o plano ideal para você
+        </div>
+        <h1>Invista no <span>crescimento</span> do seu negócio</h1>
+        <p>Ferramentas profissionais de gestão por menos que um lanche. Cancele quando quiser.</p>
+
+        <!-- Billing Toggle -->
+        <div class="billing-toggle">
+            <span class="billing-option" id="monthly-label">Mensal</span>
+            <div class="toggle-switch" id="billing-toggle"></div>
+            <span class="billing-option" id="annual-label">Anual</span>
+            <span class="save-badge">Economize 40%</span>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing-section">
+        <div class="pricing-grid">
+            <!-- Plano Starter -->
+            <div class="pricing-card">
+                <div class="plan-icon starter">
+                    <i data-lucide="rocket"></i>
+                </div>
+                <h3 class="plan-name">Starter</h3>
+                <p class="plan-description">Perfeito para quem está começando</p>
+                
+                <div class="plan-price">
+                    <span class="price-value">
+                        <span class="price-currency">R$</span>
+                        <span id="price-starter">19,90</span>
+                    </span>
+                    <span class="price-period">/mês</span>
+                </div>
+                <p class="price-annual" id="annual-starter">ou R$ 143,00/ano</p>
+
+                <ul class="features-list">
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Até <strong>30 produtos</strong> cadastrados</span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Até <strong>50 clientes</strong></span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Controle de vendas</span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Precificação inteligente</span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Catálogo digital básico</span>
+                    </li>
+                    <li class="not-included">
+                        <i data-lucide="x-circle"></i>
+                        <span>Relatórios avançados</span>
+                    </li>
+                    <li class="not-included">
+                        <i data-lucide="x-circle"></i>
+                        <span>Controle financeiro completo</span>
+                    </li>
+                    <li class="not-included">
+                        <i data-lucide="x-circle"></i>
+                        <span>Suporte prioritário</span>
+                    </li>
+                </ul>
+
+                <a href="cadastro.html?plano=starter" class="btn-cta secondary">
+                    Começar Grátis
+                    <i data-lucide="arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- Plano Pro (Popular) -->
+            <div class="pricing-card popular">
+                <div class="popular-badge">⭐ Mais Popular</div>
+                <div class="plan-icon pro">
+                    <i data-lucide="crown"></i>
+                </div>
+                <h3 class="plan-name">Profissional</h3>
+                <p class="plan-description">O mais escolhido pelas empreendedoras</p>
+                
+                <div class="plan-price">
+                    <span class="price-value">
+                        <span class="price-currency">R$</span>
+                        <span id="price-pro">34,90</span>
+                    </span>
+                    <span class="price-period">/mês</span>
+                </div>
+                <p class="price-annual" id="annual-pro">ou R$ 251,00/ano</p>
+
+                <ul class="features-list">
+                    <li class="included highlight">
+                        <i data-lucide="check-circle-2"></i>
+                        <span><strong>Produtos ilimitados</strong></span>
+                    </li>
+                    <li class="included highlight">
+                        <i data-lucide="check-circle-2"></i>
+                        <span><strong>Clientes ilimitados</strong></span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Controle de vendas completo</span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Precificação inteligente</span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Catálogo digital personalizado</span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Relatórios e gráficos</span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Controle financeiro completo</span>
+                    </li>
+                    <li class="not-included">
+                        <i data-lucide="x-circle"></i>
+                        <span>Suporte prioritário</span>
+                    </li>
+                </ul>
+
+                <a href="cadastro.html?plano=pro" class="btn-cta primary">
+                    Assinar Agora
+                    <i data-lucide="arrow-right"></i>
+                </a>
+            </div>
+
+            <!-- Plano Premium -->
+            <div class="pricing-card">
+                <div class="plan-icon premium">
+                    <i data-lucide="gem"></i>
+                </div>
+                <h3 class="plan-name">Premium</h3>
+                <p class="plan-description">Para quem quer o máximo</p>
+                
+                <div class="plan-price">
+                    <span class="price-value">
+                        <span class="price-currency">R$</span>
+                        <span id="price-premium">49,90</span>
+                    </span>
+                    <span class="price-period">/mês</span>
+                </div>
+                <p class="price-annual" id="annual-premium">ou R$ 359,00/ano</p>
+
+                <ul class="features-list">
+                    <li class="included highlight">
+                        <i data-lucide="check-circle-2"></i>
+                        <span><strong>Tudo do Profissional +</strong></span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Múltiplos catálogos</span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Exportar relatórios PDF</span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Metas e planejamento</span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Notificações de contas</span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Backup em nuvem</span>
+                    </li>
+                    <li class="included highlight">
+                        <i data-lucide="check-circle-2"></i>
+                        <span><strong>Suporte prioritário 24h</strong></span>
+                    </li>
+                    <li class="included">
+                        <i data-lucide="check-circle-2"></i>
+                        <span>Acesso antecipado a novidades</span>
+                    </li>
+                </ul>
+
+                <a href="cadastro.html?plano=premium" class="btn-cta secondary">
+                    Quero ser Premium
+                    <i data-lucide="arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Guarantee Section -->
+    <section class="guarantee-section">
+        <div class="guarantee-card">
+            <div class="guarantee-icon">
+                <i data-lucide="shield-check"></i>
+            </div>
+            <h3>7 dias de garantia incondicional</h3>
+            <p>Experimente sem risco! Se não gostar, devolvemos 100% do seu dinheiro. Sem perguntas, sem burocracia.</p>
+        </div>
+    </section>
+
+    <!-- Comparison Table -->
+    <section class="comparison-section">
+        <h2 class="comparison-title">Compare os planos</h2>
+        <div class="comparison-table">
+            <div class="comparison-header">
+                <div>Funcionalidade</div>
+                <div>Starter</div>
+                <div>Profissional</div>
+                <div>Premium</div>
+            </div>
+            <div class="comparison-row">
+                <div>Produtos cadastrados</div>
+                <div>30</div>
+                <div>Ilimitado</div>
+                <div>Ilimitado</div>
+            </div>
+            <div class="comparison-row">
+                <div>Clientes</div>
+                <div>50</div>
+                <div>Ilimitado</div>
+                <div>Ilimitado</div>
+            </div>
+            <div class="comparison-row">
+                <div>Controle de vendas</div>
+                <div><i data-lucide="check" class="check"></i></div>
+                <div><i data-lucide="check" class="check"></i></div>
+                <div><i data-lucide="check" class="check"></i></div>
+            </div>
+            <div class="comparison-row">
+                <div>Precificação inteligente</div>
+                <div><i data-lucide="check" class="check"></i></div>
+                <div><i data-lucide="check" class="check"></i></div>
+                <div><i data-lucide="check" class="check"></i></div>
+            </div>
+            <div class="comparison-row">
+                <div>Catálogo digital</div>
+                <div>Básico</div>
+                <div>Personalizado</div>
+                <div>Múltiplos</div>
+            </div>
+            <div class="comparison-row">
+                <div>Relatórios e gráficos</div>
+                <div><i data-lucide="x" class="cross"></i></div>
+                <div><i data-lucide="check" class="check"></i></div>
+                <div><i data-lucide="check" class="check"></i></div>
+            </div>
+            <div class="comparison-row">
+                <div>Controle financeiro</div>
+                <div><i data-lucide="x" class="cross"></i></div>
+                <div><i data-lucide="check" class="check"></i></div>
+                <div><i data-lucide="check" class="check"></i></div>
+            </div>
+            <div class="comparison-row">
+                <div>Exportar PDF</div>
+                <div><i data-lucide="x" class="cross"></i></div>
+                <div><i data-lucide="x" class="cross"></i></div>
+                <div><i data-lucide="check" class="check"></i></div>
+            </div>
+            <div class="comparison-row">
+                <div>Suporte prioritário</div>
+                <div><i data-lucide="x" class="cross"></i></div>
+                <div><i data-lucide="x" class="cross"></i></div>
+                <div><i data-lucide="check" class="check"></i></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+        <h2 class="faq-title">Perguntas Frequentes</h2>
+        
+        <div class="faq-item">
+            <button class="faq-question">
+                <span>Posso cancelar a qualquer momento?</span>
+                <i data-lucide="chevron-down"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Sim! Você pode cancelar sua assinatura a qualquer momento, sem multas ou taxas. Seu acesso continua até o final do período já pago.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question">
+                <span>Como funciona o período de teste?</span>
+                <i data-lucide="chevron-down"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Oferecemos 7 dias de garantia incondicional. Se você não ficar satisfeita, devolvemos 100% do valor pago, sem perguntas.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question">
+                <span>Posso mudar de plano depois?</span>
+                <i data-lucide="chevron-down"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Claro! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. A diferença será calculada proporcionalmente.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question">
+                <span>Meus dados ficam seguros?</span>
+                <i data-lucide="chevron-down"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Sim! Utilizamos criptografia de ponta e servidores seguros. Seus dados são seus e nunca serão compartilhados com terceiros.</p>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-question">
+                <span>Quais formas de pagamento são aceitas?</span>
+                <i data-lucide="chevron-down"></i>
+            </button>
+            <div class="faq-answer">
+                <p>Aceitamos cartão de crédito (todas as bandeiras), boleto bancário e PIX. Você escolhe a forma mais conveniente para você!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Final -->
+    <section class="cta-section">
+        <h2>Pronta para lucrar mais?</h2>
+        <p>Junte-se a milhares de empreendedoras que já transformaram seus negócios.</p>
+        <a href="cadastro.html" class="btn-cta-white">
+            <i data-lucide="rocket"></i>
+            Começar Agora
+        </a>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2025 Lucro Certo. Feito com 💖 para empreendedoras brasileiras.</p>
+        <p><a href="#">Termos de Uso</a> • <a href="#">Política de Privacidade</a></p>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Billing toggle
+        const billingToggle = document.getElementById('billing-toggle');
+        const monthlyLabel = document.getElementById('monthly-label');
+        const annualLabel = document.getElementById('annual-label');
+        
+        // Preços mensais
+        const monthlyPrices = {
+            starter: '19,90',
+            pro: '34,90',
+            premium: '49,90'
+        };
+
+        // Preços anuais (com 40% de desconto)
+        const annualPrices = {
+            starter: '11,90',
+            pro: '20,90',
+            premium: '29,90'
+        };
+
+        // Totais anuais
+        const annualTotals = {
+            starter: 'ou R$ 143,00/ano',
+            pro: 'ou R$ 251,00/ano',
+            premium: 'ou R$ 359,00/ano'
+        };
+
+        let isAnnual = false;
+
+        billingToggle.addEventListener('click', () => {
+            isAnnual = !isAnnual;
+            billingToggle.classList.toggle('active', isAnnual);
+            monthlyLabel.classList.toggle('active', !isAnnual);
+            annualLabel.classList.toggle('active', isAnnual);
+            
+            updatePrices();
+        });
+
+        function updatePrices() {
+            const prices = isAnnual ? annualPrices : monthlyPrices;
+            
+            document.getElementById('price-starter').textContent = prices.starter;
+            document.getElementById('price-pro').textContent = prices.pro;
+            document.getElementById('price-premium').textContent = prices.premium;
+
+            // Atualizar texto do período anual
+            if (isAnnual) {
+                document.getElementById('annual-starter').innerHTML = `<span>R$ ${monthlyPrices.starter}/mês</span> economia de 40%`;
+                document.getElementById('annual-pro').innerHTML = `<span>R$ ${monthlyPrices.pro}/mês</span> economia de 40%`;
+                document.getElementById('annual-premium').innerHTML = `<span>R$ ${monthlyPrices.premium}/mês</span> economia de 40%`;
+            } else {
+                document.getElementById('annual-starter').textContent = annualTotals.starter;
+                document.getElementById('annual-pro').textContent = annualTotals.pro;
+                document.getElementById('annual-premium').textContent = annualTotals.premium;
+            }
+        }
+
+        // Set initial active state
+        monthlyLabel.classList.add('active');
+
+        // FAQ Accordion
+        document.querySelectorAll('.faq-question').forEach(button => {
+            button.addEventListener('click', () => {
+                const item = button.parentElement;
+                const isActive = item.classList.contains('active');
+                
+                // Close all
+                document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+                
+                // Open clicked if wasn't active
+                if (!isActive) {
+                    item.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
