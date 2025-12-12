@@ -2,6 +2,11 @@
   publish = "."
   command = "echo 'No build required'"
 
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
