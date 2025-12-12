@@ -361,6 +361,89 @@ input[type="range"]::-webkit-slider-thumb {
 /* ANIMATIONS */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
+/* VARIATION TAGS */
+.variation-options-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.variation-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--primary);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.variation-tag button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+    padding: 0;
+}
+
+.variation-tag button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* STOCK TABLE */
+.stock-table {
+    width: 100%;
+    margin-top: 16px;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.stock-table thead {
+    background: var(--primary);
+    color: white;
+}
+
+.stock-table th,
+.stock-table td {
+    padding: 12px;
+    text-align: left;
+}
+
+.stock-table th {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.stock-table tbody tr {
+    border-bottom: 1px solid var(--light-gray);
+}
+
+.stock-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.stock-table tbody tr:hover {
+    background: var(--light-gray);
+}
+
+.stock-table input.form-input {
+    width: 100px;
+    padding: 8px;
+    margin: 0;
+}
+
 /* RESPONSIVENESS */
 @media (min-width: 768px) {
     main { padding: 40px 40px 100px 40px; }
