@@ -30,11 +30,7 @@
             --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Poppins', sans-serif;
@@ -43,12 +39,9 @@
             min-height: 100vh;
         }
 
-        /* Sidebar */
-        .admin-layout {
-            display: flex;
-            min-height: 100vh;
-        }
+        .admin-layout { display: flex; min-height: 100vh; }
 
+        /* Sidebar */
         .sidebar {
             width: 260px;
             background: var(--white);
@@ -57,6 +50,7 @@
             position: fixed;
             height: 100vh;
             overflow-y: auto;
+            z-index: 100;
         }
 
         .sidebar-logo {
@@ -76,17 +70,9 @@
             justify-content: center;
         }
 
-        .logo-icon svg {
-            width: 24px;
-            height: 24px;
-            color: white;
-        }
+        .logo-icon svg { width: 24px; height: 24px; color: white; }
 
-        .logo-text {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
+        .logo-text { font-size: 18px; font-weight: 700; color: var(--text-primary); }
 
         .logo-badge {
             font-size: 10px;
@@ -97,15 +83,10 @@
             margin-left: auto;
         }
 
-        .sidebar-nav {
-            list-style: none;
-        }
+        .sidebar-nav { list-style: none; }
+        .sidebar-nav li { margin-bottom: 4px; }
 
-        .sidebar-nav li {
-            margin-bottom: 4px;
-        }
-
-        .sidebar-nav a {
+        .sidebar-nav a, .sidebar-nav button {
             display: flex;
             align-items: center;
             gap: 12px;
@@ -116,22 +97,24 @@
             transition: var(--transition-smooth);
             font-size: 14px;
             font-weight: 500;
+            background: none;
+            border: none;
+            width: 100%;
+            cursor: pointer;
+            font-family: inherit;
         }
 
-        .sidebar-nav a:hover {
+        .sidebar-nav a:hover, .sidebar-nav button:hover {
             background: var(--light-gray);
             color: var(--text-primary);
         }
 
-        .sidebar-nav a.active {
+        .sidebar-nav a.active, .sidebar-nav button.active {
             background: rgba(233, 30, 99, 0.1);
             color: var(--primary);
         }
 
-        .sidebar-nav a svg {
-            width: 20px;
-            height: 20px;
-        }
+        .sidebar-nav svg { width: 20px; height: 20px; }
 
         .nav-section-title {
             font-size: 11px;
@@ -143,11 +126,7 @@
         }
 
         /* Main Content */
-        .main-content {
-            flex: 1;
-            margin-left: 260px;
-            padding: 32px;
-        }
+        .main-content { flex: 1; margin-left: 260px; padding: 32px; }
 
         .page-header {
             display: flex;
@@ -156,22 +135,9 @@
             margin-bottom: 32px;
         }
 
-        .page-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text-primary);
-        }
-
-        .page-subtitle {
-            font-size: 14px;
-            color: var(--elegant-gray);
-            margin-top: 4px;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 12px;
-        }
+        .page-title { font-size: 28px; font-weight: 700; color: var(--text-primary); }
+        .page-subtitle { font-size: 14px; color: var(--elegant-gray); margin-top: 4px; }
+        .header-actions { display: flex; gap: 12px; }
 
         .btn {
             display: inline-flex;
@@ -188,29 +154,13 @@
             text-decoration: none;
         }
 
-        .btn-primary {
-            background: var(--primary-gradient);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-medium);
-        }
-
-        .btn-secondary {
-            background: var(--light-gray);
-            color: var(--text-primary);
-        }
-
-        .btn-secondary:hover {
-            background: #EBEBED;
-        }
-
-        .btn svg {
-            width: 18px;
-            height: 18px;
-        }
+        .btn-primary { background: var(--primary-gradient); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--shadow-medium); }
+        .btn-secondary { background: var(--light-gray); color: var(--text-primary); }
+        .btn-secondary:hover { background: #EBEBED; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn svg { width: 18px; height: 18px; }
 
         /* Stats Cards */
         .stats-grid {
@@ -228,9 +178,7 @@
             transition: var(--transition-smooth);
         }
 
-        .stat-card:hover {
-            box-shadow: var(--shadow-medium);
-        }
+        .stat-card:hover { box-shadow: var(--shadow-medium); }
 
         .stat-header {
             display: flex;
@@ -248,76 +196,22 @@
             justify-content: center;
         }
 
-        .stat-icon svg {
-            width: 24px;
-            height: 24px;
-        }
+        .stat-icon svg { width: 24px; height: 24px; }
+        .stat-icon.primary { background: rgba(233, 30, 99, 0.1); color: var(--primary); }
+        .stat-icon.success { background: rgba(76, 175, 80, 0.1); color: var(--success); }
+        .stat-icon.warning { background: rgba(255, 152, 0, 0.1); color: var(--warning); }
+        .stat-icon.info { background: rgba(33, 150, 243, 0.1); color: var(--info); }
 
-        .stat-icon.primary {
-            background: rgba(233, 30, 99, 0.1);
-            color: var(--primary);
-        }
+        .stat-value { font-size: 32px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+        .stat-label { font-size: 14px; color: var(--elegant-gray); }
 
-        .stat-icon.success {
-            background: rgba(76, 175, 80, 0.1);
-            color: var(--success);
-        }
-
-        .stat-icon.warning {
-            background: rgba(255, 152, 0, 0.1);
-            color: var(--warning);
-        }
-
-        .stat-icon.info {
-            background: rgba(33, 150, 243, 0.1);
-            color: var(--info);
-        }
-
-        .stat-trend {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .stat-trend.up {
-            color: var(--success);
-        }
-
-        .stat-trend.down {
-            color: var(--danger);
-        }
-
-        .stat-trend svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        .stat-value {
-            font-size: 32px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-
-        .stat-label {
-            font-size: 14px;
-            color: var(--elegant-gray);
-        }
-
-        /* Content Grid */
-        .content-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 24px;
-        }
-
+        /* Card */
         .card {
             background: var(--white);
             border-radius: 16px;
             border: 1px solid var(--border);
             overflow: hidden;
+            margin-bottom: 24px;
         }
 
         .card-header {
@@ -328,45 +222,21 @@
             border-bottom: 1px solid var(--border);
         }
 
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
+        .card-title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+        .card-body { padding: 24px; }
 
-        .card-action {
-            font-size: 13px;
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
+        .content-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
 
-        .card-action svg {
-            width: 16px;
-            height: 16px;
-        }
+        /* Table */
+        .data-table { width: 100%; border-collapse: collapse; }
 
-        .card-body {
-            padding: 24px;
-        }
-
-        /* Leads Table */
-        .leads-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .leads-table th,
-        .leads-table td {
+        .data-table th, .data-table td {
             text-align: left;
             padding: 14px 16px;
             border-bottom: 1px solid var(--border);
         }
 
-        .leads-table th {
+        .data-table th {
             font-size: 12px;
             font-weight: 600;
             color: var(--elegant-gray);
@@ -375,29 +245,12 @@
             background: var(--light-gray);
         }
 
-        .leads-table td {
-            font-size: 14px;
-            color: var(--text-primary);
-        }
+        .data-table td { font-size: 14px; color: var(--text-primary); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: var(--light-gray); }
 
-        .leads-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .leads-table tr:hover td {
-            background: var(--light-gray);
-        }
-
-        .lead-name {
-            font-weight: 600;
-        }
-
-        .lead-email {
-            color: var(--elegant-gray);
-            font-size: 13px;
-        }
-
-        .lead-badge {
+        /* Badge */
+        .badge {
             display: inline-flex;
             align-items: center;
             gap: 4px;
@@ -407,27 +260,15 @@
             font-weight: 500;
         }
 
-        .lead-badge.new {
-            background: rgba(233, 30, 99, 0.1);
-            color: var(--primary);
-        }
+        .badge.new { background: rgba(233, 30, 99, 0.1); color: var(--primary); }
+        .badge.contacted { background: rgba(33, 150, 243, 0.1); color: var(--info); }
+        .badge.converted { background: rgba(76, 175, 80, 0.1); color: var(--success); }
+        .badge.pending { background: rgba(255, 152, 0, 0.1); color: var(--warning); }
+        .badge.active { background: rgba(76, 175, 80, 0.1); color: var(--success); }
+        .badge.cancelled { background: rgba(244, 67, 54, 0.1); color: var(--danger); }
 
-        .lead-badge.contacted {
-            background: rgba(33, 150, 243, 0.1);
-            color: var(--info);
-        }
-
-        .lead-badge.converted {
-            background: rgba(76, 175, 80, 0.1);
-            color: var(--success);
-        }
-
-        .lead-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .lead-action-btn {
+        /* Action Buttons */
+        .action-btn {
             width: 32px;
             height: 32px;
             border: none;
@@ -441,150 +282,13 @@
             transition: var(--transition-smooth);
         }
 
-        .lead-action-btn:hover {
-            background: var(--primary);
-            color: white;
-        }
+        .action-btn:hover { background: var(--primary); color: white; }
+        .action-btn svg { width: 16px; height: 16px; }
+        .actions-cell { display: flex; gap: 8px; }
 
-        .lead-action-btn svg {
-            width: 16px;
-            height: 16px;
-        }
+        /* Search & Filters */
+        .toolbar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
 
-        /* Niches Chart */
-        .niches-list {
-            list-style: none;
-        }
-
-        .niche-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .niche-item:last-child {
-            border-bottom: none;
-        }
-
-        .niche-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--light-gray);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-        }
-
-        .niche-info {
-            flex: 1;
-        }
-
-        .niche-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 4px;
-        }
-
-        .niche-bar {
-            height: 6px;
-            background: var(--light-gray);
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .niche-bar-fill {
-            height: 100%;
-            background: var(--primary-gradient);
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-
-        .niche-count {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-            min-width: 40px;
-            text-align: right;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-        }
-
-        .empty-icon {
-            width: 80px;
-            height: 80px;
-            background: var(--light-gray);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-        }
-
-        .empty-icon svg {
-            width: 40px;
-            height: 40px;
-            color: var(--elegant-gray);
-        }
-
-        .empty-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .empty-text {
-            font-size: 14px;
-            color: var(--elegant-gray);
-        }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .content-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .sidebar {
-                display: none;
-            }
-
-            .main-content {
-                margin-left: 0;
-                padding: 20px;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .page-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 16px;
-            }
-        }
-
-        /* Tabela responsiva */
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        /* Search Bar */
         .search-bar {
             display: flex;
             align-items: center;
@@ -592,7 +296,8 @@
             border-radius: 10px;
             padding: 10px 16px;
             gap: 8px;
-            margin-bottom: 16px;
+            flex: 1;
+            min-width: 200px;
         }
 
         .search-bar input {
@@ -605,28 +310,13 @@
             color: var(--text-primary);
         }
 
-        .search-bar input::placeholder {
-            color: var(--elegant-gray);
-        }
-
-        .search-bar svg {
-            width: 20px;
-            height: 20px;
-            color: var(--elegant-gray);
-        }
-
-        /* Filters */
-        .filters {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
+        .search-bar svg { width: 20px; height: 20px; color: var(--elegant-gray); }
 
         .filter-btn {
-            padding: 8px 16px;
+            padding: 10px 16px;
             background: var(--white);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 10px;
             font-family: 'Poppins', sans-serif;
             font-size: 13px;
             color: var(--elegant-gray);
@@ -634,18 +324,204 @@
             transition: var(--transition-smooth);
         }
 
-        .filter-btn:hover,
-        .filter-btn.active {
+        .filter-btn:hover, .filter-btn.active {
             background: var(--primary);
             border-color: var(--primary);
             color: white;
         }
+
+        /* Niches List */
+        .niches-list { list-style: none; }
+
+        .niche-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .niche-item:last-child { border-bottom: none; }
+
+        .niche-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--light-gray);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .niche-info { flex: 1; }
+        .niche-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+
+        .niche-bar {
+            height: 6px;
+            background: var(--light-gray);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .niche-bar-fill {
+            height: 100%;
+            background: var(--primary-gradient);
+            border-radius: 3px;
+        }
+
+        .niche-count { font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 40px; text-align: right; }
+
+        /* Empty State */
+        .empty-state { text-align: center; padding: 60px 20px; }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--light-gray);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+
+        .empty-icon svg { width: 40px; height: 40px; color: var(--elegant-gray); }
+        .empty-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+        .empty-text { font-size: 14px; color: var(--elegant-gray); }
+
+        /* Page Sections */
+        .page-section { display: none; }
+        .page-section.active { display: block; }
+
+        /* Form Styles */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 14px; font-weight: 500; color: var(--text-primary); margin-bottom: 8px; }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            transition: var(--transition-smooth);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+        }
+
+        .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition-smooth);
+        }
+
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+
+        .modal {
+            background: var(--white);
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title { font-size: 18px; font-weight: 600; }
+        .modal-close { background: none; border: none; cursor: pointer; color: var(--elegant-gray); }
+        .modal-body { padding: 24px; }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .info-text {
+            background: rgba(33, 150, 243, 0.1);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .info-text svg { color: var(--info); flex-shrink: 0; }
+        .info-text p { font-size: 14px; color: var(--text-secondary); }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .content-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 20px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .page-header { flex-direction: column; align-items: flex-start; gap: 16px; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 101;
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
+        }
+
+        .table-wrapper { overflow-x: auto; }
     </style>
 </head>
 <body>
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i data-lucide="menu"></i>
+    </button>
+
     <div class="admin-layout">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-logo">
                 <div class="logo-icon">
                     <i data-lucide="sparkles"></i>
@@ -656,67 +532,55 @@
 
             <ul class="sidebar-nav">
                 <li>
-                    <a href="#" class="active">
+                    <button class="nav-btn active" data-page="dashboard">
                         <i data-lucide="layout-dashboard"></i>
                         Dashboard
-                    </a>
+                    </button>
                 </li>
                 <li>
-                    <a href="#">
+                    <button class="nav-btn" data-page="leads">
                         <i data-lucide="users"></i>
                         Leads
-                    </a>
+                    </button>
                 </li>
                 <li>
-                    <a href="#">
+                    <button class="nav-btn" data-page="assinantes">
                         <i data-lucide="user-check"></i>
                         Assinantes
-                    </a>
+                    </button>
                 </li>
                 
                 <li class="nav-section-title">Marketing</li>
                 
                 <li>
-                    <a href="#">
-                        <i data-lucide="mail"></i>
-                        Campanhas
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
-                        <i data-lucide="tag"></i>
+                    <button class="nav-btn" data-page="cupons">
+                        <i data-lucide="ticket"></i>
                         Cupons
-                    </a>
+                    </button>
                 </li>
                 <li>
-                    <a href="#">
+                    <button class="nav-btn" data-page="campanhas">
                         <i data-lucide="megaphone"></i>
-                        Remarketing
-                    </a>
+                        Campanhas
+                    </button>
                 </li>
 
                 <li class="nav-section-title">Relatórios</li>
                 
                 <li>
-                    <a href="#">
-                        <i data-lucide="bar-chart-3"></i>
-                        Métricas
-                    </a>
-                </li>
-                <li>
-                    <a href="#">
+                    <button class="nav-btn" data-page="nichos">
                         <i data-lucide="pie-chart"></i>
                         Por Nicho
-                    </a>
+                    </button>
                 </li>
 
                 <li class="nav-section-title">Sistema</li>
 
                 <li>
-                    <a href="#">
+                    <button class="nav-btn" data-page="config">
                         <i data-lucide="settings"></i>
                         Configurações
-                    </a>
+                    </button>
                 </li>
                 <li>
                     <a href="index.html">
@@ -729,92 +593,125 @@
 
         <!-- Main Content -->
         <main class="main-content">
-            <div class="page-header">
-                <div>
-                    <h1 class="page-title">Dashboard</h1>
-                    <p class="page-subtitle">Visão geral dos seus leads e conversões</p>
+            
+            <!-- ========== DASHBOARD ========== -->
+            <section class="page-section active" id="page-dashboard">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Dashboard</h1>
+                        <p class="page-subtitle">Visão geral dos seus leads e conversões</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="exportLeadsCSV()">
+                            <i data-lucide="download"></i>
+                            Exportar
+                        </button>
+                        <button class="btn btn-primary" onclick="loadData()">
+                            <i data-lucide="refresh-cw"></i>
+                            Atualizar
+                        </button>
+                    </div>
                 </div>
-                <div class="header-actions">
-                    <button class="btn btn-secondary" id="exportBtn">
-                        <i data-lucide="download"></i>
-                        Exportar
-                    </button>
-                    <button class="btn btn-primary" id="refreshBtn">
-                        <i data-lucide="refresh-cw"></i>
-                        Atualizar
-                    </button>
-                </div>
-            </div>
 
-            <!-- Stats Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon primary">
-                            <i data-lucide="users"></i>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon primary">
+                                <i data-lucide="users"></i>
+                            </div>
                         </div>
-                        <div class="stat-trend up">
-                            <i data-lucide="trending-up"></i>
-                            +12%
+                        <div class="stat-value" id="totalLeads">0</div>
+                        <div class="stat-label">Total de Leads</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon success">
+                                <i data-lucide="user-check"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="totalAssinantes">0</div>
+                        <div class="stat-label">Assinantes</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon warning">
+                                <i data-lucide="ticket"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="totalCupons">0</div>
+                        <div class="stat-label">Cupons Usados</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon info">
+                                <i data-lucide="wallet"></i>
+                            </div>
+                        </div>
+                        <div class="stat-value" id="totalReceita">R$ 0</div>
+                        <div class="stat-label">Receita Mensal</div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Últimos Leads</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-wrapper">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Nome</th>
+                                            <th>Contato</th>
+                                            <th>Data</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashboardLeadsTable">
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                    <div class="stat-value" id="totalLeads">0</div>
-                    <div class="stat-label">Total de Leads</div>
-                </div>
 
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon success">
-                            <i data-lucide="user-check"></i>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title">Por Nicho</h2>
                         </div>
-                        <div class="stat-trend up">
-                            <i data-lucide="trending-up"></i>
-                            +8%
+                        <div class="card-body">
+                            <ul class="niches-list" id="dashboardNiches">
+                            </ul>
                         </div>
                     </div>
-                    <div class="stat-value" id="totalConversions">0</div>
-                    <div class="stat-label">Conversões</div>
                 </div>
+            </section>
 
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon warning">
-                            <i data-lucide="ticket"></i>
-                        </div>
+            <!-- ========== LEADS ========== -->
+            <section class="page-section" id="page-leads">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Leads</h1>
+                        <p class="page-subtitle">Gerencie todos os leads capturados</p>
                     </div>
-                    <div class="stat-value" id="totalCupons">0</div>
-                    <div class="stat-label">Cupons Gerados</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon info">
-                            <i data-lucide="percent"></i>
-                        </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="exportLeadsCSV()">
+                            <i data-lucide="download"></i>
+                            Exportar CSV
+                        </button>
                     </div>
-                    <div class="stat-value" id="conversionRate">0%</div>
-                    <div class="stat-label">Taxa de Conversão</div>
                 </div>
-            </div>
 
-            <!-- Content Grid -->
-            <div class="content-grid">
-                <!-- Leads Table -->
                 <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Leads Recentes</h2>
-                        <a href="#" class="card-action">
-                            Ver todos
-                            <i data-lucide="arrow-right"></i>
-                        </a>
-                    </div>
                     <div class="card-body">
-                        <div class="search-bar">
-                            <i data-lucide="search"></i>
-                            <input type="text" placeholder="Buscar por nome ou email..." id="searchLeads">
-                        </div>
-
-                        <div class="filters">
+                        <div class="toolbar">
+                            <div class="search-bar">
+                                <i data-lucide="search"></i>
+                                <input type="text" placeholder="Buscar por nome ou email..." id="searchLeads">
+                            </div>
                             <button class="filter-btn active" data-filter="all">Todos</button>
                             <button class="filter-btn" data-filter="new">Novos</button>
                             <button class="filter-btn" data-filter="contacted">Contatados</button>
@@ -822,7 +719,7 @@
                         </div>
 
                         <div class="table-wrapper">
-                            <table class="leads-table">
+                            <table class="data-table">
                                 <thead>
                                     <tr>
                                         <th>Lead</th>
@@ -834,12 +731,11 @@
                                     </tr>
                                 </thead>
                                 <tbody id="leadsTableBody">
-                                    <!-- Leads serão inseridos aqui -->
                                 </tbody>
                             </table>
                         </div>
 
-                        <div class="empty-state" id="emptyState" style="display: none;">
+                        <div class="empty-state" id="emptyLeads" style="display: none;">
                             <div class="empty-icon">
                                 <i data-lucide="inbox"></i>
                             </div>
@@ -848,155 +744,358 @@
                         </div>
                     </div>
                 </div>
+            </section>
 
-                <!-- Niches -->
-                <div class="card">
-                    <div class="card-header">
-                        <h2 class="card-title">Leads por Nicho</h2>
+            <!-- ========== ASSINANTES ========== -->
+            <section class="page-section" id="page-assinantes">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Assinantes</h1>
+                        <p class="page-subtitle">Gerencie seus assinantes ativos</p>
                     </div>
-                    <div class="card-body">
-                        <ul class="niches-list" id="nichesList">
-                            <li class="niche-item">
-                                <div class="niche-icon">👗</div>
-                                <div class="niche-info">
-                                    <div class="niche-name">Moda & Acessórios</div>
-                                    <div class="niche-bar">
-                                        <div class="niche-bar-fill" style="width: 75%"></div>
-                                    </div>
-                                </div>
-                                <div class="niche-count">45</div>
-                            </li>
-                            <li class="niche-item">
-                                <div class="niche-icon">💄</div>
-                                <div class="niche-info">
-                                    <div class="niche-name">Cosméticos</div>
-                                    <div class="niche-bar">
-                                        <div class="niche-bar-fill" style="width: 60%"></div>
-                                    </div>
-                                </div>
-                                <div class="niche-count">36</div>
-                            </li>
-                            <li class="niche-item">
-                                <div class="niche-icon">🏠</div>
-                                <div class="niche-info">
-                                    <div class="niche-name">Casa & Decoração</div>
-                                    <div class="niche-bar">
-                                        <div class="niche-bar-fill" style="width: 45%"></div>
-                                    </div>
-                                </div>
-                                <div class="niche-count">27</div>
-                            </li>
-                            <li class="niche-item">
-                                <div class="niche-icon">🍰</div>
-                                <div class="niche-info">
-                                    <div class="niche-name">Alimentação</div>
-                                    <div class="niche-bar">
-                                        <div class="niche-bar-fill" style="width: 35%"></div>
-                                    </div>
-                                </div>
-                                <div class="niche-count">21</div>
-                            </li>
-                            <li class="niche-item">
-                                <div class="niche-icon">📚</div>
-                                <div class="niche-info">
-                                    <div class="niche-name">Outros</div>
-                                    <div class="niche-bar">
-                                        <div class="niche-bar-fill" style="width: 20%"></div>
-                                    </div>
-                                </div>
-                                <div class="niche-count">12</div>
-                            </li>
-                        </ul>
+                </div>
 
-                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
-                            <p style="font-size: 12px; color: var(--elegant-gray); margin-bottom: 8px;">
-                                💡 Dica de Remarketing
-                            </p>
-                            <p style="font-size: 14px; color: var(--text-primary);">
-                                <strong>Moda & Acessórios</strong> é o nicho com mais interesse. Considere campanhas específicas!
-                            </p>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="empty-state" id="emptyAssinantes">
+                            <div class="empty-icon">
+                                <i data-lucide="users"></i>
+                            </div>
+                            <h3 class="empty-title">Nenhum assinante ainda</h3>
+                            <p class="empty-text">Quando tiver assinantes via Mercado Pago, eles aparecerão aqui.</p>
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
+
+            <!-- ========== CUPONS ========== -->
+            <section class="page-section" id="page-cupons">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Cupons</h1>
+                        <p class="page-subtitle">Gerencie seus cupons de desconto</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="openCouponModal()">
+                            <i data-lucide="plus"></i>
+                            Novo Cupom
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Desconto</th>
+                                        <th>Usos</th>
+                                        <th>Validade</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cuponsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== CAMPANHAS ========== -->
+            <section class="page-section" id="page-campanhas">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Campanhas</h1>
+                        <p class="page-subtitle">Envie mensagens para seus leads</p>
+                    </div>
+                </div>
+
+                <div class="info-text">
+                    <i data-lucide="info"></i>
+                    <p>Use esta seção para criar mensagens de WhatsApp ou Email para enviar aos seus leads. Você pode segmentar por status.</p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Nova Campanha</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">Tipo de Campanha</label>
+                            <select class="form-input" id="campanhaTipo">
+                                <option value="whatsapp">WhatsApp</option>
+                                <option value="email">Email</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Segmento</label>
+                            <select class="form-input" id="campanhaSegmento">
+                                <option value="all">Todos os Leads</option>
+                                <option value="new">Apenas Novos</option>
+                                <option value="contacted">Já Contatados</option>
+                                <option value="cupom">Com Cupom não usado</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Mensagem</label>
+                            <textarea class="form-input" rows="5" id="campanhaMensagem" placeholder="Olá {nome}! Vimos que você se interessou pelo Lucro Certo..."></textarea>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="gerarListaCampanha()">
+                            <i data-lucide="send"></i>
+                            Gerar Lista de Envio
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card" id="listaEnvioCard" style="display: none;">
+                    <div class="card-header">
+                        <h2 class="card-title">Lista de Envio</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Contato</th>
+                                        <th>Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="listaEnvioBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== NICHOS ========== -->
+            <section class="page-section" id="page-nichos">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Análise por Nicho</h1>
+                        <p class="page-subtitle">Veja quais nichos têm mais interesse</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: #FCE4EC; font-size: 24px;">👗</div>
+                        </div>
+                        <div class="stat-value" id="nichoModa">0</div>
+                        <div class="stat-label">Moda & Acessórios</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: #F3E5F5; font-size: 24px;">💄</div>
+                        </div>
+                        <div class="stat-value" id="nichoCosmeticos">0</div>
+                        <div class="stat-label">Cosméticos</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: #E8F5E9; font-size: 24px;">🏠</div>
+                        </div>
+                        <div class="stat-value" id="nichoCasa">0</div>
+                        <div class="stat-label">Casa & Decoração</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon" style="background: #FFF3E0; font-size: 24px;">🍰</div>
+                        </div>
+                        <div class="stat-value" id="nichoAlimentacao">0</div>
+                        <div class="stat-label">Alimentação</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Distribuição de Leads por Nicho</h2>
+                    </div>
+                    <div class="card-body">
+                        <ul class="niches-list" id="nichosDetalhados">
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== CONFIGURAÇÕES ========== -->
+            <section class="page-section" id="page-config">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">Configurações</h1>
+                        <p class="page-subtitle">Configure o painel administrativo</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Dados do Admin</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Nome</label>
+                                <input type="text" class="form-input" value="Carol" id="adminNome">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-input" value="admin@lucrocerto.com" id="adminEmail">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="salvarConfig()">
+                            <i data-lucide="save"></i>
+                            Salvar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Limpar Dados</h2>
+                    </div>
+                    <div class="card-body">
+                        <p style="margin-bottom: 16px; color: var(--elegant-gray);">Cuidado! Esta ação não pode ser desfeita.</p>
+                        <button class="btn btn-danger" onclick="limparLeads()">
+                            <i data-lucide="trash-2"></i>
+                            Limpar Todos os Leads
+                        </button>
+                    </div>
+                </div>
+            </section>
+
         </main>
+    </div>
+
+    <!-- Modal Novo Cupom -->
+    <div class="modal-overlay" id="couponModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">Novo Cupom</h3>
+                <button class="modal-close" onclick="closeCouponModal()">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Código do Cupom</label>
+                    <input type="text" class="form-input" id="cupomCodigo" placeholder="Ex: PROMO20" style="text-transform: uppercase;">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Desconto (%)</label>
+                        <input type="number" class="form-input" id="cupomDesconto" placeholder="10" min="1" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Limite de Usos</label>
+                        <input type="number" class="form-input" id="cupomLimite" placeholder="100">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Validade</label>
+                    <input type="date" class="form-input" id="cupomValidade">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCouponModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="salvarCupom()">Criar Cupom</button>
+            </div>
+        </div>
     </div>
 
     <script>
         lucide.createIcons();
 
-        // Load leads from localStorage
+        // ========== NAVEGAÇÃO ==========
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const page = btn.dataset.page;
+                
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+                document.getElementById(`page-${page}`).classList.add('active');
+                
+                document.getElementById('sidebar').classList.remove('open');
+                loadData();
+            });
+        });
+
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+
+        // ========== DADOS ==========
+        function loadData() {
+            loadLeads();
+            loadCupons();
+            loadNichos();
+            updateStats();
+        }
+
         function loadLeads() {
             const leads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
-            const tbody = document.getElementById('leadsTableBody');
-            const emptyState = document.getElementById('emptyState');
             
-            // Update stats
-            document.getElementById('totalLeads').textContent = leads.length;
-            document.getElementById('totalCupons').textContent = leads.filter(l => l.cupom).length;
+            // Dashboard table
+            const dashboardTable = document.getElementById('dashboardLeadsTable');
+            const recentLeads = [...leads].sort((a, b) => new Date(b.dataCaptura) - new Date(a.dataCaptura)).slice(0, 5);
             
-            // Calculate conversions (example - in real app would check subscriptions)
-            const conversions = Math.floor(leads.length * 0.15);
-            document.getElementById('totalConversions').textContent = conversions;
-            
-            // Conversion rate
-            const rate = leads.length > 0 ? Math.round((conversions / leads.length) * 100) : 0;
-            document.getElementById('conversionRate').textContent = rate + '%';
+            dashboardTable.innerHTML = recentLeads.map(lead => `
+                <tr>
+                    <td><strong>${lead.nome}</strong></td>
+                    <td>${lead.email}</td>
+                    <td>${formatDate(lead.dataCaptura)}</td>
+                    <td><span class="badge ${lead.contacted ? 'contacted' : 'new'}">${lead.contacted ? 'Contatado' : 'Novo'}</span></td>
+                </tr>
+            `).join('') || '<tr><td colspan="4" style="text-align: center; color: var(--elegant-gray);">Nenhum lead ainda</td></tr>';
 
+            // Full leads table
+            const leadsTable = document.getElementById('leadsTableBody');
+            const emptyState = document.getElementById('emptyLeads');
+            
             if (leads.length === 0) {
-                tbody.innerHTML = '';
+                leadsTable.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
             }
-
-            emptyState.style.display = 'none';
             
-            // Sort by date (newest first)
+            emptyState.style.display = 'none';
             leads.sort((a, b) => new Date(b.dataCaptura) - new Date(a.dataCaptura));
             
-            tbody.innerHTML = leads.map((lead, index) => {
-                const date = new Date(lead.dataCaptura);
-                const formattedDate = date.toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                
-                // Determine status based on some criteria
+            leadsTable.innerHTML = leads.map((lead, index) => {
                 let status = 'new';
                 let statusText = 'Novo';
-                if (lead.contacted) {
-                    status = 'contacted';
-                    statusText = 'Contatado';
-                }
-                if (lead.converted) {
-                    status = 'converted';
-                    statusText = 'Convertido';
-                }
+                if (lead.contacted) { status = 'contacted'; statusText = 'Contatado'; }
+                if (lead.converted) { status = 'converted'; statusText = 'Convertido'; }
                 
                 return `
                     <tr data-status="${status}">
                         <td>
-                            <div class="lead-name">${lead.nome}</div>
-                            <div class="lead-email">${lead.email}</div>
+                            <div><strong>${lead.nome}</strong></div>
+                            <div style="font-size: 12px; color: var(--elegant-gray);">${lead.email}</div>
                         </td>
                         <td>${lead.telefone || '-'}</td>
                         <td>${lead.cupom || '-'}</td>
-                        <td>${formattedDate}</td>
+                        <td>${formatDate(lead.dataCaptura)}</td>
+                        <td><span class="badge ${status}">${statusText}</span></td>
                         <td>
-                            <span class="lead-badge ${status}">${statusText}</span>
-                        </td>
-                        <td>
-                            <div class="lead-actions">
-                                <button class="lead-action-btn" title="WhatsApp" onclick="openWhatsApp('${lead.telefone}')">
+                            <div class="actions-cell">
+                                <button class="action-btn" title="WhatsApp" onclick="openWhatsApp('${lead.telefone}', '${lead.nome}')">
                                     <i data-lucide="message-circle"></i>
                                 </button>
-                                <button class="lead-action-btn" title="Email" onclick="sendEmail('${lead.email}')">
+                                <button class="action-btn" title="Email" onclick="sendEmail('${lead.email}')">
                                     <i data-lucide="mail"></i>
                                 </button>
-                                <button class="lead-action-btn" title="Marcar como contatado" onclick="markContacted(${index})">
+                                <button class="action-btn" title="Marcar contatado" onclick="markContacted(${index})">
                                     <i data-lucide="check"></i>
                                 </button>
                             </div>
@@ -1008,21 +1107,97 @@
             lucide.createIcons();
         }
 
-        // Open WhatsApp
-        function openWhatsApp(phone) {
+        function loadCupons() {
+            const cupons = JSON.parse(localStorage.getItem('lucrocerto_cupons') || '[]');
+            
+            if (cupons.length === 0) {
+                cupons.push({ codigo: 'LUCRO10', desconto: 10, usos: 0, limite: 999, validade: '2025-12-31', ativo: true });
+                localStorage.setItem('lucrocerto_cupons', JSON.stringify(cupons));
+            }
+            
+            const table = document.getElementById('cuponsTableBody');
+            table.innerHTML = cupons.map((cupom, index) => `
+                <tr>
+                    <td><strong>${cupom.codigo}</strong></td>
+                    <td>${cupom.desconto}%</td>
+                    <td>${cupom.usos}/${cupom.limite}</td>
+                    <td>${formatDate(cupom.validade)}</td>
+                    <td><span class="badge ${cupom.ativo ? 'active' : 'cancelled'}">${cupom.ativo ? 'Ativo' : 'Inativo'}</span></td>
+                    <td>
+                        <div class="actions-cell">
+                            <button class="action-btn" title="Copiar" onclick="copiarCupom('${cupom.codigo}')">
+                                <i data-lucide="copy"></i>
+                            </button>
+                            <button class="action-btn" title="${cupom.ativo ? 'Desativar' : 'Ativar'}" onclick="toggleCupom(${index})">
+                                <i data-lucide="${cupom.ativo ? 'pause' : 'play'}"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+            
+            lucide.createIcons();
+        }
+
+        function loadNichos() {
+            const nichos = [
+                { nome: 'Moda & Acessórios', icon: '👗', count: 45, percent: 35 },
+                { nome: 'Cosméticos', icon: '💄', count: 32, percent: 25 },
+                { nome: 'Casa & Decoração', icon: '🏠', count: 28, percent: 22 },
+                { nome: 'Alimentação', icon: '🍰', count: 15, percent: 12 },
+                { nome: 'Outros', icon: '📦', count: 8, percent: 6 }
+            ];
+
+            document.getElementById('dashboardNiches').innerHTML = nichos.slice(0, 4).map(n => `
+                <li class="niche-item">
+                    <div class="niche-icon">${n.icon}</div>
+                    <div class="niche-info">
+                        <div class="niche-name">${n.nome}</div>
+                        <div class="niche-bar"><div class="niche-bar-fill" style="width: ${n.percent}%"></div></div>
+                    </div>
+                    <div class="niche-count">${n.count}</div>
+                </li>
+            `).join('');
+
+            document.getElementById('nichosDetalhados').innerHTML = nichos.map(n => `
+                <li class="niche-item">
+                    <div class="niche-icon">${n.icon}</div>
+                    <div class="niche-info">
+                        <div class="niche-name">${n.nome}</div>
+                        <div class="niche-bar"><div class="niche-bar-fill" style="width: ${n.percent}%"></div></div>
+                    </div>
+                    <div class="niche-count">${n.count} (${n.percent}%)</div>
+                </li>
+            `).join('');
+
+            document.getElementById('nichoModa').textContent = nichos[0].count;
+            document.getElementById('nichoCosmeticos').textContent = nichos[1].count;
+            document.getElementById('nichoCasa').textContent = nichos[2].count;
+            document.getElementById('nichoAlimentacao').textContent = nichos[3].count;
+        }
+
+        function updateStats() {
+            const leads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
+            document.getElementById('totalLeads').textContent = leads.length;
+            document.getElementById('totalAssinantes').textContent = '0';
+            document.getElementById('totalCupons').textContent = leads.filter(l => l.cupom).length;
+            document.getElementById('totalReceita').textContent = 'R$ 0';
+        }
+
+        // ========== AÇÕES ==========
+        function openWhatsApp(phone, nome) {
             if (!phone) return alert('Telefone não informado');
             const cleanPhone = phone.replace(/\D/g, '');
             const phoneWithCountry = cleanPhone.length === 11 ? '55' + cleanPhone : cleanPhone;
-            window.open(`https://wa.me/${phoneWithCountry}?text=Olá! Vi que você se interessou pelo Lucro Certo 😊`, '_blank');
+            const msg = encodeURIComponent(`Olá ${nome}! Vi que você se interessou pelo Lucro Certo 😊 Posso te ajudar?`);
+            window.open(`https://wa.me/${phoneWithCountry}?text=${msg}`, '_blank');
         }
 
-        // Send email
         function sendEmail(email) {
             if (!email) return alert('Email não informado');
-            window.location.href = `mailto:${email}?subject=Seu cupom LUCRO10 está esperando!&body=Olá! Não deixe seu cupom de 10%25 de desconto expirar. Assine agora!`;
+            window.location.href = `mailto:${email}?subject=Seu cupom LUCRO10 está esperando!`;
         }
 
-        // Mark as contacted
         function markContacted(index) {
             const leads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
             if (leads[index]) {
@@ -1032,25 +1207,15 @@
             }
         }
 
-        // Export leads to CSV
-        document.getElementById('exportBtn').addEventListener('click', () => {
+        function exportLeadsCSV() {
             const leads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
+            if (leads.length === 0) return alert('Nenhum lead para exportar');
             
-            if (leads.length === 0) {
-                alert('Nenhum lead para exportar');
-                return;
-            }
-            
-            const headers = ['Nome', 'Email', 'Telefone', 'Cupom', 'Data', 'Origem'];
             const csvContent = [
-                headers.join(','),
+                ['Nome', 'Email', 'Telefone', 'Cupom', 'Data', 'Status'].join(','),
                 ...leads.map(lead => [
-                    `"${lead.nome}"`,
-                    lead.email,
-                    lead.telefone || '',
-                    lead.cupom || '',
-                    lead.dataCaptura,
-                    lead.origem || ''
+                    `"${lead.nome}"`, lead.email, lead.telefone || '', lead.cupom || '',
+                    lead.dataCaptura, lead.contacted ? 'Contatado' : 'Novo'
                 ].join(','))
             ].join('\n');
             
@@ -1059,60 +1224,112 @@
             link.href = URL.createObjectURL(blob);
             link.download = `leads_lucrocerto_${new Date().toISOString().split('T')[0]}.csv`;
             link.click();
-        });
+        }
 
-        // Refresh
-        document.getElementById('refreshBtn').addEventListener('click', loadLeads);
+        // Cupons
+        function openCouponModal() { document.getElementById('couponModal').classList.add('active'); }
+        function closeCouponModal() { document.getElementById('couponModal').classList.remove('active'); }
 
-        // Search
-        document.getElementById('searchLeads').addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const rows = document.querySelectorAll('#leadsTableBody tr');
+        function salvarCupom() {
+            const codigo = document.getElementById('cupomCodigo').value.toUpperCase();
+            const desconto = parseInt(document.getElementById('cupomDesconto').value);
+            const limite = parseInt(document.getElementById('cupomLimite').value) || 999;
+            const validade = document.getElementById('cupomValidade').value;
+
+            if (!codigo || !desconto) return alert('Preencha o código e o desconto');
+
+            const cupons = JSON.parse(localStorage.getItem('lucrocerto_cupons') || '[]');
+            cupons.push({ codigo, desconto, usos: 0, limite, validade: validade || '2025-12-31', ativo: true });
+            localStorage.setItem('lucrocerto_cupons', JSON.stringify(cupons));
             
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                row.style.display = text.includes(term) ? '' : 'none';
-            });
-        });
+            closeCouponModal();
+            loadCupons();
+            alert('Cupom criado!');
+        }
 
-        // Filters
+        function toggleCupom(index) {
+            const cupons = JSON.parse(localStorage.getItem('lucrocerto_cupons') || '[]');
+            if (cupons[index]) {
+                cupons[index].ativo = !cupons[index].ativo;
+                localStorage.setItem('lucrocerto_cupons', JSON.stringify(cupons));
+                loadCupons();
+            }
+        }
+
+        function copiarCupom(codigo) {
+            navigator.clipboard.writeText(codigo);
+            alert('Cupom copiado!');
+        }
+
+        // Campanhas
+        function gerarListaCampanha() {
+            const tipo = document.getElementById('campanhaTipo').value;
+            const segmento = document.getElementById('campanhaSegmento').value;
+            const leads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
+            let filtrados = leads;
+
+            if (segmento === 'new') filtrados = leads.filter(l => !l.contacted);
+            if (segmento === 'contacted') filtrados = leads.filter(l => l.contacted);
+            if (segmento === 'cupom') filtrados = leads.filter(l => l.cupom && !l.converted);
+
+            if (filtrados.length === 0) return alert('Nenhum lead encontrado');
+
+            document.getElementById('listaEnvioBody').innerHTML = filtrados.map(lead => `
+                <tr>
+                    <td>${lead.nome}</td>
+                    <td>${tipo === 'whatsapp' ? lead.telefone : lead.email}</td>
+                    <td>
+                        <button class="btn btn-primary" style="padding: 8px 16px; font-size: 12px;" 
+                            onclick="${tipo === 'whatsapp' ? `openWhatsApp('${lead.telefone}', '${lead.nome}')` : `sendEmail('${lead.email}')`}">
+                            <i data-lucide="${tipo === 'whatsapp' ? 'message-circle' : 'mail'}"></i>
+                            Enviar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.getElementById('listaEnvioCard').style.display = 'block';
+            lucide.createIcons();
+        }
+
+        function salvarConfig() { alert('Configurações salvas!'); }
+
+        function limparLeads() {
+            if (confirm('Limpar TODOS os leads? Esta ação não pode ser desfeita.')) {
+                localStorage.removeItem('lucrocerto_leads');
+                localStorage.removeItem('lucrocerto_lead_captured');
+                loadData();
+                alert('Leads limpos!');
+            }
+        }
+
+        // Filtros
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                const parent = btn.parentElement;
+                parent.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 
                 const filter = btn.dataset.filter;
-                const rows = document.querySelectorAll('#leadsTableBody tr');
-                
-                rows.forEach(row => {
-                    if (filter === 'all') {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = row.dataset.status === filter ? '' : 'none';
-                    }
+                btn.closest('.card').querySelectorAll('tbody tr').forEach(row => {
+                    row.style.display = filter === 'all' || row.dataset.status === filter ? '' : 'none';
                 });
             });
         });
 
-        // Load on page load
-        loadLeads();
+        document.getElementById('searchLeads')?.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('#leadsTableBody tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+            });
+        });
 
-        // Add some demo data if empty (for testing)
-        function addDemoData() {
-            const existingLeads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
-            if (existingLeads.length === 0) {
-                const demoLeads = [
-                    { nome: 'Maria Silva', email: 'maria@email.com', telefone: '(11) 99999-1234', cupom: 'LUCRO10', dataCaptura: new Date(Date.now() - 3600000).toISOString(), origem: 'popup_planos' },
-                    { nome: 'Ana Costa', email: 'ana.costa@gmail.com', telefone: '(21) 98888-5678', cupom: 'LUCRO10', dataCaptura: new Date(Date.now() - 86400000).toISOString(), origem: 'popup_planos' },
-                    { nome: 'Juliana Santos', email: 'ju.santos@email.com', telefone: '(31) 97777-9012', cupom: 'LUCRO10', dataCaptura: new Date(Date.now() - 172800000).toISOString(), origem: 'popup_planos', contacted: true }
-                ];
-                localStorage.setItem('lucrocerto_leads', JSON.stringify(demoLeads));
-                loadLeads();
-            }
+        function formatDate(dateStr) {
+            if (!dateStr) return '-';
+            return new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
         }
-        
-        // Uncomment to add demo data:
-        // addDemoData();
+
+        loadData();
     </script>
 </body>
 </html>

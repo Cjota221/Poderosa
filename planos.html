@@ -237,6 +237,193 @@
             font-weight: 600;
         }
 
+        /* Free Trial Section */
+        .trial-section {
+            max-width: 1000px;
+            margin: 0 auto 60px;
+            padding: 0 24px;
+        }
+
+        .trial-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 24px;
+            padding: 40px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+        }
+
+        .trial-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 60%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+        }
+
+        .trial-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .trial-badge svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .trial-content {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 32px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .trial-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .trial-icon svg {
+            width: 40px;
+            height: 40px;
+            color: white;
+        }
+
+        .trial-text h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 12px;
+        }
+
+        .trial-text h2 span {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .trial-text p {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 16px;
+            max-width: 450px;
+        }
+
+        .trial-features {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .trial-features li {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.15);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .trial-features li svg {
+            width: 14px;
+            height: 14px;
+            color: #4ADE80;
+        }
+
+        .trial-cta {
+            text-align: center;
+        }
+
+        .btn-trial {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 18px 36px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-trial:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-trial svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .trial-note {
+            display: block;
+            margin-top: 12px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        @media (max-width: 900px) {
+            .trial-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .trial-icon {
+                margin: 0 auto;
+            }
+
+            .trial-features {
+                justify-content: center;
+            }
+
+            .trial-badge {
+                position: static;
+                display: inline-flex;
+                margin-bottom: 20px;
+            }
+
+            .trial-card {
+                padding: 30px 24px;
+            }
+        }
+
         /* Pricing Section */
         .pricing-section {
             max-width: 1200px;
@@ -1054,6 +1241,38 @@
         </div>
     </section>
 
+    <!-- Free Trial Section -->
+    <section class="trial-section">
+        <div class="trial-card">
+            <div class="trial-badge">
+                <i data-lucide="gift"></i>
+                100% Grátis
+            </div>
+            <div class="trial-content">
+                <div class="trial-icon">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <div class="trial-text">
+                    <h2>Experimente <span>Grátis</span> antes de assinar!</h2>
+                    <p>Teste todas as funções do app. Cadastre até 3 produtos, explore o catálogo, controle financeiro e muito mais. Sem cartão de crédito!</p>
+                    <ul class="trial-features">
+                        <li><i data-lucide="check"></i> Acesso a todas as funcionalidades</li>
+                        <li><i data-lucide="check"></i> Cadastre até 3 produtos</li>
+                        <li><i data-lucide="check"></i> Catálogo online de demonstração</li>
+                        <li><i data-lucide="check"></i> Controle financeiro completo</li>
+                    </ul>
+                </div>
+                <div class="trial-cta">
+                    <button class="btn-trial" onclick="openTrialModal()">
+                        <i data-lucide="play-circle"></i>
+                        Começar Teste Grátis
+                    </button>
+                    <span class="trial-note">Sem compromisso • Sem cartão</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Pricing Section -->
     <section class="pricing-section">
         <div class="pricing-grid">
@@ -1383,6 +1602,299 @@
         <p><a href="#">Termos de Uso</a> • <a href="#">Política de Privacidade</a></p>
     </footer>
 
+    <!-- Modal Teste Grátis -->
+    <div class="trial-modal-overlay" id="trialModal">
+        <div class="trial-modal">
+            <button class="trial-modal-close" onclick="closeTrialModal()">
+                <i data-lucide="x"></i>
+            </button>
+            
+            <div class="trial-modal-header">
+                <div class="trial-modal-icon">
+                    <i data-lucide="gift"></i>
+                </div>
+                <h2>Teste Grátis 🎉</h2>
+                <p>Experimente todas as funções sem compromisso</p>
+            </div>
+
+            <form id="trialForm" class="trial-modal-form">
+                <div class="trial-form-group">
+                    <label>Seu nome</label>
+                    <div class="trial-input-wrapper">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="trialNome" placeholder="Como podemos te chamar?" required>
+                    </div>
+                </div>
+
+                <div class="trial-form-group">
+                    <label>Seu email</label>
+                    <div class="trial-input-wrapper">
+                        <i data-lucide="mail"></i>
+                        <input type="email" id="trialEmail" placeholder="seu@email.com" required>
+                    </div>
+                </div>
+
+                <div class="trial-form-group">
+                    <label>Tipo de negócio (opcional)</label>
+                    <div class="trial-input-wrapper">
+                        <i data-lucide="store"></i>
+                        <select id="trialNegocio">
+                            <option value="">Selecione seu nicho...</option>
+                            <option value="moda">👗 Moda & Acessórios</option>
+                            <option value="cosmeticos">💄 Cosméticos & Beleza</option>
+                            <option value="alimentacao">🍰 Alimentação & Confeitaria</option>
+                            <option value="artesanato">🎨 Artesanato</option>
+                            <option value="casa">🏠 Casa & Decoração</option>
+                            <option value="servicos">💼 Serviços</option>
+                            <option value="outro">📦 Outro</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="trial-benefits">
+                    <h4>O que você vai poder testar:</h4>
+                    <ul>
+                        <li><i data-lucide="check-circle"></i> Cadastrar até 3 produtos</li>
+                        <li><i data-lucide="check-circle"></i> Ver seu catálogo online</li>
+                        <li><i data-lucide="check-circle"></i> Registrar vendas e clientes</li>
+                        <li><i data-lucide="check-circle"></i> Controle financeiro completo</li>
+                        <li><i data-lucide="check-circle"></i> Relatórios e gráficos</li>
+                    </ul>
+                </div>
+
+                <button type="submit" class="trial-submit-btn">
+                    <i data-lucide="play"></i>
+                    Começar Meu Teste Grátis
+                </button>
+
+                <p class="trial-terms">
+                    Ao continuar, você concorda com nossos <a href="#">Termos de Uso</a>
+                </p>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        /* Trial Modal Styles */
+        .trial-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            padding: 20px;
+        }
+
+        .trial-modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .trial-modal {
+            background: white;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.3s ease;
+        }
+
+        .trial-modal-overlay.active .trial-modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .trial-modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: var(--light-gray);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--elegant-gray);
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+        .trial-modal-close:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .trial-modal-header {
+            text-align: center;
+            padding: 40px 30px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .trial-modal-icon {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+        }
+
+        .trial-modal-icon svg {
+            width: 36px;
+            height: 36px;
+        }
+
+        .trial-modal-header h2 {
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .trial-modal-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .trial-modal-form {
+            padding: 30px;
+        }
+
+        .trial-form-group {
+            margin-bottom: 20px;
+        }
+
+        .trial-form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
+        }
+
+        .trial-input-wrapper {
+            position: relative;
+        }
+
+        .trial-input-wrapper svg {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--elegant-gray);
+        }
+
+        .trial-input-wrapper input,
+        .trial-input-wrapper select {
+            width: 100%;
+            padding: 14px 14px 14px 48px;
+            border: 2px solid var(--light-gray);
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .trial-input-wrapper input:focus,
+        .trial-input-wrapper select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(233, 30, 99, 0.1);
+        }
+
+        .trial-benefits {
+            background: linear-gradient(135deg, #f0f4ff 0%, #fce4ec 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .trial-benefits h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 12px;
+        }
+
+        .trial-benefits ul {
+            list-style: none;
+            display: grid;
+            gap: 8px;
+        }
+
+        .trial-benefits li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--dark-gray);
+        }
+
+        .trial-benefits li svg {
+            width: 18px;
+            height: 18px;
+            color: var(--success);
+        }
+
+        .trial-submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .trial-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .trial-submit-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .trial-terms {
+            text-align: center;
+            font-size: 12px;
+            color: var(--elegant-gray);
+            margin-top: 16px;
+        }
+
+        .trial-terms a {
+            color: var(--primary);
+        }
+    </style>
+
     <script>
         // Initialize Lucide icons
         lucide.createIcons();
@@ -1460,6 +1972,78 @@
                     item.classList.add('active');
                 }
             });
+        });
+
+        // ========== Trial Modal Functions ==========
+        function openTrialModal() {
+            document.getElementById('trialModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            lucide.createIcons();
+        }
+
+        function closeTrialModal() {
+            document.getElementById('trialModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Fechar ao clicar fora
+        document.getElementById('trialModal').addEventListener('click', (e) => {
+            if (e.target.id === 'trialModal') {
+                closeTrialModal();
+            }
+        });
+
+        // Trial form submission
+        document.getElementById('trialForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const nome = document.getElementById('trialNome').value.trim();
+            const email = document.getElementById('trialEmail').value.trim();
+            const negocio = document.getElementById('trialNegocio').value;
+
+            // Criar conta de teste
+            const trialData = {
+                email: email,
+                nome: nome,
+                plano: 'trial',
+                negocio: negocio,
+                trialStartDate: new Date().toISOString(),
+                trialProductLimit: 3,
+                createdAt: new Date().toISOString()
+            };
+
+            // Salvar auth como trial
+            localStorage.setItem('lucrocerto_auth', JSON.stringify(trialData));
+            localStorage.setItem('lucrocerto_logged', 'true');
+            localStorage.setItem('lucrocerto_trial', 'true');
+
+            // Configurar estado inicial do app
+            const appState = {
+                user: {
+                    name: nome,
+                    email: email,
+                    businessType: negocio,
+                    plan: 'trial'
+                },
+                products: [],
+                clients: [],
+                sales: []
+            };
+            localStorage.setItem('lucrocerto_appState', JSON.stringify(appState));
+
+            // Salvar como lead também
+            const leads = JSON.parse(localStorage.getItem('lucrocerto_leads') || '[]');
+            leads.push({
+                nome: nome,
+                email: email,
+                negocio: negocio,
+                dataCaptura: new Date().toISOString(),
+                origem: 'trial_signup'
+            });
+            localStorage.setItem('lucrocerto_leads', JSON.stringify(leads));
+
+            // Redirecionar para o app
+            window.location.href = 'index.html';
         });
 
         // ========== Lead Capture Popup ==========

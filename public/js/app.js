@@ -1419,8 +1419,22 @@ const LucroCertoApp = (function() {
                 if (editingProductId) {
                     updatedProducts = state.products.map(p => p.id === editingProductId ? productData : p);
                 } else {
+                    // Verificar limite de teste grátis
+                    const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
+                    const TRIAL_PRODUCT_LIMIT = 3;
+                    
+                    if (isTrial && state.products.length >= TRIAL_PRODUCT_LIMIT) {
+                        showTrialLimitModal();
+                        return;
+                    }
+                    
                     updatedProducts = [...state.products, productData];
                     AchievementSystem.checkAndAward('primeiro_produto');
+                    
+                    // Se for trial e chegou no limite, mostrar aviso
+                    if (isTrial && updatedProducts.length >= TRIAL_PRODUCT_LIMIT) {
+                        setTimeout(() => showTrialLimitReachedBanner(), 500);
+                    }
                 }
 
                 StateManager.setState({ 
@@ -3727,6 +3741,282 @@ const LucroCertoApp = (function() {
         UIManager.updateNav();
         bindEvents();
         AchievementSystem.checkAndAward('primeiro_acesso');
+        
+        // Inicializar Trial Banner se estiver em teste
+        initTrialMode();
+    }
+
+    //==================================
+    // 7. TRIAL MODE FUNCTIONS
+    //==================================
+    function initTrialMode() {
+        const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
+        if (!isTrial) return;
+        
+        // Adicionar banner de trial no topo
+        const trialBanner = document.createElement('div');
+        trialBanner.id = 'trial-banner';
+        trialBanner.innerHTML = `
+            <div class="trial-banner-content">
+                <span><i data-lucide="sparkles"></i> <strong>Modo Teste Grátis</strong> - Você pode cadastrar até 3 produtos</span>
+                <a href="planos.html" class="trial-upgrade-btn">Fazer Upgrade</a>
+            </div>
+        `;
+        trialBanner.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 10px 20px;
+            z-index: 9999;
+            font-size: 13px;
+        `;
+        
+        const bannerContent = trialBanner.querySelector('.trial-banner-content');
+        bannerContent.style.cssText = `
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        `;
+        
+        const upgradeBtn = trialBanner.querySelector('.trial-upgrade-btn');
+        upgradeBtn.style.cssText = `
+            background: white;
+            color: #667eea;
+            padding: 6px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 12px;
+        `;
+        
+        document.body.prepend(trialBanner);
+        document.body.style.paddingTop = '50px';
+        
+        setTimeout(() => lucide.createIcons({ nodes: [trialBanner] }), 100);
+        
+        // Mostrar contador de produtos no banner
+        updateTrialProductCounter();
+    }
+    
+    function updateTrialProductCounter() {
+        const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
+        if (!isTrial) return;
+        
+        const state = StateManager.getState();
+        const productCount = state.products ? state.products.length : 0;
+        const banner = document.getElementById('trial-banner');
+        
+        if (banner) {
+            const span = banner.querySelector('span');
+            if (span) {
+                span.innerHTML = `<i data-lucide="sparkles"></i> <strong>Modo Teste Grátis</strong> - ${productCount}/3 produtos cadastrados`;
+                lucide.createIcons({ nodes: [banner] });
+            }
+        }
+    }
+    
+    // Sobrescrever o subscribe para atualizar contador
+    const originalSubscribe = StateManager.notifySubscribers.bind(StateManager);
+    StateManager.notifySubscribers = function() {
+        originalSubscribe();
+        updateTrialProductCounter();
+    };
+    
+    function showTrialLimitModal() {
+        // Remover modal existente se houver
+        const existingModal = document.getElementById('trial-limit-modal');
+        if (existingModal) existingModal.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'trial-limit-modal';
+        modal.innerHTML = `
+            <div class="trial-modal-backdrop" onclick="closeTrialLimitModal()"></div>
+            <div class="trial-modal-content">
+                <div class="trial-modal-icon">🚀</div>
+                <h2>Você está arrasando!</h2>
+                <p>Você atingiu o limite de <strong>3 produtos</strong> do teste grátis.</p>
+                <p style="color: #666; font-size: 14px; margin-bottom: 24px;">
+                    Para cadastrar produtos ilimitados e ter acesso a todas as funcionalidades premium, assine um de nossos planos!
+                </p>
+                <div class="trial-modal-benefits">
+                    <div class="benefit"><i data-lucide="check-circle"></i> Produtos ilimitados</div>
+                    <div class="benefit"><i data-lucide="check-circle"></i> Catálogo online profissional</div>
+                    <div class="benefit"><i data-lucide="check-circle"></i> Relatórios avançados</div>
+                    <div class="benefit"><i data-lucide="check-circle"></i> Suporte prioritário</div>
+                </div>
+                <div class="trial-modal-buttons">
+                    <a href="planos.html" class="btn-upgrade">Ver Planos</a>
+                    <button onclick="closeTrialLimitModal()" class="btn-later">Depois</button>
+                </div>
+            </div>
+        `;
+        
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        `;
+        
+        const style = document.createElement('style');
+        style.textContent = `
+            #trial-limit-modal .trial-modal-backdrop {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0,0,0,0.6);
+                backdrop-filter: blur(5px);
+            }
+            #trial-limit-modal .trial-modal-content {
+                position: relative;
+                background: white;
+                border-radius: 24px;
+                padding: 40px;
+                max-width: 420px;
+                width: 100%;
+                text-align: center;
+                animation: modalPop 0.3s ease;
+            }
+            @keyframes modalPop {
+                from { opacity: 0; transform: scale(0.9) translateY(20px); }
+                to { opacity: 1; transform: scale(1) translateY(0); }
+            }
+            #trial-limit-modal .trial-modal-icon {
+                font-size: 60px;
+                margin-bottom: 16px;
+            }
+            #trial-limit-modal h2 {
+                font-size: 24px;
+                font-weight: 700;
+                color: #1a1a2e;
+                margin-bottom: 12px;
+            }
+            #trial-limit-modal p {
+                color: #37474F;
+                margin-bottom: 8px;
+            }
+            #trial-limit-modal .trial-modal-benefits {
+                background: #f8f8fc;
+                border-radius: 12px;
+                padding: 16px;
+                margin-bottom: 24px;
+                text-align: left;
+            }
+            #trial-limit-modal .benefit {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-size: 14px;
+                color: #37474F;
+                padding: 8px 0;
+            }
+            #trial-limit-modal .benefit svg {
+                width: 18px;
+                height: 18px;
+                color: #4CAF50;
+            }
+            #trial-limit-modal .trial-modal-buttons {
+                display: flex;
+                gap: 12px;
+            }
+            #trial-limit-modal .btn-upgrade {
+                flex: 1;
+                padding: 14px 24px;
+                background: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+                color: white;
+                border: none;
+                border-radius: 12px;
+                font-weight: 600;
+                font-size: 15px;
+                text-decoration: none;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            #trial-limit-modal .btn-upgrade:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 20px rgba(233, 30, 99, 0.3);
+            }
+            #trial-limit-modal .btn-later {
+                padding: 14px 24px;
+                background: #f4f6f8;
+                color: #607D8B;
+                border: none;
+                border-radius: 12px;
+                font-weight: 500;
+                cursor: pointer;
+            }
+        `;
+        
+        document.head.appendChild(style);
+        document.body.appendChild(modal);
+        
+        setTimeout(() => lucide.createIcons({ nodes: [modal] }), 100);
+    }
+    
+    function closeTrialLimitModal() {
+        const modal = document.getElementById('trial-limit-modal');
+        if (modal) modal.remove();
+    }
+    
+    // Tornar função global
+    window.closeTrialLimitModal = closeTrialLimitModal;
+    
+    function showTrialLimitReachedBanner() {
+        const existingBanner = document.getElementById('trial-limit-reached');
+        if (existingBanner) return;
+        
+        const banner = document.createElement('div');
+        banner.id = 'trial-limit-reached';
+        banner.innerHTML = `
+            <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <span>🎉 <strong>Parabéns!</strong> Você cadastrou 3 produtos! Para continuar, faça upgrade do seu plano.</span>
+                <a href="planos.html" style="background: white; color: #FF9800; padding: 8px 20px; border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 13px;">Ver Planos</a>
+            </div>
+        `;
+        banner.style.cssText = `
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+            padding: 12px 20px;
+            font-size: 14px;
+            position: fixed;
+            bottom: 80px;
+            left: 20px;
+            right: 20px;
+            border-radius: 12px;
+            z-index: 9998;
+            box-shadow: 0 4px 20px rgba(255, 152, 0, 0.3);
+            animation: slideUp 0.3s ease;
+        `;
+        
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUp {
+                from { opacity: 0; transform: translateY(20px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+        `;
+        document.head.appendChild(style);
+        document.body.appendChild(banner);
+        
+        // Auto-remover após 10 segundos
+        setTimeout(() => {
+            if (banner.parentNode) banner.remove();
+        }, 10000);
     }
 
     return { init };
