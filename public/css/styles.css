@@ -151,6 +151,39 @@ body {
     left: 0;
 }
 
+/* DESKTOP: Menu sempre visível */
+@media (min-width: 1024px) {
+    .hamburger-btn {
+        display: none;
+    }
+    
+    .app-header {
+        margin-left: 280px;
+    }
+    
+    .menu-overlay {
+        display: none !important;
+    }
+    
+    .side-menu {
+        left: 0;
+        top: 0;
+        box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+    }
+    
+    .close-menu-btn {
+        display: none;
+    }
+    
+    #main-content {
+        margin-left: 280px;
+    }
+    
+    .bottom-nav {
+        margin-left: 280px;
+    }
+}
+
 .menu-header {
     background: var(--primary-gradient);
     padding: 20px 16px;
@@ -2535,3 +2568,316 @@ input[type="range"]::-webkit-slider-thumb {
     padding: 8px 12px;
     font-size: 13px;
 }
+
+/* ========== RELATÓRIOS ========== */
+.report-filters {
+    padding: 12px;
+    margin-bottom: 20px;
+}
+
+.filter-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--light-gray);
+    background: white;
+    border-radius: 20px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.report-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.report-card {
+    background: white;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-soft);
+}
+
+.report-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.report-icon svg {
+    width: 22px;
+    height: 22px;
+    color: white;
+}
+
+.report-card.revenue .report-icon { background: linear-gradient(135deg, #4CAF50, #81C784); }
+.report-card.sales .report-icon { background: linear-gradient(135deg, #2196F3, #64B5F6); }
+.report-card.expenses .report-icon { background: linear-gradient(135deg, #FF5722, #FF8A65); }
+.report-card.profit .report-icon { background: linear-gradient(135deg, #E91E63, #F06292); }
+
+.report-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.report-label {
+    font-size: 12px;
+    color: var(--elegant-gray);
+}
+
+.report-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--dark-gray);
+}
+
+.chart-container {
+    height: 200px;
+    margin-top: 16px;
+}
+
+.top-products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.top-product-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--light-gray);
+    border-radius: 12px;
+}
+
+.top-rank {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.top-product-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.top-product-name {
+    font-weight: 600;
+    color: var(--dark-gray);
+}
+
+.top-product-stats {
+    font-size: 13px;
+    color: var(--elegant-gray);
+}
+
+.financial-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    background: var(--light-gray);
+    border-radius: 10px;
+}
+
+.summary-row.total {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.summary-row.total span {
+    color: white;
+    font-weight: 600;
+}
+
+.summary-row .positive {
+    color: #4CAF50;
+    font-weight: 600;
+}
+
+.summary-row .negative {
+    color: #FF5722;
+    font-weight: 600;
+}
+
+.indicators-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.indicator {
+    background: var(--light-gray);
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.indicator-label {
+    display: block;
+    font-size: 12px;
+    color: var(--elegant-gray);
+    margin-bottom: 4px;
+}
+
+.indicator-value {
+    display: block;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+/* ========== MEU CATÁLOGO ========== */
+.catalog-preview-card {
+    overflow: hidden;
+    padding: 0;
+}
+
+.catalog-preview-header {
+    background: var(--primary-gradient);
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.preview-logo {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.preview-logo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.preview-name {
+    color: white;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.catalog-preview-actions {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.catalog-link-box {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.catalog-link-box .form-input {
+    flex: 1;
+    font-size: 13px;
+}
+
+.share-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.btn-whatsapp {
+    background: #25D366;
+    color: white;
+    border: none;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.btn-whatsapp:hover {
+    background: #1da851;
+}
+
+.logo-upload-area {
+    width: 100%;
+    height: 120px;
+    border: 2px dashed var(--light-gray);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    color: var(--elegant-gray);
+    font-size: 14px;
+}
+
+.logo-upload-area:hover {
+    border-color: var(--primary);
+    background: rgba(233, 30, 99, 0.05);
+}
+
+.tip-card {
+    background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+    border: none;
+}
+
+.tip-card h3 {
+    color: #F57C00;
+}
+
+.tips-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tips-list li {
+    padding: 8px 0;
+    color: var(--dark-gray);
+    font-size: 14px;
+}
+

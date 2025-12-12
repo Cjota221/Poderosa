@@ -58,7 +58,7 @@ const LucroCertoApp = (function() {
     // 3. UI RENDERER & ROUTER
     //==================================
     const UIManager = {
-        pages: ['dashboard', 'despesas', 'produtos', 'add-edit-product', 'precificar', 'clientes', 'vendas', 'nova-venda', 'financeiro', 'metas', 'relatorios', 'configuracoes'],
+        pages: ['dashboard', 'despesas', 'produtos', 'add-edit-product', 'precificar', 'clientes', 'vendas', 'nova-venda', 'financeiro', 'metas', 'relatorios', 'configuracoes', 'meu-catalogo'],
         
         // Menu completo com todas as páginas na ordem do fluxo de trabalho
         menuItems: [
@@ -71,11 +71,12 @@ const LucroCertoApp = (function() {
             { section: 'Vendas & Clientes' },
             { id: 'clientes', icon: 'users', label: 'Clientes' },
             { id: 'vendas', icon: 'shopping-cart', label: 'Vendas' },
+            { id: 'meu-catalogo', icon: 'store', label: 'Meu Catálogo Digital' },
             { divider: true },
             { section: 'Financeiro' },
-            { id: 'financeiro', icon: 'wallet', label: 'Controle Financeiro' },
-            { id: 'metas', icon: 'target', label: 'Metas' },
+            { id: 'financeiro', icon: 'wallet', label: 'Contas a Pagar' },
             { id: 'relatorios', icon: 'bar-chart-3', label: 'Relatórios' },
+            { id: 'metas', icon: 'target', label: 'Metas' },
             { divider: true },
             { section: 'Sistema' },
             { id: 'configuracoes', icon: 'settings', label: 'Configurações' },
@@ -103,13 +104,13 @@ const LucroCertoApp = (function() {
             const menuUserInfo = document.getElementById('menu-user-info');
             const { user } = StateManager.getState();
             
-            // User info no header do menu
-            const photoSrc = user.profilePhoto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiI+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSI0Ii8+PHBhdGggZD0iTTIwIDIxdi0yYTQgNCAwIDAgMC00LTRIOGE0IDQgMCAwIDAtNCA0djIiLz48L3N2Zz4=';
+            // User info no header do menu - prioriza catalogLogo
+            const photoSrc = user.catalogLogo || user.profilePhoto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiI+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSI0Ii8+PHBhdGggZD0iTTIwIDIxdi0yYTQgNCAwIDAgMC00LTRIOGE0IDQgMCAwIDAtNCA0djIiLz48L3N2Zz4=';
             
             menuUserInfo.innerHTML = `
                 <img src="${photoSrc}" alt="Foto" class="menu-user-photo">
-                <span class="menu-user-name">${user.name || 'Empreendedora'}</span>
-                <span class="menu-user-business">${user.businessName || 'Meu Negócio'}</span>
+                <span class="menu-user-name">${user.businessName || user.name || 'Meu Negócio'}</span>
+                <span class="menu-user-business">${user.name || 'Empreendedora'}</span>
             `;
             
             // Lista de itens do menu
@@ -140,14 +141,14 @@ const LucroCertoApp = (function() {
         updateSideMenu() {
             const { currentPage, user } = StateManager.getState();
             
-            // Atualiza info do usuário
+            // Atualiza info do usuário - prioriza catalogLogo
             const menuUserInfo = document.getElementById('menu-user-info');
             if (menuUserInfo && user) {
-                const photoSrc = user.profilePhoto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiI+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSI0Ii8+PHBhdGggZD0iTTIwIDIxdi0yYTQgNCAwIDAgMC00LTRIOGE0IDQgMCAwIDAtNCA0djIiLz48L3N2Zz4=';
+                const photoSrc = user.catalogLogo || user.profilePhoto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiI+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSI0Ii8+PHBhdGggZD0iTTIwIDIxdi0yYTQgNCAwIDAgMC00LTRIOGE0IDQgMCAwIDAtNCA0djIiLz48L3N2Zz4=';
                 menuUserInfo.innerHTML = `
                     <img src="${photoSrc}" alt="Foto" class="menu-user-photo">
-                    <span class="menu-user-name">${user.name || 'Empreendedora'}</span>
-                    <span class="menu-user-business">${user.businessName || 'Meu Negócio'}</span>
+                    <span class="menu-user-name">${user.businessName || user.name || 'Meu Negócio'}</span>
+                    <span class="menu-user-business">${user.name || 'Empreendedora'}</span>
                 `;
             }
             
@@ -160,6 +161,9 @@ const LucroCertoApp = (function() {
         toggleMenu(show) {
             const sideMenu = document.getElementById('side-menu');
             const overlay = document.getElementById('menu-overlay');
+            
+            // No desktop (>=1024px), não faz nada
+            if (window.innerWidth >= 1024) return;
             
             if (show === undefined) {
                 show = !sideMenu.classList.contains('active');
@@ -213,12 +217,13 @@ const LucroCertoApp = (function() {
                 despesas: () => { container.innerHTML = this.getDespesasHTML(); this.bindDespesasEvents(); },
                 precificar: () => { container.innerHTML = this.getPrecificarHTML(); this.bindPrecificarEvents(); },
                 metas: () => { container.innerHTML = this.getMetasHTML(); },
-                relatorios: () => { container.innerHTML = this.getRelatoriosHTML(); },
+                relatorios: () => { container.innerHTML = this.getRelatoriosHTML(); this.bindRelatoriosEvents(); },
                 configuracoes: () => { container.innerHTML = this.getConfiguracoesHTML(); this.bindConfiguracoesEvents(); },
                 clientes: () => { container.innerHTML = this.getClientesHTML(); this.bindClientesEvents(); },
                 vendas: () => { container.innerHTML = this.getVendasHTML(); this.bindVendasEvents(); },
                 'nova-venda': () => { container.innerHTML = this.getNovaVendaHTML(); this.bindNovaVendaEvents(); },
                 financeiro: () => { container.innerHTML = this.getFinanceiroHTML(); this.bindFinanceiroEvents(); },
+                'meu-catalogo': () => { container.innerHTML = this.getMeuCatalogoHTML(); this.bindMeuCatalogoEvents(); },
             };
 
             if (pageRenderers[pageId]) {
@@ -1501,7 +1506,399 @@ const LucroCertoApp = (function() {
             `;
         },
         
-        getRelatoriosHTML() { return `<h2>Relatórios Visuais</h2> <p>Em breve, gráficos incríveis sobre seu negócio!</p>`; },
+        getRelatoriosHTML() { 
+            const { sales, products, costs, bills } = StateManager.getState();
+            
+            // Cálculos para relatórios
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            // Vendas do mês
+            const monthSales = (sales || []).filter(s => {
+                const d = new Date(s.date);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+            const totalRevenue = monthSales.reduce((acc, s) => acc + s.total, 0);
+            const totalSalesCount = monthSales.length;
+            
+            // Vendas por semana (últimas 4 semanas)
+            const weeklyData = [0, 0, 0, 0];
+            const oneWeek = 7 * 24 * 60 * 60 * 1000;
+            monthSales.forEach(s => {
+                const daysAgo = Math.floor((now - new Date(s.date)) / (24 * 60 * 60 * 1000));
+                const weekIndex = Math.min(3, Math.floor(daysAgo / 7));
+                weeklyData[3 - weekIndex] += s.total;
+            });
+            
+            // Produtos mais vendidos
+            const productSales = {};
+            monthSales.forEach(s => {
+                (s.items || []).forEach(item => {
+                    if (!productSales[item.productId]) {
+                        productSales[item.productId] = { name: item.productName, qty: 0, revenue: 0 };
+                    }
+                    productSales[item.productId].qty += item.quantity;
+                    productSales[item.productId].revenue += item.subtotal;
+                });
+            });
+            const topProducts = Object.values(productSales).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
+            
+            // Custos
+            const fixedCosts = (costs?.fixed || []).reduce((acc, c) => acc + c.value, 0);
+            const billsTotal = (bills || []).filter(b => !b.paid).reduce((acc, b) => acc + b.value, 0);
+            
+            // Lucro estimado
+            const estimatedProfit = totalRevenue - fixedCosts;
+            
+            return `
+                <h2>📊 Relatórios</h2>
+                <p class="sub-header">Acompanhe o desempenho do seu negócio</p>
+                
+                <!-- Filtro de Período -->
+                <div class="report-filters card">
+                    <div class="filter-row">
+                        <button class="filter-btn active" data-period="month">Este Mês</button>
+                        <button class="filter-btn" data-period="week">Esta Semana</button>
+                        <button class="filter-btn" data-period="year">Este Ano</button>
+                    </div>
+                </div>
+                
+                <!-- Cards Resumo -->
+                <div class="report-summary">
+                    <div class="report-card revenue">
+                        <div class="report-icon"><i data-lucide="trending-up"></i></div>
+                        <div class="report-info">
+                            <span class="report-label">Faturamento</span>
+                            <span class="report-value">R$ ${totalRevenue.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="report-card sales">
+                        <div class="report-icon"><i data-lucide="shopping-bag"></i></div>
+                        <div class="report-info">
+                            <span class="report-label">Vendas</span>
+                            <span class="report-value">${totalSalesCount}</span>
+                        </div>
+                    </div>
+                    <div class="report-card expenses">
+                        <div class="report-icon"><i data-lucide="receipt"></i></div>
+                        <div class="report-info">
+                            <span class="report-label">Despesas Fixas</span>
+                            <span class="report-value">R$ ${fixedCosts.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    <div class="report-card profit">
+                        <div class="report-icon"><i data-lucide="piggy-bank"></i></div>
+                        <div class="report-info">
+                            <span class="report-label">Lucro Estimado</span>
+                            <span class="report-value">R$ ${estimatedProfit.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gráfico de Vendas -->
+                <div class="card">
+                    <h3><i data-lucide="bar-chart-3"></i> Vendas por Semana</h3>
+                    <div class="chart-container">
+                        <canvas id="sales-chart"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Produtos Mais Vendidos -->
+                <div class="card">
+                    <h3><i data-lucide="trophy"></i> Produtos Mais Vendidos</h3>
+                    ${topProducts.length > 0 ? `
+                        <div class="top-products-list">
+                            ${topProducts.map((p, i) => `
+                                <div class="top-product-item">
+                                    <span class="top-rank">${i + 1}º</span>
+                                    <div class="top-product-info">
+                                        <span class="top-product-name">${p.name}</span>
+                                        <span class="top-product-stats">${p.qty} vendidos • R$ ${p.revenue.toFixed(2)}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <p class="empty-state">Nenhuma venda registrada ainda. Comece a vender para ver seus produtos campeões! 🏆</p>
+                    `}
+                </div>
+                
+                <!-- Resumo Financeiro -->
+                <div class="card">
+                    <h3><i data-lucide="wallet"></i> Resumo Financeiro do Mês</h3>
+                    <div class="financial-summary">
+                        <div class="summary-row">
+                            <span>💰 Entradas (Vendas)</span>
+                            <span class="positive">+ R$ ${totalRevenue.toFixed(2)}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>📋 Custos Fixos</span>
+                            <span class="negative">- R$ ${fixedCosts.toFixed(2)}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>📝 Contas a Pagar</span>
+                            <span class="negative">- R$ ${billsTotal.toFixed(2)}</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>📈 Resultado</span>
+                            <span class="${estimatedProfit >= 0 ? 'positive' : 'negative'}">${estimatedProfit >= 0 ? '+' : ''} R$ ${estimatedProfit.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Ticket Médio -->
+                <div class="card">
+                    <h3><i data-lucide="calculator"></i> Indicadores</h3>
+                    <div class="indicators-grid">
+                        <div class="indicator">
+                            <span class="indicator-label">Ticket Médio</span>
+                            <span class="indicator-value">R$ ${totalSalesCount > 0 ? (totalRevenue / totalSalesCount).toFixed(2) : '0.00'}</span>
+                        </div>
+                        <div class="indicator">
+                            <span class="indicator-label">Média Diária</span>
+                            <span class="indicator-value">R$ ${(totalRevenue / 30).toFixed(2)}</span>
+                        </div>
+                        <div class="indicator">
+                            <span class="indicator-label">Produtos Cadastrados</span>
+                            <span class="indicator-value">${(products || []).length}</span>
+                        </div>
+                        <div class="indicator">
+                            <span class="indicator-label">Meta do Mês</span>
+                            <span class="indicator-value">${Math.round((totalRevenue / (StateManager.getState().user.monthlyGoal || 1)) * 100)}%</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        },
+        
+        bindRelatoriosEvents() {
+            // Gráfico de vendas
+            const ctx = document.getElementById('sales-chart');
+            if (ctx) {
+                const { sales } = StateManager.getState();
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+                
+                const monthSales = (sales || []).filter(s => {
+                    const d = new Date(s.date);
+                    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+                });
+                
+                const weeklyData = [0, 0, 0, 0];
+                monthSales.forEach(s => {
+                    const daysAgo = Math.floor((now - new Date(s.date)) / (24 * 60 * 60 * 1000));
+                    const weekIndex = Math.min(3, Math.floor(daysAgo / 7));
+                    weeklyData[3 - weekIndex] += s.total;
+                });
+                
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'],
+                        datasets: [{
+                            label: 'Faturamento',
+                            data: weeklyData,
+                            backgroundColor: ['#F06292', '#E91E63', '#F06292', '#E91E63'],
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { callback: v => 'R$ ' + v } }
+                        }
+                    }
+                });
+            }
+            
+            // Filtros de período
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    // TODO: Filtrar por período selecionado
+                });
+            });
+        },
+        
+        // ========== PÁGINA MEU CATÁLOGO ==========
+        getMeuCatalogoHTML() {
+            const { user } = StateManager.getState();
+            const catalogUrl = `${window.location.origin}/catalogo.html`;
+            const catalogLogo = user.catalogLogo || '';
+            const catalogColor = user.catalogColor || 'pink';
+            
+            const colors = [
+                { id: 'pink', name: 'Rosa', color: '#E91E63' },
+                { id: 'blue', name: 'Azul', color: '#2196F3' },
+                { id: 'green', name: 'Verde', color: '#4CAF50' },
+                { id: 'purple', name: 'Roxo', color: '#9C27B0' },
+                { id: 'orange', name: 'Laranja', color: '#FF9800' },
+            ];
+            
+            return `
+                <h2>🏪 Meu Catálogo Digital</h2>
+                <p class="sub-header">Personalize e compartilhe seu catálogo com clientes</p>
+                
+                <!-- Preview do Catálogo -->
+                <div class="card catalog-preview-card">
+                    <div class="catalog-preview-header" style="background: ${colors.find(c => c.id === catalogColor)?.color || '#E91E63'}">
+                        <div class="preview-logo">
+                            ${catalogLogo 
+                                ? `<img src="${catalogLogo}" alt="Logo">`
+                                : `<i data-lucide="store" style="width: 40px; height: 40px; color: white;"></i>`
+                            }
+                        </div>
+                        <span class="preview-name">${user.businessName || 'Minha Loja'}</span>
+                    </div>
+                    <div class="catalog-preview-actions">
+                        <a href="${catalogUrl}" target="_blank" class="btn btn-primary">
+                            <i data-lucide="external-link"></i> Ver Catálogo
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Compartilhar -->
+                <div class="card">
+                    <h3><i data-lucide="share-2"></i> Compartilhar Catálogo</h3>
+                    <p style="margin-bottom: 16px; color: var(--elegant-gray);">Envie para suas clientes verem seus produtos e fazerem pedidos pelo WhatsApp!</p>
+                    
+                    <div class="catalog-link-box">
+                        <input type="text" value="${catalogUrl}" readonly id="catalog-link-input" class="form-input">
+                        <button class="btn btn-secondary" data-action="copy-catalog-link-page">
+                            <i data-lucide="copy"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="share-buttons">
+                        <button class="btn btn-whatsapp" data-action="share-catalog-whatsapp-page">
+                            <i data-lucide="message-circle"></i> Compartilhar no WhatsApp
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Personalização -->
+                <div class="card">
+                    <h3><i data-lucide="palette"></i> Personalização</h3>
+                    
+                    <div class="form-group">
+                        <label>Logomarca da Loja</label>
+                        <p style="font-size: 12px; color: var(--elegant-gray); margin-bottom: 8px;">
+                            Aparece no topo do seu catálogo digital
+                        </p>
+                        <div class="catalog-logo-upload">
+                            <input type="file" id="catalog-logo-input" accept="image/*" style="display: none;">
+                            <label for="catalog-logo-input" class="logo-upload-area" id="catalog-logo-preview">
+                                ${catalogLogo 
+                                    ? `<img src="${catalogLogo}" alt="Logo do catálogo" style="max-width: 100%; max-height: 100%; object-fit: contain;">`
+                                    : `<i data-lucide="image-plus" style="width: 32px; height: 32px; color: var(--elegant-gray);"></i>
+                                       <span>Clique para adicionar logo</span>`
+                                }
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label>Cor Principal do Catálogo</label>
+                        <p style="font-size: 12px; color: var(--elegant-gray); margin-bottom: 12px;">
+                            Escolha a cor que combina com sua marca
+                        </p>
+                        <div class="color-palette" id="catalog-color-palette">
+                            ${colors.map(c => `
+                                <button class="color-option ${c.id} ${catalogColor === c.id ? 'active' : ''}" 
+                                        data-color="${c.id}" 
+                                        title="${c.name}"
+                                        style="background: ${c.color};">
+                                    ${catalogColor === c.id ? '<i data-lucide="check"></i>' : ''}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dicas -->
+                <div class="card tip-card">
+                    <h3><i data-lucide="lightbulb"></i> Dicas para vender mais</h3>
+                    <ul class="tips-list">
+                        <li>📸 Coloque fotos de qualidade nos produtos</li>
+                        <li>💬 Descreva bem cada produto</li>
+                        <li>🏷️ Mantenha os preços atualizados</li>
+                        <li>📱 Compartilhe o link nos seus status</li>
+                        <li>👥 Envie para grupos de clientes</li>
+                    </ul>
+                </div>
+            `;
+        },
+        
+        bindMeuCatalogoEvents() {
+            // Upload de logo
+            const logoInput = document.getElementById('catalog-logo-input');
+            const logoPreview = document.getElementById('catalog-logo-preview');
+            
+            if (logoInput) {
+                logoInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            const logoData = event.target.result;
+                            const user = { ...StateManager.getState().user, catalogLogo: logoData };
+                            StateManager.setState({ user });
+                            logoPreview.innerHTML = `<img src="${logoData}" alt="Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;">`;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            
+            // Seleção de cor
+            const colorPalette = document.getElementById('catalog-color-palette');
+            if (colorPalette) {
+                colorPalette.addEventListener('click', (e) => {
+                    const colorBtn = e.target.closest('.color-option');
+                    if (colorBtn) {
+                        const color = colorBtn.dataset.color;
+                        const user = { ...StateManager.getState().user, catalogColor: color };
+                        StateManager.setState({ user });
+                        
+                        // Atualiza visual
+                        colorPalette.querySelectorAll('.color-option').forEach(btn => {
+                            btn.classList.remove('active');
+                            btn.innerHTML = '';
+                        });
+                        colorBtn.classList.add('active');
+                        colorBtn.innerHTML = '<i data-lucide="check"></i>';
+                        lucide.createIcons({ nodes: [colorBtn.querySelector('[data-lucide]')] });
+                        
+                        // Atualiza preview
+                        const previewHeader = document.querySelector('.catalog-preview-header');
+                        const colors = { pink: '#E91E63', blue: '#2196F3', green: '#4CAF50', purple: '#9C27B0', orange: '#FF9800' };
+                        if (previewHeader) {
+                            previewHeader.style.background = colors[color];
+                        }
+                    }
+                });
+            }
+            
+            // Copiar link
+            document.querySelector('[data-action="copy-catalog-link-page"]')?.addEventListener('click', () => {
+                const input = document.getElementById('catalog-link-input');
+                input.select();
+                document.execCommand('copy');
+                alert('Link copiado! 📋');
+            });
+            
+            // Compartilhar WhatsApp
+            document.querySelector('[data-action="share-catalog-whatsapp-page"]')?.addEventListener('click', () => {
+                const { user } = StateManager.getState();
+                const catalogUrl = `${window.location.origin}/catalogo.html`;
+                const msg = `Olá! 💖 Confira o catálogo da ${user.businessName || 'minha loja'}: ${catalogUrl}`;
+                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+            });
+        },
 
         // ========== PÁGINA DE CONFIGURAÇÕES ==========
         getConfiguracoesHTML() {
