@@ -1432,16 +1432,160 @@ const LucroCertoApp = (function() {
         },
 
         getDespesasHTML() {
-            const { costs, user } = StateManager.getState();
-            const fixedCostsHTML = costs.fixed.map((c, index) => `<div class="cost-list-item"><div class="cost-item-info"><span>${c.name}</span><strong>R$ ${c.value.toFixed(2)}</strong></div><button class="remove-btn" data-action="remove-fixed-cost" data-index="${index}"><i data-lucide="x-circle"></i></button></div>`).join('');
-            const variableCostsHTML = costs.variable.map((c, index) => `<div class="cost-list-item"><div class="cost-item-info"><span>${c.name}</span><div><strong>${c.value}${c.type === 'percentage' ? '%' : ' R$'}</strong><span class="cost-type-badge">${c.type === 'percentage' ? '%' : 'Fixo'}</span></div></div><button class="remove-btn" data-action="remove-variable-cost" data-index="${index}"><i data-lucide="x-circle"></i></button></div>`).join('');
+            const { costs, user, bills } = StateManager.getState();
+            
+            // Custos fixos manuais (cadastrados aqui)
+            const manualFixedCosts = costs.fixed || [];
+            
+            // Custos vindos do Financeiro (contas recorrentes marcadas como custo do negócio)
+            const billsAsFixedCosts = (bills || []).filter(b => b.recurring && b.isBusinessCost);
+            
+            // HTML dos custos manuais
+            const manualCostsHTML = manualFixedCosts.map((c, index) => `
+                <div class="cost-list-item">
+                    <div class="cost-item-info">
+                        <span>${c.name}</span>
+                        <strong>R$ ${c.value.toFixed(2)}</strong>
+                    </div>
+                    <button class="remove-btn" data-action="remove-fixed-cost" data-index="${index}">
+                        <i data-lucide="x-circle"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            // HTML dos custos vindos do Financeiro
+            const billsCostsHTML = billsAsFixedCosts.map(b => `
+                <div class="cost-list-item from-bills">
+                    <div class="cost-item-info">
+                        <span>${b.name} <span class="cost-badge auto">📊 Do Financeiro</span></span>
+                        <strong>R$ ${b.amount.toFixed(2)}</strong>
+                    </div>
+                    <button class="btn-link" data-action="navigate" data-route="financeiro" title="Gerenciar no Financeiro">
+                        <i data-lucide="external-link"></i>
+                    </button>
+                </div>
+            `).join('');
+            
+            // Total combinado
+            const manualTotal = manualFixedCosts.reduce((acc, c) => acc + c.value, 0);
+            const billsTotal = billsAsFixedCosts.reduce((acc, b) => acc + b.amount, 0);
+            const totalFixedCosts = manualTotal + billsTotal;
+            
+            const variableCostsHTML = (costs.variable || []).map((c, index) => `
+                <div class="cost-list-item">
+                    <div class="cost-item-info">
+                        <span>${c.name}</span>
+                        <div>
+                            <strong>${c.value}${c.type === 'percentage' ? '%' : ' R$'}</strong>
+                            <span class="cost-type-badge">${c.type === 'percentage' ? '%' : 'Fixo'}</span>
+                        </div>
+                    </div>
+                    <button class="remove-btn" data-action="remove-variable-cost" data-index="${index}">
+                        <i data-lucide="x-circle"></i>
+                    </button>
+                </div>
+            `).join('');
+            
             return `
                 <h2>Gestão de Despesas</h2>
                 <p class="sub-header">A base para uma precificação lucrativa começa aqui.</p>
-                <div class="card"><div class="card-header"><div class="card-icon" style="background: var(--success-gradient);"><i data-lucide="shopping-cart"></i></div><h3 class="card-title">Qual a sua meta de vendas mensal?</h3></div><p>Este número é essencial para calcularmos seus custos por cada produto vendido.</p><div class="form-group" style="margin-top: 1rem;"><label for="monthly-sales-goal">Itens a vender por mês</label><input type="number" id="monthly-sales-goal" class="form-input" placeholder="Ex: 100" value="${user.monthlySalesGoal}"></div></div>
-                <div class="card"><div class="card-header"><div class="card-icon"><i data-lucide="building"></i></div><h3 class="card-title">Custos Fixos Mensais</h3></div><div id="fixed-costs-list">${fixedCostsHTML}</div><p style="font-size:14px; text-align:right; margin-top:8px;">Total: <strong>R$ ${SmartPricing.getTotalMonthlyFixedCosts().toFixed(2)}</strong></p><form class="add-cost-form" id="add-fixed-cost-form"><div class="input-group"><input type="text" id="fixed-cost-name" class="form-input" placeholder="Nome da Despesa" required><input type="number" step="0.01" id="fixed-cost-value" class="form-input" placeholder="Valor (R$)" required></div><button type="submit" class="btn btn-secondary btn-full" style="margin-top:10px;">Adicionar Custo Fixo</button></form></div>
-                <div class="card"><div class="card-header"><div class="card-icon" style="background: var(--secondary-gradient);"><i data-lucide="trending-up"></i></div><h3 class="card-title">Custos Variáveis por Venda</h3></div><div id="variable-costs-list" style="margin-top: 1rem;">${variableCostsHTML}</div><form class="add-cost-form" id="add-variable-cost-form"><div class="input-group"><input type="text" id="variable-cost-name" class="form-input" placeholder="Nome da Despesa" required><input type="number" step="0.01" id="variable-cost-value" class="form-input" placeholder="Valor" required><select id="variable-cost-type" class="form-select" style="width: 80px;"><option value="percentage">%</option><option value="fixed">R$</option></select></div><button type="submit" class="btn btn-secondary btn-full" style="margin-top:10px;">Adicionar Custo Variável</button></form></div>
-                <div class="card"><div class="card-header"><div class="card-icon" style="background: var(--info);"><i data-lucide="truck"></i></div><h3 class="card-title">Custo com Frete da Compra</h3></div><p>Se você compra de fornecedores, insira o valor total do frete pago no mês.</p><div class="form-group" style="margin-top: 1rem;"><label for="monthly-shipping-cost">Custo total do frete mensal</label><input type="number" id="monthly-shipping-cost" class="form-input" placeholder="Ex: 150.00" value="${costs.shipping || ''}"></div></div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: var(--success-gradient);">
+                            <i data-lucide="shopping-cart"></i>
+                        </div>
+                        <h3 class="card-title">Qual a sua meta de vendas mensal?</h3>
+                    </div>
+                    <p>Este número é essencial para calcularmos seus custos por cada produto vendido.</p>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="monthly-sales-goal">Itens a vender por mês</label>
+                        <input type="number" id="monthly-sales-goal" class="form-input" placeholder="Ex: 100" value="${user.monthlySalesGoal || ''}">
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon"><i data-lucide="building"></i></div>
+                        <h3 class="card-title">Custos Fixos Mensais</h3>
+                    </div>
+                    
+                    ${billsAsFixedCosts.length > 0 ? `
+                        <div class="costs-section">
+                            <h4 style="font-size: 14px; color: var(--elegant-gray); margin-bottom: 8px;">
+                                📊 Vindos do Financeiro (automático)
+                            </h4>
+                            <div id="bills-costs-list">${billsCostsHTML}</div>
+                        </div>
+                    ` : ''}
+                    
+                    ${manualFixedCosts.length > 0 ? `
+                        <div class="costs-section" style="margin-top: ${billsAsFixedCosts.length > 0 ? '16px' : '0'};">
+                            ${billsAsFixedCosts.length > 0 ? `<h4 style="font-size: 14px; color: var(--elegant-gray); margin-bottom: 8px;">✏️ Adicionados manualmente</h4>` : ''}
+                            <div id="fixed-costs-list">${manualCostsHTML}</div>
+                        </div>
+                    ` : ''}
+                    
+                    ${billsAsFixedCosts.length === 0 && manualFixedCosts.length === 0 ? `
+                        <p style="color: var(--elegant-gray); padding: 12px; text-align: center;">
+                            Nenhum custo fixo cadastrado. Adicione abaixo ou cadastre no <a href="#" data-action="navigate" data-route="financeiro" style="color: var(--primary);">Financeiro</a>.
+                        </p>
+                    ` : ''}
+                    
+                    <p style="font-size:14px; text-align:right; margin-top:12px; padding-top: 12px; border-top: 1px solid #eee;">
+                        Total: <strong style="color: var(--primary);">R$ ${totalFixedCosts.toFixed(2)}</strong>
+                    </p>
+                    
+                    <form class="add-cost-form" id="add-fixed-cost-form" style="margin-top: 16px;">
+                        <p style="font-size: 13px; color: var(--elegant-gray); margin-bottom: 8px;">
+                            💡 Dica: Cadastre contas no <strong>Financeiro</strong> como "recorrente" para aparecer automaticamente aqui.
+                        </p>
+                        <div class="input-group">
+                            <input type="text" id="fixed-cost-name" class="form-input" placeholder="Nome da Despesa" required>
+                            <input type="number" step="0.01" id="fixed-cost-value" class="form-input" placeholder="Valor (R$)" required>
+                        </div>
+                        <button type="submit" class="btn btn-secondary btn-full" style="margin-top:10px;">
+                            Adicionar Custo Fixo Manual
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: var(--secondary-gradient);">
+                            <i data-lucide="trending-up"></i>
+                        </div>
+                        <h3 class="card-title">Custos Variáveis por Venda</h3>
+                    </div>
+                    <div id="variable-costs-list" style="margin-top: 1rem;">${variableCostsHTML}</div>
+                    <form class="add-cost-form" id="add-variable-cost-form">
+                        <div class="input-group">
+                            <input type="text" id="variable-cost-name" class="form-input" placeholder="Nome da Despesa" required>
+                            <input type="number" step="0.01" id="variable-cost-value" class="form-input" placeholder="Valor" required>
+                            <select id="variable-cost-type" class="form-select" style="width: 80px;">
+                                <option value="percentage">%</option>
+                                <option value="fixed">R$</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-secondary btn-full" style="margin-top:10px;">
+                            Adicionar Custo Variável
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: var(--info);">
+                            <i data-lucide="truck"></i>
+                        </div>
+                        <h3 class="card-title">Custo com Frete da Compra</h3>
+                    </div>
+                    <p>Se você compra de fornecedores, insira o valor total do frete pago no mês.</p>
+                    <div class="form-group" style="margin-top: 1rem;">
+                        <label for="monthly-shipping-cost">Custo total do frete mensal</label>
+                        <input type="number" id="monthly-shipping-cost" class="form-input" placeholder="Ex: 150.00" value="${costs.shipping || ''}">
+                    </div>
+                </div>
             `;
         },
         
@@ -3173,6 +3317,15 @@ const LucroCertoApp = (function() {
                                     <span>Conta recorrente (todo mês)</span>
                                 </label>
                             </div>
+                            <div class="form-group" id="bill-business-cost-group" style="display: none;">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="bill-business-cost" checked>
+                                    <span>📊 Incluir nos custos do negócio (precificação)</span>
+                                </label>
+                                <p style="font-size: 12px; color: var(--elegant-gray); margin-left: 30px; margin-top: 4px;">
+                                    Essa conta será considerada nas despesas para calcular o preço dos produtos
+                                </p>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button class="btn btn-secondary" data-action="close-bill-modal">Cancelar</button>
@@ -3241,7 +3394,17 @@ const LucroCertoApp = (function() {
                 document.getElementById('bill-amount').value = '';
                 document.getElementById('bill-due').value = '';
                 document.getElementById('bill-recurring').checked = false;
+                document.getElementById('bill-business-cost').checked = true;
+                document.getElementById('bill-business-cost-group').style.display = 'none';
                 lucide.createIcons({ nodes: [document.getElementById('bill-modal')] });
+            });
+            
+            // Mostrar opção de custo do negócio quando marcar recorrente
+            document.getElementById('bill-recurring')?.addEventListener('change', (e) => {
+                const businessCostGroup = document.getElementById('bill-business-cost-group');
+                if (businessCostGroup) {
+                    businessCostGroup.style.display = e.target.checked ? 'block' : 'none';
+                }
             });
             
             document.querySelectorAll('[data-action="close-bill-modal"]').forEach(btn => {
@@ -3256,6 +3419,7 @@ const LucroCertoApp = (function() {
                 const amount = parseFloat(document.getElementById('bill-amount').value);
                 const dueDate = document.getElementById('bill-due').value;
                 const recurring = document.getElementById('bill-recurring').checked;
+                const isBusinessCost = recurring && document.getElementById('bill-business-cost').checked;
                 
                 if (!name || !amount || !dueDate) {
                     alert('❌ Preencha todos os campos obrigatórios');
@@ -3268,6 +3432,7 @@ const LucroCertoApp = (function() {
                     amount,
                     dueDate,
                     recurring,
+                    isBusinessCost, // Nova propriedade para integração com despesas
                     paid: false,
                     createdAt: new Date().toISOString()
                 };
@@ -3429,9 +3594,17 @@ const LucroCertoApp = (function() {
     const EmotionalIA = { generateInsight: () => "Você está no controle. Continue brilhando! ✨" };
     const SmartPricing = {
         getTotalMonthlyFixedCosts() {
-            const { costs } = StateManager.getState();
-            if (!costs || !costs.fixed) return 0;
-            return costs.fixed.reduce((acc, cost) => acc + cost.value, 0);
+            const { costs, bills } = StateManager.getState();
+            
+            // Custos manuais
+            const manualCosts = (costs?.fixed || []).reduce((acc, cost) => acc + cost.value, 0);
+            
+            // Custos vindos do Financeiro (contas recorrentes marcadas como custo do negócio)
+            const billsCosts = (bills || [])
+                .filter(b => b.recurring && b.isBusinessCost)
+                .reduce((acc, b) => acc + b.amount, 0);
+            
+            return manualCosts + billsCosts;
         },
         getTotalUnitCost(productCost) {
             const { user, costs } = StateManager.getState();
