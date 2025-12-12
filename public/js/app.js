@@ -217,37 +217,107 @@ const LucroCertoApp = (function() {
         getAddEditProductHTML() {
             const { editingProductId, products } = StateManager.getState();
             const product = editingProductId ? products.find(p => p.id === editingProductId) : ProductManager.getNewProductTemplate();
-            const pageTitle = editingProductId ? 'Editar Produto' : 'Adicionar Novo Produto';
+            const pageTitle = editingProductId ? '✏️ Editar Produto' : '✨ Novo Produto';
 
             return `
-                <h2>${pageTitle}</h2>
+                <div style="display: flex; align-items: center; margin-bottom: 20px;">
+                    <button class="btn-icon" data-action="cancel-product-edit" style="margin-right: 12px;">
+                        <i data-lucide="arrow-left"></i>
+                    </button>
+                    <h2 style="margin: 0;">${pageTitle}</h2>
+                </div>
+
                 <form id="product-form">
+                    <!-- FOTO E NOME -->
                     <div class="card">
-                        <div style="display: flex; align-items: flex-start;">
-                            <div class="image-upload-placeholder"><i data-lucide="camera"></i><span style="font-size:12px; text-align:center;">Foto</span></div>
-                            <div class="form-group" style="flex-grow:1;"><label for="product-name">Nome do Produto</label><input type="text" id="product-name" class="form-input" required value="${product.name}"></div>
+                        <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+                            <div style="flex-shrink: 0;">
+                                <label class="image-upload-container">
+                                    <input type="file" id="product-image-input" accept="image/*" style="display: none;">
+                                    <div class="image-upload-preview" id="image-preview">
+                                        ${product.imageUrl ? 
+                                            `<img src="${product.imageUrl}" alt="Produto" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">` :
+                                            `<i data-lucide="camera" style="width: 32px; height: 32px; color: var(--elegant-gray);"></i>
+                                            <span style="font-size: 12px; color: var(--elegant-gray); margin-top: 8px;">Adicionar Foto</span>`
+                                        }
+                                    </div>
+                                </label>
+                                <p style="font-size: 11px; color: var(--elegant-gray); text-align: center; margin-top: 8px;">Toque para adicionar</p>
+                            </div>
+                            <div style="flex: 1; min-width: 200px;">
+                                <div class="form-group">
+                                    <label for="product-name">Nome do Produto <span class="required">*</span></label>
+                                    <input type="text" id="product-name" class="form-input" placeholder="Ex: Colar de Pérolas" required value="${product.name}">
+                                    <small>Digite o nome que aparecerá para suas clientes</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
+                    <!-- PRECIFICAÇÃO INTELIGENTE -->
                     <div class="card">
-                        <h3>Variações e Estoque</h3>
+                        <h3><i data-lucide="calculator" style="width: 20px; height: 20px; vertical-align: middle;"></i> Precificação Inteligente</h3>
                         <div class="form-group">
-                            <label>Tipo de Variação</label>
-                            <div style="display:flex; gap: 15px;">
-                                <label><input type="radio" name="variation-type" value="none" ${product.variationType === 'none' ? 'checked' : ''}> Sem Variação</label>
-                                <label><input type="radio" name="variation-type" value="simple" ${product.variationType === 'simple' ? 'checked' : ''}> Simples</label>
-                                <label><input type="radio" name="variation-type" value="combined" ${product.variationType === 'combined' ? 'checked' : ''}> Combinada</label>
+                            <label for="product-base-cost">💰 Quanto você pagou no produto? <span class="required">*</span></label>
+                            <input type="number" step="0.01" min="0" id="product-base-cost" class="form-input" placeholder="Ex: 25.50" value="${product.baseCost || ''}" required>
+                            <small>O custo que você teve para produzir ou comprar</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profit-margin">📈 Qual lucro você quer ter? (Margem %)</label>
+                            <input type="range" id="profit-margin" min="0" max="300" value="100" step="10" class="slider">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                <span style="font-size: 14px; color: var(--dark-gray);">Margem:</span>
+                                <span id="margin-display" style="font-size: 18px; font-weight: 600; color: var(--primary);">100%</span>
+                            </div>
+                        </div>
+
+                        <div id="pricing-calculator-live"></div>
+                    </div>
+
+                    <!-- VARIAÇÕES E ESTOQUE -->
+                    <div class="card">
+                        <h3><i data-lucide="package" style="width: 20px; height: 20px; vertical-align: middle;"></i> Variações e Estoque</h3>
+                        <div class="form-group">
+                            <label>Seu produto tem variações? (Ex: tamanhos, cores)</label>
+                            <div class="radio-group-cards">
+                                <label class="radio-card">
+                                    <input type="radio" name="variation-type" value="none" ${product.variationType === 'none' || !product.variationType ? 'checked' : ''}>
+                                    <div class="radio-card-content">
+                                        <i data-lucide="circle" style="width: 24px; height: 24px;"></i>
+                                        <strong>Sem Variação</strong>
+                                        <small>Produto único</small>
+                                    </div>
+                                </label>
+                                <label class="radio-card">
+                                    <input type="radio" name="variation-type" value="simple" ${product.variationType === 'simple' ? 'checked' : ''}>
+                                    <div class="radio-card-content">
+                                        <i data-lucide="tag" style="width: 24px; height: 24px;"></i>
+                                        <strong>Variação Simples</strong>
+                                        <small>Ex: P, M, G</small>
+                                    </div>
+                                </label>
+                                <label class="radio-card">
+                                    <input type="radio" name="variation-type" value="combined" ${product.variationType === 'combined' ? 'checked' : ''}>
+                                    <div class="radio-card-content">
+                                        <i data-lucide="git-branch" style="width: 24px; height: 24px;"></i>
+                                        <strong>Variação Combinada</strong>
+                                        <small>Ex: Cor + Tamanho</small>
+                                    </div>
+                                </label>
                             </div>
                         </div>
                         <div id="stock-management-area"></div>
                     </div>
-                    <div class="card">
-                         <h3>Precificação Inteligente</h3>
-                        <div class="form-group"><label for="product-base-cost">Quanto você pagou no produto (Custo)?</label><input type="number" step="0.01" id="product-base-cost" class="form-input" placeholder="Ex: 25.50" value="${product.baseCost || ''}"></div>
-                        <div id="pricing-calculator-live"></div>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                       <button type="button" class="btn btn-secondary" data-action="cancel-product-edit">Cancelar</button>
-                       <button type="submit" class="btn btn-primary btn-full">Salvar Produto</button>
+
+                    <!-- BOTÕES -->
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                       <button type="button" class="btn btn-secondary" data-action="cancel-product-edit">
+                           <i data-lucide="x" style="width: 18px; height: 18px;"></i> Cancelar
+                       </button>
+                       <button type="submit" class="btn btn-primary" style="flex: 1;">
+                           <i data-lucide="check" style="width: 18px; height: 18px;"></i> Salvar Produto
+                       </button>
                     </div>
                 </form>
             `;
@@ -258,6 +328,561 @@ const LucroCertoApp = (function() {
             if (!form) return;
             
             const { editingProductId, products } = StateManager.getState();
+            const currentProduct = editingProductId ? products.find(p => p.id === editingProductId) : null;
+            const baseCostInput = document.getElementById('product-base-cost');
+            const profitMarginInput = document.getElementById('profit-margin');
+            const variationRadios = form.querySelectorAll('input[name="variation-type"]');
+            
+            let variationOptions1 = [];
+            let variationOptions2 = [];
+            let currentImageBase64 = currentProduct?.imageUrl || '';
+
+            // ===== UPLOAD DE IMAGEM =====
+            const imageInput = document.getElementById('product-image-input');
+            const imagePreview = document.getElementById('image-preview');
+            
+            imageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    // Validação de tamanho (máx 2MB)
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('❌ Imagem muito grande! Escolha uma imagem menor que 2MB.');
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        currentImageBase64 = event.target.result;
+                        imagePreview.innerHTML = `<img src="${currentImageBase64}" alt="Produto" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // ===== PRECIFICAÇÃO COM SLIDER =====
+            const updatePricingUI = () => {
+                const productCost = parseFloat(baseCostInput.value) || 0;
+                const margin = parseInt(profitMarginInput.value) || 100;
+                const container = document.getElementById('pricing-calculator-live');
+                const marginDisplay = document.getElementById('margin-display');
+                
+                if (marginDisplay) {
+                    marginDisplay.textContent = margin + '%';
+                }
+
+                if (!container) return;
+
+                if (productCost === 0) {
+                    container.innerHTML = `
+                        <div style="background: var(--light-gray); padding: 16px; border-radius: 12px; text-align: center; margin-top: 16px;">
+                            <i data-lucide="info" style="width: 24px; height: 24px; color: var(--elegant-gray);"></i>
+                            <p style="color: var(--elegant-gray); margin-top: 8px;">Digite o custo do produto acima para ver o cálculo</p>
+                        </div>
+                    `;
+                    setTimeout(() => lucide.createIcons({ nodes: [container] }), 0);
+                    return;
+                }
+
+                const unitCosts = SmartPricing.getTotalUnitCost(productCost);
+                const { price, profit } = SmartPricing.calculate(productCost, margin);
+                const profitPercentageOfPrice = ((profit / price) * 100).toFixed(1);
+
+                container.innerHTML = `
+                    <div class="pricing-result-card">
+                        <div class="pricing-header">
+                            <i data-lucide="trending-up" style="width: 20px; height: 20px;"></i>
+                            <h4>Resultado da Precificação</h4>
+                        </div>
+                        
+                        <div class="pricing-breakdown">
+                            <div class="pricing-row">
+                                <span class="pricing-label">
+                                    <i data-lucide="shopping-bag" style="width: 16px; height: 16px;"></i>
+                                    Custo do Produto
+                                </span>
+                                <span class="pricing-value">R$ ${productCost.toFixed(2)}</span>
+                            </div>
+                            <div class="pricing-row">
+                                <span class="pricing-label">
+                                    <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
+                                    Custos Fixos/Unidade
+                                </span>
+                                <span class="pricing-value">R$ ${unitCosts.fixed.toFixed(2)}</span>
+                            </div>
+                            <div class="pricing-row">
+                                <span class="pricing-label">
+                                    <i data-lucide="package" style="width: 16px; height: 16px;"></i>
+                                    Custos Variáveis
+                                </span>
+                                <span class="pricing-value">R$ ${unitCosts.variable.toFixed(2)}</span>
+                            </div>
+                            <div class="pricing-row total">
+                                <span class="pricing-label">
+                                    <strong>Custo Total/Unidade</strong>
+                                </span>
+                                <span class="pricing-value"><strong style="color: var(--alert);">R$ ${unitCosts.total.toFixed(2)}</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="pricing-result">
+                            <div class="result-item" style="background: linear-gradient(135deg, var(--primary-light), var(--primary));">
+                                <i data-lucide="tag" style="width: 24px; height: 24px; color: white;"></i>
+                                <div>
+                                    <small style="color: rgba(255,255,255,0.9); font-size: 12px;">Preço de Venda</small>
+                                    <strong style="color: white; font-size: 24px;">R$ ${price.toFixed(2)}</strong>
+                                </div>
+                            </div>
+                            <div class="result-item" style="background: linear-gradient(135deg, var(--success-light), var(--success));">
+                                <i data-lucide="dollar-sign" style="width: 24px; height: 24px; color: white;"></i>
+                                <div>
+                                    <small style="color: rgba(255,255,255,0.9); font-size: 12px;">Lucro por Venda</small>
+                                    <strong style="color: white; font-size: 24px;">R$ ${profit.toFixed(2)}</strong>
+                                    <small style="color: rgba(255,255,255,0.9); font-size: 11px;">${profitPercentageOfPrice}% do preço</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--light-gray); padding: 12px; border-radius: 8px; margin-top: 12px;">
+                            <p style="font-size: 13px; color: var(--dark-gray); margin: 0;">
+                                <i data-lucide="lightbulb" style="width: 14px; height: 14px; color: var(--warning);"></i>
+                                <strong>Dica:</strong> Este é o preço sugerido. Você pode ajustar a margem acima conforme seu objetivo!
+                            </p>
+                        </div>
+                    </div>
+                `;
+                setTimeout(() => lucide.createIcons({ nodes: [container] }), 0);
+            };
+
+            // ===== GERENCIAMENTO DE VARIAÇÕES =====
+            const updateVariationUI = () => {
+                const selectedType = form.querySelector('input[name="variation-type"]:checked').value;
+                const container = document.getElementById('stock-management-area');
+                variationOptions1 = [];
+                variationOptions2 = [];
+
+                if (selectedType === 'none') {
+                    const currentStock = currentProduct && currentProduct.variationType === 'none' ? (currentProduct.stock.total || 0) : 0;
+                    container.innerHTML = `
+                        <div class="form-group" style="margin-top: 20px;">
+                            <label for="stock-total">
+                                <i data-lucide="package" style="width: 16px; height: 16px; vertical-align: middle;"></i>
+                                Quantidade em Estoque
+                            </label>
+                            <input type="number" class="form-input" id="stock-total" placeholder="Ex: 50" value="${currentStock}" min="0">
+                            <small>Quantas unidades você tem disponíveis?</small>
+                        </div>
+                    `;
+                } else if (selectedType === 'simple') {
+                    const currentVariation = currentProduct && currentProduct.variationType === 'simple' ? currentProduct.variations[0] : null;
+                    const variationName = currentVariation ? currentVariation.name : '';
+                    
+                    container.innerHTML = `
+                        <div style="background: var(--light-gray); padding: 20px; border-radius: 12px; margin-top: 20px;">
+                            <h4 style="margin: 0 0 16px 0; font-size: 16px; color: var(--dark-gray);">
+                                <i data-lucide="tag" style="width: 18px; height: 18px; vertical-align: middle;"></i>
+                                Configure sua Variação Simples
+                            </h4>
+                            
+                            <div class="form-group">
+                                <label for="variation-name-1">O que varia no seu produto?</label>
+                                <input type="text" class="form-input" id="variation-name-1" placeholder="Ex: Tamanho, Cor, Modelo..." value="${variationName}">
+                                <small>Exemplo: Tamanho, Cor, Sabor, Modelo</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="variation-options-input-1">
+                                    Quais são as opções? 
+                                    <span style="color: var(--primary); font-weight: 600;">(Digite e pressione Enter)</span>
+                                </label>
+                                <input type="text" class="form-input" id="variation-options-input-1" placeholder="Digite uma opção e pressione Enter. Ex: P, M, G">
+                                <small>💡 Dica: Digite uma opção por vez e pressione Enter, ou separe por vírgula (P, M, G)</small>
+                                <div class="variation-options-container" id="variation-options-tags-1"></div>
+                            </div>
+                            
+                            <div id="simple-stock-table"></div>
+                        </div>
+                    `;
+
+                    if (currentVariation && currentVariation.options) {
+                        variationOptions1 = [...currentVariation.options];
+                        renderVariationTags();
+                        renderStockTable();
+                    }
+
+                    const optionsInput = document.getElementById('variation-options-input-1');
+                    if (optionsInput) {
+                        optionsInput.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const value = optionsInput.value.trim();
+                                
+                                // Aceita valores separados por vírgula
+                                if (value.includes(',')) {
+                                    const options = value.split(',').map(opt => opt.trim()).filter(opt => opt);
+                                    options.forEach(opt => {
+                                        if (!variationOptions1.includes(opt)) {
+                                            variationOptions1.push(opt);
+                                        }
+                                    });
+                                } else if (value && !variationOptions1.includes(value)) {
+                                    variationOptions1.push(value);
+                                }
+                                
+                                renderVariationTags();
+                                renderStockTable();
+                                optionsInput.value = '';
+                            }
+                        });
+                    }
+                } else if (selectedType === 'combined') {
+                    const currentVar1 = currentProduct && currentProduct.variationType === 'combined' && currentProduct.variations[0] ? currentProduct.variations[0] : null;
+                    const currentVar2 = currentProduct && currentProduct.variationType === 'combined' && currentProduct.variations[1] ? currentProduct.variations[1] : null;
+                    
+                    container.innerHTML = `
+                        <div style="background: var(--light-gray); padding: 20px; border-radius: 12px; margin-top: 20px;">
+                            <h4 style="margin: 0 0 16px 0; font-size: 16px; color: var(--dark-gray);">
+                                <i data-lucide="git-branch" style="width: 18px; height: 18px; vertical-align: middle;"></i>
+                                Configure suas Variações Combinadas
+                            </h4>
+                            <p style="font-size: 13px; color: var(--elegant-gray); margin-bottom: 20px;">
+                                Exemplo: T-shirt que tem <strong>Cores</strong> (Preto, Branco, Nude) E <strong>Tamanhos</strong> (P, M, G)
+                            </p>
+                            
+                            <!-- VARIAÇÃO 1 -->
+                            <div class="form-group">
+                                <label for="variation-name-1"><strong>1ª Variação</strong> - O que varia?</label>
+                                <input type="text" class="form-input" id="variation-name-1" placeholder="Ex: Cor" value="${currentVar1 ? currentVar1.name : ''}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="variation-options-input-1">
+                                    Opções da 1ª Variação
+                                    <span style="color: var(--primary); font-weight: 600;">(Digite e pressione Enter)</span>
+                                </label>
+                                <input type="text" class="form-input" id="variation-options-input-1" placeholder="Ex: Preto, Branco, Nude">
+                                <small>💡 Digite uma por vez ou separe por vírgula</small>
+                                <div class="variation-options-container" id="variation-options-tags-1"></div>
+                            </div>
+                            
+                            <!-- VARIAÇÃO 2 -->
+                            <div class="form-group" style="margin-top: 24px; padding-top: 24px; border-top: 2px dashed #ddd;">
+                                <label for="variation-name-2"><strong>2ª Variação</strong> - O que mais varia?</label>
+                                <input type="text" class="form-input" id="variation-name-2" placeholder="Ex: Tamanho" value="${currentVar2 ? currentVar2.name : ''}">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="variation-options-input-2">
+                                    Opções da 2ª Variação
+                                    <span style="color: var(--primary); font-weight: 600;">(Digite e pressione Enter)</span>
+                                </label>
+                                <input type="text" class="form-input" id="variation-options-input-2" placeholder="Ex: P, M, G">
+                                <small>💡 Digite uma por vez ou separe por vírgula</small>
+                                <div class="variation-options-container" id="variation-options-tags-2"></div>
+                            </div>
+                            
+                            <div id="combined-stock-table"></div>
+                        </div>
+                    `;
+
+                    // Carrega opções existentes
+                    if (currentVar1 && currentVar1.options) {
+                        variationOptions1 = [...currentVar1.options];
+                        renderVariationTags(1);
+                    }
+                    if (currentVar2 && currentVar2.options) {
+                        variationOptions2 = [...currentVar2.options];
+                        renderVariationTags(2);
+                    }
+                    if (variationOptions1.length > 0 && variationOptions2.length > 0) {
+                        renderCombinedStockTable();
+                    }
+
+                    // Event listeners para variação 1
+                    const optionsInput1 = document.getElementById('variation-options-input-1');
+                    if (optionsInput1) {
+                        optionsInput1.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const value = optionsInput1.value.trim();
+                                
+                                if (value.includes(',')) {
+                                    const options = value.split(',').map(opt => opt.trim()).filter(opt => opt);
+                                    options.forEach(opt => {
+                                        if (!variationOptions1.includes(opt)) {
+                                            variationOptions1.push(opt);
+                                        }
+                                    });
+                                } else if (value && !variationOptions1.includes(value)) {
+                                    variationOptions1.push(value);
+                                }
+                                
+                                renderVariationTags(1);
+                                if (variationOptions1.length > 0 && variationOptions2.length > 0) {
+                                    renderCombinedStockTable();
+                                }
+                                optionsInput1.value = '';
+                            }
+                        });
+                    }
+
+                    // Event listeners para variação 2
+                    const optionsInput2 = document.getElementById('variation-options-input-2');
+                    if (optionsInput2) {
+                        optionsInput2.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                const value = optionsInput2.value.trim();
+                                
+                                if (value.includes(',')) {
+                                    const options = value.split(',').map(opt => opt.trim()).filter(opt => opt);
+                                    options.forEach(opt => {
+                                        if (!variationOptions2.includes(opt)) {
+                                            variationOptions2.push(opt);
+                                        }
+                                    });
+                                } else if (value && !variationOptions2.includes(value)) {
+                                    variationOptions2.push(value);
+                                }
+                                
+                                renderVariationTags(2);
+                                if (variationOptions1.length > 0 && variationOptions2.length > 0) {
+                                    renderCombinedStockTable();
+                                }
+                                optionsInput2.value = '';
+                            }
+                        });
+                    }
+                }
+            };
+
+            // Renderiza tags de variações
+            const renderVariationTags = (variationNumber = 1) => {
+                const tagsContainer = document.getElementById(`variation-options-tags-${variationNumber}`);
+                if (!tagsContainer) return;
+
+                const options = variationNumber === 1 ? variationOptions1 : variationOptions2;
+
+                tagsContainer.innerHTML = options.map((option, index) => `
+                    <div class="variation-tag">
+                        ${option}
+                        <button type="button" data-remove-option="${variationNumber}-${index}">
+                            <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                        </button>
+                    </div>
+                `).join('');
+
+                tagsContainer.querySelectorAll('[data-remove-option]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const [varNum, idx] = btn.dataset.removeOption.split('-');
+                        const varNumber = parseInt(varNum);
+                        const index = parseInt(idx);
+                        
+                        if (varNumber === 1) {
+                            variationOptions1.splice(index, 1);
+                            renderVariationTags(1);
+                            if (variationOptions2.length > 0) renderCombinedStockTable();
+                        } else {
+                            variationOptions2.splice(index, 1);
+                            renderVariationTags(2);
+                            if (variationOptions1.length > 0) renderCombinedStockTable();
+                        }
+                        renderStockTable();
+                    });
+                });
+
+                setTimeout(() => lucide.createIcons({ nodes: [tagsContainer] }), 0);
+            };
+
+            // Renderiza tabela de estoque simples
+            const renderStockTable = () => {
+                const tableContainer = document.getElementById('simple-stock-table');
+                if (!tableContainer || variationOptions1.length === 0) {
+                    if (tableContainer) tableContainer.innerHTML = '';
+                    return;
+                }
+
+                const currentStock = currentProduct && currentProduct.variationType === 'simple' ? currentProduct.stock : {};
+
+                tableContainer.innerHTML = `
+                    <div style="margin-top: 20px;">
+                        <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--dark-gray);">
+                            <i data-lucide="package" style="width: 16px; height: 16px; vertical-align: middle;"></i>
+                            Estoque de Cada Opção
+                        </h4>
+                        <table class="stock-table">
+                            <thead>
+                                <tr>
+                                    <th>Opção</th>
+                                    <th style="width: 120px;">Estoque</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${variationOptions1.map(option => `
+                                    <tr>
+                                        <td><strong>${option}</strong></td>
+                                        <td>
+                                            <input type="number" class="form-input" data-stock-option="${option}" value="${currentStock[option] || 0}" min="0" placeholder="0">
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                setTimeout(() => lucide.createIcons({ nodes: [tableContainer] }), 0);
+            };
+
+            // Renderiza tabela de estoque combinado
+            const renderCombinedStockTable = () => {
+                const tableContainer = document.getElementById('combined-stock-table');
+                if (!tableContainer || variationOptions1.length === 0 || variationOptions2.length === 0) {
+                    if (tableContainer) tableContainer.innerHTML = '';
+                    return;
+                }
+
+                const currentStock = currentProduct && currentProduct.variationType === 'combined' ? currentProduct.stock : {};
+
+                tableContainer.innerHTML = `
+                    <div style="margin-top: 20px;">
+                        <h4 style="font-size: 14px; margin-bottom: 12px; color: var(--dark-gray);">
+                            <i data-lucide="grid" style="width: 16px; height: 16px; vertical-align: middle;"></i>
+                            Estoque de Cada Combinação
+                        </h4>
+                        <div class="combined-stock-grid">
+                            ${variationOptions1.map(opt1 => `
+                                <div class="combined-stock-section">
+                                    <h5 class="combined-stock-title">${opt1}</h5>
+                                    ${variationOptions2.map(opt2 => {
+                                        const key = `${opt1}-${opt2}`;
+                                        return `
+                                            <div class="combined-stock-item">
+                                                <label>${opt2}</label>
+                                                <input type="number" class="form-input" data-combined-stock="${key}" value="${currentStock[key] || 0}" min="0" placeholder="0">
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                setTimeout(() => lucide.createIcons({ nodes: [tableContainer] }), 0);
+            };
+
+            // ===== SUBMIT DO FORMULÁRIO =====
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const productName = document.getElementById('product-name').value.trim();
+                const productCost = parseFloat(baseCostInput.value) || 0;
+                const profitMargin = parseInt(profitMarginInput.value) || 100;
+                const variationType = form.querySelector('input[name="variation-type"]:checked').value;
+
+                // Validações
+                if (!productName) {
+                    alert('❌ Por favor, digite o nome do produto.');
+                    return;
+                }
+
+                if (productCost <= 0) {
+                    alert('❌ Por favor, digite o custo do produto.');
+                    return;
+                }
+
+                // Monta objeto do produto
+                const finalPrice = SmartPricing.calculate(productCost, profitMargin).price;
+                
+                const productData = {
+                    id: editingProductId || `prod_${Date.now()}`,
+                    name: productName,
+                    baseCost: productCost,
+                    profitMargin: profitMargin,
+                    finalPrice: finalPrice,
+                    variationType: variationType,
+                    variations: [],
+                    stock: {},
+                    imageUrl: currentImageBase64
+                };
+
+                // Processa estoque baseado no tipo de variação
+                if (variationType === 'none') {
+                    const stockTotal = parseInt(document.getElementById('stock-total')?.value) || 0;
+                    productData.stock = { total: stockTotal };
+                } else if (variationType === 'simple') {
+                    const variationName = document.getElementById('variation-name-1')?.value.trim();
+                    
+                    if (!variationName) {
+                        alert('❌ Por favor, digite o nome da variação (ex: Tamanho, Cor).');
+                        return;
+                    }
+
+                    if (variationOptions1.length === 0) {
+                        alert('❌ Por favor, adicione pelo menos uma opção de variação.');
+                        return;
+                    }
+
+                    productData.variations = [{ name: variationName, options: variationOptions1 }];
+                    
+                    variationOptions1.forEach(option => {
+                        const stockInput = document.querySelector(`[data-stock-option="${option}"]`);
+                        productData.stock[option] = parseInt(stockInput?.value) || 0;
+                    });
+                } else if (variationType === 'combined') {
+                    const variationName1 = document.getElementById('variation-name-1')?.value.trim();
+                    const variationName2 = document.getElementById('variation-name-2')?.value.trim();
+                    
+                    if (!variationName1 || !variationName2) {
+                        alert('❌ Por favor, preencha os nomes das duas variações.');
+                        return;
+                    }
+
+                    if (variationOptions1.length === 0 || variationOptions2.length === 0) {
+                        alert('❌ Por favor, adicione opções para ambas as variações.');
+                        return;
+                    }
+
+                    productData.variations = [
+                        { name: variationName1, options: variationOptions1 },
+                        { name: variationName2, options: variationOptions2 }
+                    ];
+                    
+                    // Coleta estoque de cada combinação
+                    variationOptions1.forEach(opt1 => {
+                        variationOptions2.forEach(opt2 => {
+                            const key = `${opt1}-${opt2}`;
+                            const stockInput = document.querySelector(`[data-combined-stock="${key}"]`);
+                            productData.stock[key] = parseInt(stockInput?.value) || 0;
+                        });
+                    });
+                }
+
+                // Salva ou atualiza produto
+                const state = StateManager.getState();
+                let updatedProducts;
+
+                if (editingProductId) {
+                    updatedProducts = state.products.map(p => p.id === editingProductId ? productData : p);
+                } else {
+                    updatedProducts = [...state.products, productData];
+                    AchievementSystem.checkAndAward('primeiro_produto');
+                }
+
+                StateManager.setState({ 
+                    products: updatedProducts,
+                    currentPage: 'produtos',
+                    editingProductId: null
+                });
+            });
+
+            // Event listeners
+            baseCostInput.addEventListener('input', updatePricingUI);
+            profitMarginInput.addEventListener('input', updatePricingUI);
+            variationRadios.forEach(radio => radio.addEventListener('change', updateVariationUI));
+            
+            // Inicializa
+            updateVariationUI();
+            updatePricingUI();
+        },
             const currentProduct = editingProductId ? products.find(p => p.id === editingProductId) : null;
             const baseCostInput = document.getElementById('product-base-cost');
             const variationRadios = form.querySelectorAll('input[name="variation-type"]');
