@@ -89,7 +89,19 @@
         </div>
     </div>
 
+    <!-- Auth Check Script -->
+    <script>
+        // Verificar se o usuário está logado
+        (function() {
+            const isLogged = localStorage.getItem('lucrocerto_logged');
+            if (!isLogged || isLogged !== 'true') {
+                // Redirecionar para login se não estiver logado
+                window.location.href = 'login.html';
+            }
+        })();
+    </script>
+
     <!-- Application Script -->
-    <script src="./public/js/app.js?v=2.2"></script>
+    <script src="./public/js/app.js?v=2.3"></script>
 </body>
 </html>

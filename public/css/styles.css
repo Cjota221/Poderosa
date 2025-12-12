@@ -315,6 +315,20 @@ body {
     font-weight: 500;
 }
 
+.menu-item-logout {
+    margin-top: auto;
+    border-top: 1px solid var(--light-gray);
+}
+
+.menu-item-logout:hover {
+    background: #FFEBEE;
+}
+
+.menu-item-logout .menu-item-icon,
+.menu-item-logout .menu-item-label {
+    color: #C62828;
+}
+
 .menu-divider {
     height: 1px;
     background: var(--light-gray);

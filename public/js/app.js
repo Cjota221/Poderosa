@@ -80,6 +80,7 @@ const LucroCertoApp = (function() {
             { divider: true },
             { section: 'Sistema' },
             { id: 'configuracoes', icon: 'settings', label: 'Configurações' },
+            { id: 'logout', icon: 'log-out', label: 'Sair da Conta', isLogout: true },
         ],
         
         // Botões do menu inferior (acesso rápido)
@@ -120,6 +121,14 @@ const LucroCertoApp = (function() {
                 }
                 if (item.divider) {
                     return `<li class="menu-divider"></li>`;
+                }
+                if (item.isLogout) {
+                    return `
+                        <li class="menu-item menu-item-logout" data-action="logout">
+                            <span class="menu-item-icon"><i data-lucide="${item.icon}"></i></span>
+                            <span class="menu-item-label">${item.label}</span>
+                        </li>
+                    `;
                 }
                 return `
                     <li class="menu-item" data-action="navigate" data-route="${item.id}">
@@ -3663,6 +3672,12 @@ const LucroCertoApp = (function() {
                 },
                 'toggle-menu': () => UIManager.toggleMenu(),
                 'close-menu': () => UIManager.toggleMenu(false),
+                'logout': () => {
+                    if (confirm('Deseja realmente sair da sua conta?')) {
+                        localStorage.removeItem('lucrocerto_logged');
+                        window.location.href = 'login.html';
+                    }
+                },
                 'add-new-product': () => { StateManager.setState({ currentPage: 'add-edit-product', editingProductId: null }); },
                 'edit-product': () => { StateManager.setState({ currentPage: 'add-edit-product', editingProductId: productId }); },
                 'cancel-product-edit': () => { StateManager.setState({ currentPage: 'produtos', editingProductId: null }); },
