@@ -1919,11 +1919,14 @@ const LucroCertoApp = (function() {
                 
                 <div class="card">
                     <h3><i data-lucide="user" style="width: 20px; height: 20px; vertical-align: middle;"></i> Cliente</h3>
-                    <div class="form-group">
-                        <select id="sale-client" class="form-input">
-                            <option value="">-- Selecionar cliente (opcional) --</option>
+                    <div class="client-select-row">
+                        <select id="sale-client" class="form-input" style="flex: 1;">
+                            <option value="">-- Selecionar cliente --</option>
                             ${clientOptions}
                         </select>
+                        <button class="btn btn-secondary" data-action="quick-add-client" title="Novo cliente">
+                            <i data-lucide="user-plus"></i>
+                        </button>
                     </div>
                 </div>
                 
@@ -1937,7 +1940,7 @@ const LucroCertoApp = (function() {
                     </button>
                 </div>
                 
-                <div class="card">
+                <div class="card" style="margin-bottom: 100px;">
                     <h3><i data-lucide="credit-card" style="width: 20px; height: 20px; vertical-align: middle;"></i> Pagamento</h3>
                     <div class="payment-methods">
                         <label class="payment-option">
@@ -1961,12 +1964,38 @@ const LucroCertoApp = (function() {
                 
                 <div class="sale-total-bar">
                     <div class="sale-total-info">
-                        <span class="sale-total-label">Total da Venda</span>
+                        <span class="sale-total-label">Total</span>
                         <span class="sale-total-value" id="sale-total">R$ 0,00</span>
                     </div>
-                    <button class="btn btn-primary btn-lg" data-action="finish-sale">
-                        <i data-lucide="check-circle"></i> Finalizar Venda
+                    <button class="btn btn-primary" data-action="finish-sale">
+                        <i data-lucide="check-circle"></i> Finalizar
                     </button>
+                </div>
+                
+                <!-- Modal Cadastro Rápido de Cliente -->
+                <div id="quick-client-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i data-lucide="user-plus"></i> Novo Cliente</h3>
+                            <button class="modal-close" data-action="close-quick-client-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="quick-client-name">Nome *</label>
+                                <input type="text" id="quick-client-name" class="form-input" placeholder="Nome do cliente">
+                            </div>
+                            <div class="form-group">
+                                <label for="quick-client-phone">WhatsApp</label>
+                                <input type="tel" id="quick-client-phone" class="form-input" placeholder="(00) 00000-0000">
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-action="close-quick-client-modal">Cancelar</button>
+                            <button class="btn btn-primary" data-action="save-quick-client">
+                                <i data-lucide="check"></i> Salvar
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- Modal Selecionar Produto -->
@@ -2201,6 +2230,65 @@ const LucroCertoApp = (function() {
             
             // Click fora do modal
             document.getElementById('product-select-modal')?.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    e.target.style.display = 'none';
+                }
+            });
+            
+            // ===== CADASTRO RÁPIDO DE CLIENTE =====
+            // Abrir modal
+            document.querySelector('[data-action="quick-add-client"]')?.addEventListener('click', () => {
+                document.getElementById('quick-client-modal').style.display = 'flex';
+                document.getElementById('quick-client-name').value = '';
+                document.getElementById('quick-client-phone').value = '';
+                lucide.createIcons({ nodes: [document.getElementById('quick-client-modal')] });
+            });
+            
+            // Fechar modal
+            document.querySelectorAll('[data-action="close-quick-client-modal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('quick-client-modal').style.display = 'none';
+                });
+            });
+            
+            // Salvar cliente rápido
+            document.querySelector('[data-action="save-quick-client"]')?.addEventListener('click', () => {
+                const name = document.getElementById('quick-client-name').value.trim();
+                if (!name) {
+                    alert('❌ Digite o nome do cliente');
+                    return;
+                }
+                
+                const newClient = {
+                    id: `cli_${Date.now()}`,
+                    name: name,
+                    phone: document.getElementById('quick-client-phone').value.trim(),
+                    email: '',
+                    notes: '',
+                    purchases: 0,
+                    totalSpent: 0,
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Salva no state (vai para a lista de clientes)
+                const { clients: currentClients } = StateManager.getState();
+                const updatedClients = [...(currentClients || []), newClient];
+                StateManager.setState({ clients: updatedClients });
+                
+                // Atualiza o select de clientes e seleciona o novo
+                const selectClient = document.getElementById('sale-client');
+                const newOption = document.createElement('option');
+                newOption.value = newClient.id;
+                newOption.textContent = newClient.name;
+                selectClient.appendChild(newOption);
+                selectClient.value = newClient.id;
+                
+                // Fecha modal
+                document.getElementById('quick-client-modal').style.display = 'none';
+            });
+            
+            // Click fora do modal de cliente
+            document.getElementById('quick-client-modal')?.addEventListener('click', (e) => {
                 if (e.target.classList.contains('modal')) {
                     e.target.style.display = 'none';
                 }
