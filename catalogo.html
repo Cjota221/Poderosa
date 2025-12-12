@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo - Lucro Certo</title>
+    <meta name="description" content="Confira nossos produtos e faça seu pedido!">
+    
+    <!-- PWA & Mobile -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#E91E63">
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="./public/css/catalogo.css">
+</head>
+<body>
+    <!-- Header da Loja -->
+    <header class="store-header">
+        <div class="store-logo" id="store-logo">
+            <i data-lucide="store"></i>
+        </div>
+        <div class="store-info">
+            <h1 class="store-name" id="store-name">Minha Loja</h1>
+            <p class="store-slogan">Confira nossos produtos! 💖</p>
+        </div>
+    </header>
+
+    <!-- Busca -->
+    <div class="search-container">
+        <div class="search-box">
+            <i data-lucide="search"></i>
+            <input type="text" id="search-input" placeholder="Buscar produto...">
+        </div>
+    </div>
+
+    <!-- Categorias / Filtros -->
+    <div class="categories-container" id="categories-container">
+        <button class="category-btn active" data-category="all">Todos</button>
+    </div>
+
+    <!-- Grid de Produtos -->
+    <main class="products-container">
+        <div class="products-grid" id="products-grid">
+            <!-- Produtos serão renderizados via JS -->
+        </div>
+        
+        <div class="empty-catalog" id="empty-catalog" style="display: none;">
+            <i data-lucide="package-x"></i>
+            <h3>Nenhum produto encontrado</h3>
+            <p>Este catálogo ainda não possui produtos cadastrados.</p>
+        </div>
+    </main>
+
+    <!-- Carrinho Flutuante -->
+    <button class="cart-fab" id="cart-fab" style="display: none;">
+        <i data-lucide="shopping-cart"></i>
+        <span class="cart-count" id="cart-count">0</span>
+    </button>
+
+    <!-- Modal do Produto -->
+    <div class="modal-overlay" id="product-modal" style="display: none;">
+        <div class="modal-product">
+            <button class="modal-close" id="close-product-modal">
+                <i data-lucide="x"></i>
+            </button>
+            <div class="modal-product-image">
+                <img id="modal-product-img" src="" alt="">
+            </div>
+            <div class="modal-product-info">
+                <h2 id="modal-product-name"></h2>
+                <p class="modal-product-price" id="modal-product-price"></p>
+                
+                <div class="variation-selector" id="variation-selector" style="display: none;">
+                    <label>Selecione uma opção:</label>
+                    <div class="variation-options" id="variation-options"></div>
+                </div>
+                
+                <div class="quantity-selector">
+                    <label>Quantidade:</label>
+                    <div class="quantity-controls">
+                        <button class="qty-btn" id="qty-decrease">-</button>
+                        <span class="qty-value" id="qty-value">1</span>
+                        <button class="qty-btn" id="qty-increase">+</button>
+                    </div>
+                </div>
+                
+                <div class="stock-info" id="stock-info">
+                    <i data-lucide="package"></i>
+                    <span id="stock-text"></span>
+                </div>
+                
+                <button class="btn-add-cart" id="btn-add-cart">
+                    <i data-lucide="shopping-cart"></i>
+                    Adicionar ao Carrinho
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal do Carrinho -->
+    <div class="modal-overlay" id="cart-modal" style="display: none;">
+        <div class="modal-cart">
+            <div class="cart-header">
+                <h2><i data-lucide="shopping-cart"></i> Meu Carrinho</h2>
+                <button class="modal-close" id="close-cart-modal">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            
+            <div class="cart-items" id="cart-items">
+                <!-- Itens do carrinho -->
+            </div>
+            
+            <div class="cart-empty" id="cart-empty" style="display: none;">
+                <i data-lucide="shopping-bag"></i>
+                <p>Seu carrinho está vazio</p>
+            </div>
+            
+            <div class="cart-footer" id="cart-footer">
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <strong id="cart-total-value">R$ 0,00</strong>
+                </div>
+                
+                <div class="customer-info">
+                    <h4>Seus dados para o pedido:</h4>
+                    <div class="form-group">
+                        <input type="text" id="customer-name" placeholder="Seu nome" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <textarea id="customer-notes" placeholder="Observações do pedido (opcional)" class="form-input" rows="2"></textarea>
+                    </div>
+                </div>
+                
+                <button class="btn-whatsapp" id="btn-whatsapp">
+                    <i data-lucide="message-circle"></i>
+                    Enviar Pedido via WhatsApp
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="catalog-footer">
+        <p>Catálogo criado com <span style="color: var(--primary);">💖</span> Lucro Certo</p>
+    </footer>
+
+    <!-- Script -->
+    <script src="./public/js/catalogo.js"></script>
+</body>
+</html>

@@ -1495,7 +1495,36 @@ const LucroCertoApp = (function() {
                     <i data-lucide="check" style="width: 18px; height: 18px;"></i> Salvar Configurações
                 </button>
                 
-                <div class="card" style="margin-top: 30px; background: var(--light-gray);">
+                <div class="card catalog-card" style="margin-top: 30px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border: 2px solid var(--primary-light);">
+                    <h3><i data-lucide="shopping-bag" style="width: 20px; height: 20px; vertical-align: middle; color: var(--primary);"></i> Meu Catálogo Digital</h3>
+                    <p style="font-size: 14px; color: var(--elegant-gray); margin-bottom: 16px;">
+                        Compartilhe seu catálogo com suas clientes! Elas podem ver seus produtos, adicionar ao carrinho e fazer pedidos direto pelo WhatsApp.
+                    </p>
+                    
+                    <div class="catalog-link-box" id="catalog-link-box">
+                        <input type="text" id="catalog-link" class="form-input" readonly value="${window.location.origin}/catalogo.html">
+                        <button class="btn btn-primary" data-action="copy-catalog-link" title="Copiar link">
+                            <i data-lucide="copy" style="width: 18px; height: 18px;"></i>
+                        </button>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
+                        <a href="./catalogo.html" target="_blank" class="btn btn-secondary" style="flex: 1; text-decoration: none; text-align: center;">
+                            <i data-lucide="eye" style="width: 18px; height: 18px;"></i> Ver Catálogo
+                        </a>
+                        <button class="btn btn-success" data-action="share-catalog-whatsapp" style="flex: 1; background: #25D366; border-color: #25D366;">
+                            <i data-lucide="message-circle" style="width: 18px; height: 18px;"></i> Compartilhar
+                        </button>
+                    </div>
+                    
+                    <div class="catalog-tips" style="margin-top: 16px; padding: 12px; background: rgba(255,255,255,0.7); border-radius: 8px;">
+                        <p style="font-size: 13px; color: var(--dark-gray); margin: 0;">
+                            <strong>💡 Dica:</strong> Cadastre seus produtos com fotos bonitas e preços corretos. Seu catálogo atualiza automaticamente!
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 20px; background: var(--light-gray);">
                     <h3><i data-lucide="link" style="width: 20px; height: 20px; vertical-align: middle;"></i> Acesso Rápido</h3>
                     <div class="settings-links">
                         <a href="#" class="settings-link" data-action="navigate" data-route="despesas">
@@ -1555,6 +1584,33 @@ const LucroCertoApp = (function() {
                 
                 StateManager.setState({ user: updatedUser });
                 alert('✅ Configurações salvas com sucesso!');
+            });
+            
+            // Copiar link do catálogo
+            document.querySelector('[data-action="copy-catalog-link"]')?.addEventListener('click', () => {
+                const linkInput = document.getElementById('catalog-link');
+                linkInput.select();
+                navigator.clipboard.writeText(linkInput.value).then(() => {
+                    alert('✅ Link copiado! Agora é só enviar para suas clientes.');
+                }).catch(() => {
+                    document.execCommand('copy');
+                    alert('✅ Link copiado!');
+                });
+            });
+            
+            // Compartilhar via WhatsApp
+            document.querySelector('[data-action="share-catalog-whatsapp"]')?.addEventListener('click', () => {
+                const catalogLink = document.getElementById('catalog-link').value;
+                const { user } = StateManager.getState();
+                const businessName = user.businessName || 'minha loja';
+                
+                const message = `✨ Olá! Dá uma olhada no catálogo da ${businessName}! 💖\n\n` +
+                                `Você pode ver todos os produtos, preços e fazer seu pedido direto pelo celular:\n\n` +
+                                `👉 ${catalogLink}\n\n` +
+                                `Te espero! 🛍️`;
+                
+                const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
+                window.open(url, '_blank');
             });
         },
 

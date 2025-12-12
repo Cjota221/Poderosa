@@ -1344,6 +1344,57 @@ input[type="range"]::-webkit-slider-thumb {
     transform: translateX(8px);
 }
 
+/* Catálogo Digital */
+.catalog-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.catalog-card::before {
+    content: '📱';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    font-size: 100px;
+    opacity: 0.1;
+    transform: rotate(15deg);
+}
+
+.catalog-link-box {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.catalog-link-box input {
+    flex: 1;
+    background: white;
+    font-size: 13px;
+    padding: 12px 16px;
+    border: 2px solid var(--primary-light);
+    border-radius: 8px;
+}
+
+.catalog-link-box input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.catalog-link-box .btn {
+    flex-shrink: 0;
+    padding: 12px 16px;
+}
+
+.btn-success {
+    background: var(--success) !important;
+    border-color: var(--success) !important;
+    color: white;
+}
+
+.btn-success:hover {
+    filter: brightness(1.1);
+}
+
 /* Clientes */
 .clients-summary {
     display: flex;
