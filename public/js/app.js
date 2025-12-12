@@ -58,19 +58,116 @@ const LucroCertoApp = (function() {
     // 3. UI RENDERER & ROUTER
     //==================================
     const UIManager = {
-        pages: ['dashboard', 'produtos', 'add-edit-product', 'despesas', 'precificar', 'metas', 'relatorios', 'configuracoes', 'clientes', 'vendas', 'nova-venda', 'financeiro'],
+        pages: ['dashboard', 'despesas', 'produtos', 'add-edit-product', 'precificar', 'clientes', 'vendas', 'nova-venda', 'financeiro', 'metas', 'relatorios', 'configuracoes'],
+        
+        // Menu completo com todas as páginas na ordem do fluxo de trabalho
+        menuItems: [
+            { section: 'Gestão do Negócio' },
+            { id: 'dashboard', icon: 'layout-dashboard', label: 'Início' },
+            { id: 'despesas', icon: 'receipt', label: 'Despesas/Custos' },
+            { id: 'produtos', icon: 'package-search', label: 'Produtos' },
+            { id: 'precificar', icon: 'calculator', label: 'Precificação' },
+            { divider: true },
+            { section: 'Vendas & Clientes' },
+            { id: 'clientes', icon: 'users', label: 'Clientes' },
+            { id: 'vendas', icon: 'shopping-cart', label: 'Vendas' },
+            { divider: true },
+            { section: 'Financeiro' },
+            { id: 'financeiro', icon: 'wallet', label: 'Controle Financeiro' },
+            { id: 'metas', icon: 'target', label: 'Metas' },
+            { id: 'relatorios', icon: 'bar-chart-3', label: 'Relatórios' },
+            { divider: true },
+            { section: 'Sistema' },
+            { id: 'configuracoes', icon: 'settings', label: 'Configurações' },
+        ],
+        
+        // Botões do menu inferior (acesso rápido)
         navButtons: [
             { id: 'dashboard', icon: 'layout-dashboard', label: 'Início' },
             { id: 'vendas', icon: 'shopping-cart', label: 'Vendas' },
             { id: 'produtos', icon: 'package-search', label: 'Produtos' },
             { id: 'clientes', icon: 'users', label: 'Clientes' },
-            { id: 'configuracoes', icon: 'settings', label: 'Config' }
+            { id: 'financeiro', icon: 'wallet', label: 'Finanças' }
         ],
 
         init() {
             this.renderNav();
+            this.renderSideMenu();
             StateManager.subscribe(this.updateActiveContent.bind(this));
             StateManager.subscribe(this.updateNav.bind(this));
+            StateManager.subscribe(this.updateSideMenu.bind(this));
+        },
+        
+        renderSideMenu() {
+            const menuList = document.getElementById('menu-list');
+            const menuUserInfo = document.getElementById('menu-user-info');
+            const { user } = StateManager.getState();
+            
+            // User info no header do menu
+            const photoSrc = user.profilePhoto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiI+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSI0Ii8+PHBhdGggZD0iTTIwIDIxdi0yYTQgNCAwIDAgMC00LTRIOGE0IDQgMCAwIDAtNCA0djIiLz48L3N2Zz4=';
+            
+            menuUserInfo.innerHTML = `
+                <img src="${photoSrc}" alt="Foto" class="menu-user-photo">
+                <span class="menu-user-name">${user.name || 'Empreendedora'}</span>
+                <span class="menu-user-business">${user.businessName || 'Meu Negócio'}</span>
+            `;
+            
+            // Lista de itens do menu
+            menuList.innerHTML = this.menuItems.map(item => {
+                if (item.section) {
+                    return `<li class="menu-section-title">${item.section}</li>`;
+                }
+                if (item.divider) {
+                    return `<li class="menu-divider"></li>`;
+                }
+                return `
+                    <li class="menu-item" data-action="navigate" data-route="${item.id}">
+                        <span class="menu-item-icon"><i data-lucide="${item.icon}"></i></span>
+                        <span class="menu-item-label">${item.label}</span>
+                    </li>
+                `;
+            }).join('');
+            
+            setTimeout(() => {
+                lucide.createIcons({ nodes: [...menuList.querySelectorAll('[data-lucide]')] });
+                const header = document.getElementById('app-header');
+                if (header) {
+                    lucide.createIcons({ nodes: [...header.querySelectorAll('[data-lucide]')] });
+                }
+            }, 0);
+        },
+        
+        updateSideMenu() {
+            const { currentPage, user } = StateManager.getState();
+            
+            // Atualiza info do usuário
+            const menuUserInfo = document.getElementById('menu-user-info');
+            if (menuUserInfo && user) {
+                const photoSrc = user.profilePhoto || 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiI+PGNpcmNsZSBjeD0iMTIiIGN5PSI4IiByPSI0Ii8+PHBhdGggZD0iTTIwIDIxdi0yYTQgNCAwIDAgMC00LTRIOGE0IDQgMCAwIDAtNCA0djIiLz48L3N2Zz4=';
+                menuUserInfo.innerHTML = `
+                    <img src="${photoSrc}" alt="Foto" class="menu-user-photo">
+                    <span class="menu-user-name">${user.name || 'Empreendedora'}</span>
+                    <span class="menu-user-business">${user.businessName || 'Meu Negócio'}</span>
+                `;
+            }
+            
+            // Atualiza item ativo
+            document.querySelectorAll('.menu-item').forEach(item => {
+                item.classList.toggle('active', item.dataset.route === currentPage);
+            });
+        },
+        
+        toggleMenu(show) {
+            const sideMenu = document.getElementById('side-menu');
+            const overlay = document.getElementById('menu-overlay');
+            
+            if (show === undefined) {
+                show = !sideMenu.classList.contains('active');
+            }
+            
+            sideMenu.classList.toggle('active', show);
+            overlay.classList.toggle('active', show);
+            document.body.style.overflow = show ? 'hidden' : '';
         },
         
         renderNav() {
@@ -2990,7 +3087,12 @@ const LucroCertoApp = (function() {
             const productId = target.dataset.id;
             
             const actions = {
-                'navigate': () => StateManager.setState({ currentPage: route }),
+                'navigate': () => {
+                    StateManager.setState({ currentPage: route });
+                    UIManager.toggleMenu(false); // Fecha o menu ao navegar
+                },
+                'toggle-menu': () => UIManager.toggleMenu(),
+                'close-menu': () => UIManager.toggleMenu(false),
                 'add-new-product': () => { StateManager.setState({ currentPage: 'add-edit-product', editingProductId: null }); },
                 'edit-product': () => { StateManager.setState({ currentPage: 'add-edit-product', editingProductId: productId }); },
                 'cancel-product-edit': () => { StateManager.setState({ currentPage: 'produtos', editingProductId: null }); },

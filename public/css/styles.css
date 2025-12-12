@@ -64,6 +64,228 @@ body {
     height: 100%;
 }
 
+/* APP HEADER */
+.app-header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    z-index: 1001;
+    box-shadow: var(--shadow-soft);
+}
+
+.hamburger-btn {
+    background: none;
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.hamburger-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.hamburger-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.app-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.5px;
+}
+
+.header-spacer {
+    width: 40px;
+}
+
+/* SIDE MENU (DRAWER) */
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 280px;
+    height: 100vh;
+    background: white;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    transition: left 0.3s ease;
+    box-shadow: var(--shadow-strong);
+}
+
+.side-menu.active {
+    left: 0;
+}
+
+.menu-header {
+    background: var(--primary-gradient);
+    padding: 20px 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    min-height: 120px;
+}
+
+.menu-user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.menu-user-photo {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3px solid white;
+    object-fit: cover;
+    background: rgba(255,255,255,0.2);
+}
+
+.menu-user-name {
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-top: 8px;
+}
+
+.menu-user-business {
+    color: rgba(255,255,255,0.85);
+    font-size: 0.85rem;
+}
+
+.close-menu-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.close-menu-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+.close-menu-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.menu-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+    list-style: none;
+}
+
+.menu-section-title {
+    padding: 16px 20px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--elegant-gray);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    border-left: 3px solid transparent;
+}
+
+.menu-item:hover {
+    background: var(--light-gray);
+}
+
+.menu-item.active {
+    background: rgba(233, 30, 99, 0.08);
+    border-left-color: var(--primary);
+}
+
+.menu-item.active .menu-item-icon,
+.menu-item.active .menu-item-label {
+    color: var(--primary);
+}
+
+.menu-item-icon {
+    width: 24px;
+    height: 24px;
+    color: var(--elegant-gray);
+    transition: var(--transition-smooth);
+}
+
+.menu-item-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.menu-item-label {
+    font-size: 0.95rem;
+    color: var(--dark-gray);
+    font-weight: 500;
+}
+
+.menu-divider {
+    height: 1px;
+    background: var(--light-gray);
+    margin: 8px 16px;
+}
+
+.menu-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--light-gray);
+    text-align: center;
+}
+
+.menu-footer p {
+    font-size: 0.75rem;
+    color: var(--elegant-gray);
+    margin: 2px 0;
+}
+
 main {
     flex-grow: 1;
     overflow-y: auto;
