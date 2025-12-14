@@ -486,11 +486,6 @@
                 ✅ <strong>Pagamento confirmado!</strong> Complete seu cadastro abaixo.
             </div>
 
-            <!-- Banner de Aviso - sem pagamento -->
-            <div id="warning-banner" class="warning-banner" style="display: none;">
-                ⚠️ Você precisa assinar um plano primeiro. <a href="precos">Ver planos</a>
-            </div>
-
             <!-- Title -->
             <h2 class="auth-title">Crie sua conta ✨</h2>
             <p class="auth-subtitle">Preencha os dados para acessar o sistema</p>
@@ -633,16 +628,15 @@
 
         // Show appropriate banners
         if (hasPaidPlan) {
-            // Pagamento confirmado
+            // Pagamento confirmado - mostrar plano
             document.getElementById('success-banner').style.display = 'block';
             document.getElementById('plan-banner').style.display = 'block';
             document.getElementById('plan-name-display').textContent = planNames[paymentData.plano] || '⭐ Seu Plano';
             document.getElementById('plan-details-display').textContent = 
                 paymentData.periodo === 'anual' ? 'Cobrança anual • Economia de 25%' : 'Cobrança mensal';
-        } else {
-            // Sem pagamento - mostrar aviso
-            document.getElementById('warning-banner').style.display = 'block';
         }
+        // Não mostrar warning - pessoa pode criar conta normalmente
+        // O sistema vai verificar o plano depois do cadastro
 
         // Pre-fill email
         if (finalEmail) {
@@ -799,13 +793,6 @@
 
         // Google signup
         document.getElementById('google-signup').addEventListener('click', () => {
-            if (!hasPaidPlan) {
-                if (confirm('🔒 Para criar sua conta, você precisa primeiro assinar um plano.\n\nDeseja ver os planos disponíveis?')) {
-                    window.location.href = 'precos';
-                }
-                return;
-            }
-            
             // Simular cadastro com Google
             const googleModal = document.createElement('div');
             googleModal.innerHTML = `
