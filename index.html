@@ -33,6 +33,9 @@
 <body>
 
     <div id="app-container">
+        <!-- Banner de Aviso do Plano -->
+        <div id="plan-alert-banner" class="plan-alert-banner" style="display: none;"></div>
+        
         <!-- Header with Hamburger Menu -->
         <header class="app-header" id="app-header">
             <button class="hamburger-btn" id="hamburger-btn" data-action="toggle-menu">
@@ -96,7 +99,7 @@
             const isLogged = localStorage.getItem('lucrocerto_logged');
             if (!isLogged || isLogged !== 'true') {
                 // Redirecionar para login se não estiver logado
-                window.location.href = 'login.html';
+                window.location.href = 'login';
             }
         })();
     </script>

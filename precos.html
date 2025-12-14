@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planos - Lucro Certo</title>
+    <meta name="description" content="Escolha o plano ideal para seu negócio">
+    
+    <!-- PWA & Mobile Meta Tags -->
+    <meta name="theme-color" content="#E91E63">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --primary: #E91E63;
+            --primary-light: #F06292;
+            --primary-dark: #C2185B;
+            --primary-gradient: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+            --secondary: #9C27B0;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --error: #F44336;
+            --dark-gray: #37474F;
+            --elegant-gray: #607D8B;
+            --light-gray: #f4f6f8;
+            --white: #ffffff;
+            --background: #f8f8fc;
+            --shadow-soft: 0 4px 20px rgba(233, 30, 99, 0.1);
+            --shadow-medium: 0 8px 30px rgba(233, 30, 99, 0.15);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--dark-gray);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .page-header {
+            background: var(--primary-gradient);
+            padding: 24px;
+            text-align: center;
+            color: white;
+        }
+
+        .page-header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .back-link {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .header-wrapper {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Current Plan Banner */
+        .current-plan-banner {
+            background: linear-gradient(135deg, #FFF3CD 0%, #FFE69C 100%);
+            border: 2px solid #FFE69C;
+            border-radius: 12px;
+            padding: 16px 24px;
+            margin: 20px auto;
+            max-width: 800px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .current-plan-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .current-plan-info i {
+            color: #856404;
+        }
+
+        .current-plan-info span {
+            color: #856404;
+            font-weight: 500;
+        }
+
+        .current-plan-info strong {
+            color: #664d03;
+        }
+
+        /* Billing Toggle */
+        .billing-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            padding: 20px;
+            background: white;
+        }
+
+        .billing-btn {
+            padding: 12px 32px;
+            border: 2px solid var(--light-gray);
+            background: white;
+            border-radius: 30px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            color: var(--elegant-gray);
+        }
+
+        .billing-btn.active {
+            background: var(--primary-gradient);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .billing-btn .discount {
+            background: #4CAF50;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        /* Plans Container */
+        .plans-container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        /* Plan Card */
+        .plan-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px 28px;
+            box-shadow: var(--shadow-soft);
+            position: relative;
+            transition: var(--transition-smooth);
+            border: 2px solid transparent;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .plan-card.popular {
+            border-color: var(--primary);
+        }
+
+        .plan-card.current {
+            border-color: var(--success);
+            background: linear-gradient(135deg, #f0fff4 0%, #dcfce7 100%);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-gradient);
+            color: white;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .current-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #4CAF50, #8BC34A);
+            color: white;
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .plan-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .plan-icon.starter {
+            background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+            color: #1976D2;
+        }
+
+        .plan-icon.pro {
+            background: linear-gradient(135deg, #FCE4EC, #F8BBD9);
+            color: #E91E63;
+        }
+
+        .plan-icon.premium {
+            background: linear-gradient(135deg, #F3E5F5, #E1BEE7);
+            color: #9C27B0;
+        }
+
+        .plan-icon svg {
+            width: 28px;
+            height: 28px;
+        }
+
+        .plan-name {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--dark-gray);
+        }
+
+        .plan-description {
+            font-size: 14px;
+            color: var(--elegant-gray);
+            margin-bottom: 20px;
+        }
+
+        .plan-price {
+            margin-bottom: 24px;
+        }
+
+        .price-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--dark-gray);
+        }
+
+        .price-period {
+            font-size: 14px;
+            color: var(--elegant-gray);
+        }
+
+        .original-price {
+            text-decoration: line-through;
+            color: var(--elegant-gray);
+            font-size: 14px;
+            margin-left: 8px;
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 28px;
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 14px;
+            color: var(--dark-gray);
+            border-bottom: 1px solid var(--light-gray);
+        }
+
+        .plan-features li:last-child {
+            border-bottom: none;
+        }
+
+        .plan-features li svg {
+            width: 18px;
+            height: 18px;
+            color: var(--success);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .plan-features li.disabled {
+            color: var(--elegant-gray);
+            opacity: 0.6;
+        }
+
+        .plan-features li.disabled svg {
+            color: var(--elegant-gray);
+        }
+
+        .plan-btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .plan-btn.primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .plan-btn.primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(233, 30, 99, 0.3);
+        }
+
+        .plan-btn.secondary {
+            background: var(--light-gray);
+            color: var(--dark-gray);
+        }
+
+        .plan-btn.secondary:hover {
+            background: #e8eaed;
+        }
+
+        .plan-btn.current {
+            background: linear-gradient(135deg, #4CAF50, #8BC34A);
+            color: white;
+            cursor: default;
+        }
+
+        .plan-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Footer */
+        .page-footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--elegant-gray);
+            font-size: 14px;
+        }
+
+        .page-footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 22px;
+            }
+
+            .back-link {
+                position: static;
+                transform: none;
+                justify-content: center;
+                margin-bottom: 16px;
+            }
+
+            .current-plan-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .plans-container {
+                grid-template-columns: 1fr;
+            }
+
+            .plan-card {
+                padding: 24px 20px;
+            }
+
+            .price-value {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="page-header">
+        <div class="header-wrapper">
+            <a href="./index" class="back-link">
+                <i data-lucide="arrow-left"></i>
+                Voltar ao App
+            </a>
+            <h1>💖 Escolha seu Plano</h1>
+            <p>Invista no crescimento do seu negócio</p>
+        </div>
+    </header>
+
+    <!-- Current Plan Banner (shown dynamically) -->
+    <div class="current-plan-banner" id="current-plan-banner" style="display: none;">
+        <div class="current-plan-info">
+            <i data-lucide="info"></i>
+            <span>Seu plano atual: <strong id="current-plan-name">Profissional</strong></span>
+        </div>
+    </div>
+
+    <!-- Billing Toggle -->
+    <div class="billing-toggle">
+        <button class="billing-btn active" data-billing="monthly">Mensal</button>
+        <button class="billing-btn" data-billing="annual">
+            Anual <span class="discount">-25%</span>
+        </button>
+    </div>
+
+    <!-- Plans -->
+    <div class="plans-container" id="plans-container">
+        <!-- Starter -->
+        <div class="plan-card" data-plan="starter">
+            <div class="plan-icon starter">
+                <i data-lucide="rocket"></i>
+            </div>
+            <h3 class="plan-name">Iniciante</h3>
+            <p class="plan-description">Perfeito para começar sua jornada</p>
+            <div class="plan-price">
+                <span class="price-value">R$ <span class="price-amount">19,90</span></span>
+                <span class="price-period">/mês</span>
+                <span class="original-price" style="display: none;">R$ 19,90</span>
+            </div>
+            <ul class="plan-features">
+                <li><i data-lucide="check"></i> Até 20 produtos</li>
+                <li><i data-lucide="check"></i> Até 50 clientes</li>
+                <li><i data-lucide="check"></i> Catálogo digital básico</li>
+                <li><i data-lucide="check"></i> Controle de vendas</li>
+                <li><i data-lucide="check"></i> Relatórios simples</li>
+                <li class="disabled"><i data-lucide="x"></i> Suporte prioritário</li>
+            </ul>
+            <a href="./checkout?plan=starter&billing=monthly" class="plan-btn secondary">
+                <i data-lucide="arrow-right"></i>
+                Escolher Iniciante
+            </a>
+        </div>
+
+        <!-- Pro -->
+        <div class="plan-card popular" data-plan="pro">
+            <span class="popular-badge">⭐ Mais Escolhido</span>
+            <div class="plan-icon pro">
+                <i data-lucide="crown"></i>
+            </div>
+            <h3 class="plan-name">Profissional</h3>
+            <p class="plan-description">O equilíbrio perfeito para crescer</p>
+            <div class="plan-price">
+                <span class="price-value">R$ <span class="price-amount">34,90</span></span>
+                <span class="price-period">/mês</span>
+                <span class="original-price" style="display: none;">R$ 34,90</span>
+            </div>
+            <ul class="plan-features">
+                <li><i data-lucide="check"></i> Produtos ilimitados</li>
+                <li><i data-lucide="check"></i> Clientes ilimitados</li>
+                <li><i data-lucide="check"></i> Catálogo digital completo</li>
+                <li><i data-lucide="check"></i> Relatórios detalhados</li>
+                <li><i data-lucide="check"></i> Precificação inteligente</li>
+                <li><i data-lucide="check"></i> Suporte por WhatsApp</li>
+            </ul>
+            <a href="./checkout?plan=pro&billing=monthly" class="plan-btn primary">
+                <i data-lucide="sparkles"></i>
+                Escolher Profissional
+            </a>
+        </div>
+
+        <!-- Premium -->
+        <div class="plan-card" data-plan="premium">
+            <div class="plan-icon premium">
+                <i data-lucide="gem"></i>
+            </div>
+            <h3 class="plan-name">Premium</h3>
+            <p class="plan-description">Para quem quer o máximo</p>
+            <div class="plan-price">
+                <span class="price-value">R$ <span class="price-amount">49,90</span></span>
+                <span class="price-period">/mês</span>
+                <span class="original-price" style="display: none;">R$ 49,90</span>
+            </div>
+            <ul class="plan-features">
+                <li><i data-lucide="check"></i> Tudo do Profissional</li>
+                <li><i data-lucide="check"></i> Multi-catálogos</li>
+                <li><i data-lucide="check"></i> Integrações avançadas</li>
+                <li><i data-lucide="check"></i> Relatórios exportáveis</li>
+                <li><i data-lucide="check"></i> Backup automático</li>
+                <li><i data-lucide="check"></i> Suporte prioritário 24h</li>
+            </ul>
+            <a href="./checkout?plan=premium&billing=monthly" class="plan-btn secondary">
+                <i data-lucide="arrow-right"></i>
+                Escolher Premium
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="page-footer">
+        <p>Dúvidas? <a href="https://wa.me/5511999999999" target="_blank">Fale conosco no WhatsApp</a></p>
+        <p style="margin-top: 8px;">✨ Cancele quando quiser, sem multas!</p>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // Plans data
+        const plans = {
+            starter: { name: 'Iniciante', monthly: 19.90, annual: 14.90 },
+            pro: { name: 'Profissional', monthly: 34.90, annual: 26.17 },
+            premium: { name: 'Premium', monthly: 49.90, annual: 37.42 }
+        };
+
+        let currentBilling = 'monthly';
+
+        // Check current user plan
+        const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+        if (authData.plano) {
+            const banner = document.getElementById('current-plan-banner');
+            const planNameEl = document.getElementById('current-plan-name');
+            
+            banner.style.display = 'flex';
+            planNameEl.textContent = plans[authData.plano]?.name || authData.planoNome || 'Seu Plano';
+            
+            // Mark current plan card
+            const currentCard = document.querySelector(`[data-plan="${authData.plano}"]`);
+            if (currentCard) {
+                currentCard.classList.add('current');
+                
+                // Remove popular badge if exists
+                const popularBadge = currentCard.querySelector('.popular-badge');
+                if (popularBadge) popularBadge.remove();
+                
+                // Add current badge
+                const currentBadge = document.createElement('span');
+                currentBadge.className = 'current-badge';
+                currentBadge.innerHTML = '✓ Seu Plano Atual';
+                currentCard.insertBefore(currentBadge, currentCard.firstChild);
+                
+                // Change button
+                const btn = currentCard.querySelector('.plan-btn');
+                btn.className = 'plan-btn current';
+                btn.innerHTML = '<i data-lucide="check-circle"></i> Plano Atual';
+                btn.removeAttribute('href');
+                lucide.createIcons({ nodes: [btn] });
+            }
+        }
+
+        // Billing toggle
+        document.querySelectorAll('.billing-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.billing-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentBilling = btn.dataset.billing;
+                updatePrices();
+            });
+        });
+
+        // Update prices based on billing
+        function updatePrices() {
+            document.querySelectorAll('.plan-card').forEach(card => {
+                const planKey = card.dataset.plan;
+                const plan = plans[planKey];
+                const priceEl = card.querySelector('.price-amount');
+                const originalEl = card.querySelector('.original-price');
+                const periodEl = card.querySelector('.price-period');
+                const btn = card.querySelector('.plan-btn');
+                
+                if (currentBilling === 'annual') {
+                    priceEl.textContent = plan.annual.toFixed(2).replace('.', ',');
+                    originalEl.textContent = `R$ ${plan.monthly.toFixed(2).replace('.', ',')}`;
+                    originalEl.style.display = 'inline';
+                    periodEl.textContent = '/mês (anual)';
+                } else {
+                    priceEl.textContent = plan.monthly.toFixed(2).replace('.', ',');
+                    originalEl.style.display = 'none';
+                    periodEl.textContent = '/mês';
+                }
+                
+                // Update button link
+                if (btn.hasAttribute('href')) {
+                    btn.href = `./checkout?plan=${planKey}&billing=${currentBilling}`;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

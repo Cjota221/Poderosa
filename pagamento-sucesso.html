@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento Confirmado! - Lucro Certo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .success-card {
+            background: white;
+            border-radius: 24px;
+            padding: 50px 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: popIn 0.5s ease;
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.8) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #4CAF50 0%, #8BC34A 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4); }
+            50% { box-shadow: 0 0 0 20px rgba(76, 175, 80, 0); }
+        }
+
+        .success-icon svg {
+            width: 50px;
+            height: 50px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #607D8B;
+            margin-bottom: 30px;
+        }
+
+        .plan-info {
+            background: linear-gradient(135deg, #f8f8fc 0%, #fff 100%);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 2px solid #E91E63;
+        }
+
+        .plan-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #E91E63;
+            margin-bottom: 8px;
+        }
+
+        .plan-details {
+            font-size: 14px;
+            color: #607D8B;
+        }
+
+        .features-list {
+            text-align: left;
+            list-style: none;
+            margin-bottom: 30px;
+        }
+
+        .features-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            font-size: 14px;
+            color: #37474F;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .features-list li:last-child { border-bottom: none; }
+
+        .features-list li svg {
+            width: 20px;
+            height: 20px;
+            color: #4CAF50;
+        }
+
+        .btn-access {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 18px 30px;
+            background: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-access:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(233, 30, 99, 0.4);
+        }
+
+        .btn-access svg { width: 22px; height: 22px; }
+
+        .confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .help-text {
+            margin-top: 20px;
+            font-size: 13px;
+            color: #607D8B;
+        }
+
+        .help-text a {
+            color: #E91E63;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="success-card">
+        <div class="success-icon">
+            <i data-lucide="check"></i>
+        </div>
+        
+        <h1>Pagamento Confirmado! 🎉</h1>
+        <p class="subtitle">Sua assinatura foi ativada com sucesso!</p>
+
+        <div class="plan-info">
+            <div class="plan-name" id="planName">Plano Profissional</div>
+            <div class="plan-details" id="planDetails">Cobrança mensal • R$ 34,90/mês</div>
+        </div>
+
+        <ul class="features-list">
+            <li><i data-lucide="check-circle"></i> Acesso imediato a todas as funcionalidades</li>
+            <li><i data-lucide="check-circle"></i> Suporte por email e WhatsApp</li>
+            <li><i data-lucide="check-circle"></i> Atualizações automáticas incluídas</li>
+            <li><i data-lucide="check-circle"></i> Cancele quando quiser, sem multa</li>
+        </ul>
+
+        <a href="index" class="btn-access">
+            <i data-lucide="sparkles"></i>
+            Acessar Minha Conta
+        </a>
+
+        <p class="help-text">
+            Dúvidas? <a href="mailto:suporte@lucrocerto.com">Fale conosco</a>
+        </p>
+    </div>
+
+    <canvas class="confetti" id="confetti"></canvas>
+
+    <script>
+        lucide.createIcons();
+
+        // Pegar info do plano da URL
+        const params = new URLSearchParams(window.location.search);
+        const plano = params.get('plano');
+        const periodo = params.get('periodo');
+
+        const planos = {
+            starter: { nome: 'Plano Starter', mensal: 19.90, anual: 178.92 },
+            pro: { nome: 'Plano Profissional', mensal: 34.90, anual: 314.10 },
+            premium: { nome: 'Plano Premium', mensal: 49.90, anual: 449.10 }
+        };
+
+        if (plano && planos[plano]) {
+            const p = planos[plano];
+            document.getElementById('planName').textContent = p.nome;
+            
+            if (periodo === 'anual') {
+                document.getElementById('planDetails').textContent = `Cobrança anual • R$ ${p.anual.toFixed(2).replace('.', ',')}/ano`;
+            } else {
+                document.getElementById('planDetails').textContent = `Cobrança mensal • R$ ${p.mensal.toFixed(2).replace('.', ',')}/mês`;
+            }
+        }
+
+        // Salvar como logado
+        localStorage.setItem('lucrocerto_logged', 'true');
+        localStorage.removeItem('lucrocerto_trial');
+
+        // Confetti animation
+        const canvas = document.getElementById('confetti');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const pieces = [];
+        const colors = ['#E91E63', '#F06292', '#9C27B0', '#4CAF50', '#FFD700', '#FF9800'];
+
+        for (let i = 0; i < 150; i++) {
+            pieces.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height - canvas.height,
+                r: Math.random() * 6 + 4,
+                d: Math.random() * 150,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                tilt: Math.random() * 10 - 10,
+                tiltAngle: 0,
+                tiltAngleInc: Math.random() * 0.07 + 0.05
+            });
+        }
+
+        function drawConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            pieces.forEach((p, i) => {
+                ctx.beginPath();
+                ctx.lineWidth = p.r;
+                ctx.strokeStyle = p.color;
+                ctx.moveTo(p.x + p.tilt + p.r / 4, p.y);
+                ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 4);
+                ctx.stroke();
+
+                p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+                p.tilt = Math.sin(p.tiltAngle) * 15;
+                p.tiltAngle += p.tiltAngleInc;
+
+                if (p.y > canvas.height) {
+                    pieces[i] = {
+                        ...p,
+                        x: Math.random() * canvas.width,
+                        y: -10,
+                        tilt: Math.random() * 10 - 10
+                    };
+                }
+            });
+        }
+
+        let animationCount = 0;
+        function animate() {
+            drawConfetti();
+            animationCount++;
+            if (animationCount < 300) {
+                requestAnimationFrame(animate);
+            }
+        }
+        animate();
+    </script>
+</body>
+</html>

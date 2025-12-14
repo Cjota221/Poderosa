@@ -95,6 +95,7 @@ const LucroCertoApp = (function() {
         init() {
             this.renderNav();
             this.renderSideMenu();
+            this.checkPlanStatus(); // Verificar status do plano
             StateManager.subscribe(this.updateActiveContent.bind(this));
             StateManager.subscribe(this.updateNav.bind(this));
             StateManager.subscribe(this.updateSideMenu.bind(this));
@@ -145,6 +146,100 @@ const LucroCertoApp = (function() {
                     lucide.createIcons({ nodes: [...header.querySelectorAll('[data-lucide]')] });
                 }
             }, 0);
+        },
+        
+        // Verificar status do plano e mostrar banner se necessário
+        checkPlanStatus() {
+            const banner = document.getElementById('plan-alert-banner');
+            if (!banner) return;
+            
+            // Pegar dados do plano do localStorage
+            let authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+            
+            // ============================================
+            // 🧪 MODO DEMONSTRAÇÃO - Simular plano vencendo
+            // Remover este bloco em produção!
+            // ============================================
+            const DEMO_MODE = true; // Mude para false para desativar
+            const DEMO_DAYS_UNTIL_EXPIRY = 2; // Simular X dias até vencer (use -1 para simular vencido)
+            
+            if (DEMO_MODE) {
+                const fakeCreatedAt = new Date();
+                fakeCreatedAt.setDate(fakeCreatedAt.getDate() - (30 - DEMO_DAYS_UNTIL_EXPIRY));
+                authData = {
+                    plano: 'pro',
+                    planoNome: 'Profissional',
+                    billing: 'monthly',
+                    createdAt: fakeCreatedAt.toISOString()
+                };
+            }
+            // ============================================
+            
+            // Se não tem dados de auth, não mostrar banner (usuário em trial ou não logado)
+            if (!authData.createdAt) {
+                banner.style.display = 'none';
+                document.body.classList.remove('has-plan-banner');
+                return;
+            }
+            
+            // Calcular dias até o vencimento
+            const createdAt = new Date(authData.createdAt);
+            const expiryDate = new Date(createdAt);
+            expiryDate.setDate(expiryDate.getDate() + 30);
+            
+            const today = new Date();
+            const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+            
+            // Verificar se o banner foi fechado hoje
+            const bannerClosedDate = localStorage.getItem('lucrocerto_banner_closed');
+            const todayStr = today.toDateString();
+            
+            if (bannerClosedDate === todayStr && daysUntilExpiry > 0) {
+                banner.style.display = 'none';
+                document.body.classList.remove('has-plan-banner');
+                return;
+            }
+            
+            // Mostrar banner se vencendo em 3 dias ou menos
+            if (daysUntilExpiry <= 0) {
+                // Plano vencido
+                const daysOverdue = Math.abs(daysUntilExpiry);
+                const daysUntilDeactivation = 3 - daysOverdue;
+                
+                banner.className = 'plan-alert-banner danger';
+                banner.innerHTML = `
+                    <span>⚠️ <strong>Seu plano venceu!</strong> Sua conta será desativada em ${daysUntilDeactivation > 0 ? daysUntilDeactivation : 0} dia(s). 
+                    <a href="./checkout?plan=${authData.plano || 'pro'}&billing=${authData.billing || 'monthly'}">Renove agora</a></span>
+                `;
+                banner.style.display = 'flex';
+                document.body.classList.add('has-plan-banner');
+                
+            } else if (daysUntilExpiry <= 3) {
+                // Plano vencendo em breve
+                banner.className = 'plan-alert-banner warning';
+                banner.innerHTML = `
+                    <span>📅 Seu plano vence em <strong>${daysUntilExpiry} dia(s)</strong>. 
+                    <a href="./checkout?plan=${authData.plano || 'pro'}&billing=${authData.billing || 'monthly'}">Clique aqui para renovar</a></span>
+                    <button class="close-banner" onclick="LucroCertoApp.closePlanBanner()">✕</button>
+                `;
+                banner.style.display = 'flex';
+                document.body.classList.add('has-plan-banner');
+                
+            } else {
+                banner.style.display = 'none';
+                document.body.classList.remove('has-plan-banner');
+            }
+        },
+        
+        // Fechar banner de aviso do plano
+        closePlanBanner() {
+            const banner = document.getElementById('plan-alert-banner');
+            if (banner) {
+                banner.style.display = 'none';
+                document.body.classList.remove('has-plan-banner');
+                // Salvar que o banner foi fechado hoje
+                localStorage.setItem('lucrocerto_banner_closed', new Date().toDateString());
+            }
         },
         
         updateSideMenu() {
@@ -774,6 +869,10 @@ const LucroCertoApp = (function() {
             const { editingProductId, products } = StateManager.getState();
             const product = editingProductId ? products.find(p => p.id === editingProductId) : ProductManager.getNewProductTemplate();
             const pageTitle = editingProductId ? '✏️ Editar Produto' : '✨ Novo Produto';
+            
+            // Garantir que images seja sempre um array
+            const productImages = product.images || (product.imageUrl ? [product.imageUrl] : []);
+            const hasDescription = product.description && product.description.trim() !== '';
 
             return `
                 <div style="display: flex; align-items: center; margin-bottom: 20px;">
@@ -784,29 +883,58 @@ const LucroCertoApp = (function() {
                 </div>
 
                 <form id="product-form">
-                    <!-- FOTO E NOME -->
+                    <!-- NOME DO PRODUTO -->
                     <div class="card">
-                        <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
-                            <div style="flex-shrink: 0;">
-                                <label class="image-upload-container">
-                                    <input type="file" id="product-image-input" accept="image/*" style="display: none;">
-                                    <div class="image-upload-preview" id="image-preview">
-                                        ${product.imageUrl ? 
-                                            `<img src="${product.imageUrl}" alt="Produto" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">` :
-                                            `<i data-lucide="camera" style="width: 32px; height: 32px; color: var(--elegant-gray);"></i>
-                                            <span style="font-size: 12px; color: var(--elegant-gray); margin-top: 8px;">Adicionar Foto</span>`
-                                        }
-                                    </div>
-                                </label>
-                                <p style="font-size: 11px; color: var(--elegant-gray); text-align: center; margin-top: 8px;">Toque para adicionar</p>
-                            </div>
-                            <div style="flex: 1; min-width: 200px;">
-                                <div class="form-group">
-                                    <label for="product-name">Nome do Produto <span class="required">*</span></label>
-                                    <input type="text" id="product-name" class="form-input" placeholder="Ex: Colar de Pérolas" required value="${product.name}">
-                                    <small>Digite o nome que aparecerá para suas clientes</small>
+                        <div class="form-group">
+                            <label for="product-name">Nome do Produto <span class="required">*</span></label>
+                            <input type="text" id="product-name" class="form-input" placeholder="Ex: Colar de Pérolas" required value="${product.name}">
+                            <small>Digite o nome que aparecerá para suas clientes</small>
+                        </div>
+                    </div>
+                    
+                    <!-- FOTOS DO PRODUTO -->
+                    <div class="card">
+                        <h3><i data-lucide="camera" style="width: 20px; height: 20px; vertical-align: middle;"></i> Fotos do Produto</h3>
+                        <p style="font-size: 13px; color: var(--elegant-gray); margin-bottom: 16px;">
+                            Adicione fotos para mostrar seu produto de diferentes ângulos
+                        </p>
+                        
+                        <div class="product-gallery" id="product-gallery">
+                            ${productImages.map((img, idx) => `
+                                <div class="gallery-item" data-index="${idx}">
+                                    <img src="${img}" alt="Foto ${idx + 1}">
+                                    <button type="button" class="gallery-remove-btn" data-remove-image="${idx}">
+                                        <i data-lucide="x"></i>
+                                    </button>
+                                    ${idx === 0 ? '<span class="gallery-main-badge">Principal</span>' : ''}
                                 </div>
-                            </div>
+                            `).join('')}
+                            
+                            <label class="gallery-add-btn">
+                                <input type="file" id="product-image-input" accept="image/*" multiple style="display: none;">
+                                <i data-lucide="plus"></i>
+                                <span>Adicionar</span>
+                            </label>
+                        </div>
+                        <small style="display: block; margin-top: 12px; color: var(--elegant-gray);">
+                            💡 A primeira foto será a principal. Arraste para reordenar.
+                        </small>
+                    </div>
+                    
+                    <!-- DESCRIÇÃO OPCIONAL -->
+                    <div class="card">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <h3 style="margin: 0;"><i data-lucide="file-text" style="width: 20px; height: 20px; vertical-align: middle;"></i> Descrição</h3>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="has-description" ${hasDescription ? 'checked' : ''}>
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <p style="font-size: 13px; color: var(--elegant-gray); margin-bottom: 12px;">
+                            Quer adicionar uma descrição para este produto?
+                        </p>
+                        <div id="description-area" style="display: ${hasDescription ? 'block' : 'none'};">
+                            <textarea id="product-description" class="form-input" rows="3" placeholder="Descreva seu produto... Ex: Colar artesanal feito com pérolas naturais, acabamento em ouro 18k...">${product.description || ''}</textarea>
                         </div>
                     </div>
 
@@ -891,29 +1019,98 @@ const LucroCertoApp = (function() {
             
             let variationOptions1 = [];
             let variationOptions2 = [];
-            let currentImageBase64 = currentProduct?.imageUrl || '';
-
-            // ===== UPLOAD DE IMAGEM =====
-            const imageInput = document.getElementById('product-image-input');
-            const imagePreview = document.getElementById('image-preview');
             
-            imageInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    // Validação de tamanho (máx 2MB)
+            // Array de imagens do produto
+            let productImages = currentProduct?.images || (currentProduct?.imageUrl ? [currentProduct.imageUrl] : []);
+            
+            // Objeto para armazenar as fotos vinculadas às variações (persiste durante a edição)
+            let variationImagesMap = currentProduct?.variationImages ? { ...currentProduct.variationImages } : {};
+
+            // ===== GALERIA DE FOTOS =====
+            const imageInput = document.getElementById('product-image-input');
+            const galleryContainer = document.getElementById('product-gallery');
+            
+            // Função para renderizar a galeria
+            const renderGallery = () => {
+                const galleryItems = productImages.map((img, idx) => `
+                    <div class="gallery-item" data-index="${idx}">
+                        <img src="${img}" alt="Foto ${idx + 1}">
+                        <button type="button" class="gallery-remove-btn" data-remove-image="${idx}">
+                            <i data-lucide="x"></i>
+                        </button>
+                        ${idx === 0 ? '<span class="gallery-main-badge">Principal</span>' : ''}
+                    </div>
+                `).join('');
+                
+                galleryContainer.innerHTML = galleryItems + `
+                    <label class="gallery-add-btn">
+                        <input type="file" id="product-image-input-new" accept="image/*" multiple style="display: none;">
+                        <i data-lucide="plus"></i>
+                        <span>Adicionar</span>
+                    </label>
+                `;
+                
+                // Re-bind eventos
+                setTimeout(() => {
+                    lucide.createIcons({ nodes: [...galleryContainer.querySelectorAll('[data-lucide]')] });
+                }, 0);
+                
+                // Evento de remover imagem
+                galleryContainer.querySelectorAll('.gallery-remove-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const idx = parseInt(btn.dataset.removeImage);
+                        productImages.splice(idx, 1);
+                        renderGallery();
+                    });
+                });
+                
+                // Evento de adicionar nova imagem
+                const newInput = document.getElementById('product-image-input-new');
+                if (newInput) {
+                    newInput.addEventListener('change', handleImageUpload);
+                }
+            };
+            
+            // Função para processar upload de imagens
+            const handleImageUpload = (e) => {
+                const files = Array.from(e.target.files);
+                
+                files.forEach(file => {
                     if (file.size > 2 * 1024 * 1024) {
-                        alert('❌ Imagem muito grande! Escolha uma imagem menor que 2MB.');
+                        alert('❌ Imagem muito grande! Máximo 2MB por foto.');
                         return;
                     }
-
+                    
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                        currentImageBase64 = event.target.result;
-                        imagePreview.innerHTML = `<img src="${currentImageBase64}" alt="Produto" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">`;
+                        productImages.push(event.target.result);
+                        renderGallery();
                     };
                     reader.readAsDataURL(file);
-                }
-            });
+                });
+            };
+            
+            // Bind inicial do input
+            if (imageInput) {
+                imageInput.addEventListener('change', handleImageUpload);
+            }
+            
+            // Renderizar galeria inicial
+            renderGallery();
+            
+            // ===== TOGGLE DE DESCRIÇÃO =====
+            const hasDescriptionToggle = document.getElementById('has-description');
+            const descriptionArea = document.getElementById('description-area');
+            
+            if (hasDescriptionToggle) {
+                hasDescriptionToggle.addEventListener('change', () => {
+                    descriptionArea.style.display = hasDescriptionToggle.checked ? 'block' : 'none';
+                    if (hasDescriptionToggle.checked) {
+                        document.getElementById('product-description')?.focus();
+                    }
+                });
+            }
 
             // ===== PRECIFICAÇÃO COM SLIDER =====
             const updatePricingUI = () => {
@@ -1047,11 +1244,15 @@ const LucroCertoApp = (function() {
                             
                             <div class="form-group">
                                 <label for="variation-options-input-1">
-                                    Quais são as opções? 
-                                    <span style="color: var(--primary); font-weight: 600;">(Digite e pressione Enter)</span>
+                                    Quais são as opções?
                                 </label>
-                                <input type="text" class="form-input" id="variation-options-input-1" placeholder="Digite uma opção e pressione Enter. Ex: P, M, G">
-                                <small>💡 Dica: Digite uma opção por vez e pressione Enter, ou separe por vírgula (P, M, G)</small>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" class="form-input" id="variation-options-input-1" placeholder="Ex: P, M, G" style="flex: 1;">
+                                    <button type="button" class="btn btn-primary" id="add-variation-btn-1" style="white-space: nowrap;">
+                                        <i data-lucide="plus" style="width: 16px; height: 16px;"></i> Adicionar
+                                    </button>
+                                </div>
+                                <small>💡 Digite uma opção e clique em Adicionar, ou separe por vírgula (P, M, G)</small>
                                 <div class="variation-options-container" id="variation-options-tags-1"></div>
                             </div>
                             
@@ -1066,27 +1267,43 @@ const LucroCertoApp = (function() {
                     }
 
                     const optionsInput = document.getElementById('variation-options-input-1');
+                    const addBtn = document.getElementById('add-variation-btn-1');
+                    
+                    // Função para adicionar variação
+                    const addVariation = () => {
+                        const value = optionsInput.value.trim();
+                        if (!value) return;
+                        
+                        // Aceita valores separados por vírgula
+                        if (value.includes(',')) {
+                            const options = value.split(',').map(opt => opt.trim()).filter(opt => opt);
+                            options.forEach(opt => {
+                                if (!variationOptions1.includes(opt)) {
+                                    variationOptions1.push(opt);
+                                }
+                            });
+                        } else if (!variationOptions1.includes(value)) {
+                            variationOptions1.push(value);
+                        }
+                        
+                        renderVariationTags();
+                        renderStockTable();
+                        optionsInput.value = '';
+                        optionsInput.focus();
+                    };
+                    
+                    // Evento de clique no botão
+                    if (addBtn) {
+                        addBtn.addEventListener('click', addVariation);
+                        setTimeout(() => lucide.createIcons({ nodes: [addBtn] }), 0);
+                    }
+                    
+                    // Evento de Enter no input (mantém para quem preferir)
                     if (optionsInput) {
                         optionsInput.addEventListener('keypress', (e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
-                                const value = optionsInput.value.trim();
-                                
-                                // Aceita valores separados por vírgula
-                                if (value.includes(',')) {
-                                    const options = value.split(',').map(opt => opt.trim()).filter(opt => opt);
-                                    options.forEach(opt => {
-                                        if (!variationOptions1.includes(opt)) {
-                                            variationOptions1.push(opt);
-                                        }
-                                    });
-                                } else if (value && !variationOptions1.includes(value)) {
-                                    variationOptions1.push(value);
-                                }
-                                
-                                renderVariationTags();
-                                renderStockTable();
-                                optionsInput.value = '';
+                                addVariation();
                             }
                         });
                     }
@@ -1113,10 +1330,14 @@ const LucroCertoApp = (function() {
                             <div class="form-group">
                                 <label for="variation-options-input-1">
                                     Opções da 1ª Variação
-                                    <span style="color: var(--primary); font-weight: 600;">(Digite e pressione Enter)</span>
                                 </label>
-                                <input type="text" class="form-input" id="variation-options-input-1" placeholder="Ex: Preto, Branco, Nude">
-                                <small>💡 Digite uma por vez ou separe por vírgula</small>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" class="form-input" id="variation-options-input-1" placeholder="Ex: Preto, Branco, Nude" style="flex: 1;">
+                                    <button type="button" class="btn btn-primary" id="add-variation-btn-1" style="white-space: nowrap;">
+                                        <i data-lucide="plus" style="width: 16px; height: 16px;"></i> Adicionar
+                                    </button>
+                                </div>
+                                <small>💡 Digite uma opção e clique em Adicionar</small>
                                 <div class="variation-options-container" id="variation-options-tags-1"></div>
                             </div>
                             
@@ -1129,10 +1350,14 @@ const LucroCertoApp = (function() {
                             <div class="form-group">
                                 <label for="variation-options-input-2">
                                     Opções da 2ª Variação
-                                    <span style="color: var(--primary); font-weight: 600;">(Digite e pressione Enter)</span>
                                 </label>
-                                <input type="text" class="form-input" id="variation-options-input-2" placeholder="Ex: P, M, G">
-                                <small>💡 Digite uma por vez ou separe por vírgula</small>
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" class="form-input" id="variation-options-input-2" placeholder="Ex: P, M, G" style="flex: 1;">
+                                    <button type="button" class="btn btn-primary" id="add-variation-btn-2" style="white-space: nowrap;">
+                                        <i data-lucide="plus" style="width: 16px; height: 16px;"></i> Adicionar
+                                    </button>
+                                </div>
+                                <small>💡 Digite uma opção e clique em Adicionar</small>
                                 <div class="variation-options-container" id="variation-options-tags-2"></div>
                             </div>
                             
@@ -1155,56 +1380,84 @@ const LucroCertoApp = (function() {
 
                     // Event listeners para variação 1
                     const optionsInput1 = document.getElementById('variation-options-input-1');
+                    const addBtn1 = document.getElementById('add-variation-btn-1');
+                    
+                    // Função para adicionar variação 1
+                    const addVariation1 = () => {
+                        const value = optionsInput1.value.trim();
+                        if (!value) return;
+                        
+                        if (value.includes(',')) {
+                            const options = value.split(',').map(opt => opt.trim()).filter(opt => opt);
+                            options.forEach(opt => {
+                                if (!variationOptions1.includes(opt)) {
+                                    variationOptions1.push(opt);
+                                }
+                            });
+                        } else if (!variationOptions1.includes(value)) {
+                            variationOptions1.push(value);
+                        }
+                        
+                        renderVariationTags(1);
+                        if (variationOptions1.length > 0 && variationOptions2.length > 0) {
+                            renderCombinedStockTable();
+                        }
+                        optionsInput1.value = '';
+                        optionsInput1.focus();
+                    };
+                    
+                    if (addBtn1) {
+                        addBtn1.addEventListener('click', addVariation1);
+                        setTimeout(() => lucide.createIcons({ nodes: [addBtn1] }), 0);
+                    }
+                    
                     if (optionsInput1) {
                         optionsInput1.addEventListener('keypress', (e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
-                                const value = optionsInput1.value.trim();
-                                
-                                if (value.includes(',')) {
-                                    const options = value.split(',').map(opt => opt.trim()).filter(opt => opt);
-                                    options.forEach(opt => {
-                                        if (!variationOptions1.includes(opt)) {
-                                            variationOptions1.push(opt);
-                                        }
-                                    });
-                                } else if (value && !variationOptions1.includes(value)) {
-                                    variationOptions1.push(value);
-                                }
-                                
-                                renderVariationTags(1);
-                                if (variationOptions1.length > 0 && variationOptions2.length > 0) {
-                                    renderCombinedStockTable();
-                                }
-                                optionsInput1.value = '';
+                                addVariation1();
                             }
                         });
                     }
 
                     // Event listeners para variação 2
                     const optionsInput2 = document.getElementById('variation-options-input-2');
+                    const addBtn2 = document.getElementById('add-variation-btn-2');
+                    
+                    // Função para adicionar variação 2
+                    const addVariation2 = () => {
+                        const value = optionsInput2.value.trim();
+                        if (!value) return;
+                        
+                        if (value.includes(',')) {
+                            const options = value.split(',').map(opt => opt.trim()).filter(opt => opt);
+                            options.forEach(opt => {
+                                if (!variationOptions2.includes(opt)) {
+                                    variationOptions2.push(opt);
+                                }
+                            });
+                        } else if (!variationOptions2.includes(value)) {
+                            variationOptions2.push(value);
+                        }
+                        
+                        renderVariationTags(2);
+                        if (variationOptions1.length > 0 && variationOptions2.length > 0) {
+                            renderCombinedStockTable();
+                        }
+                        optionsInput2.value = '';
+                        optionsInput2.focus();
+                    };
+                    
+                    if (addBtn2) {
+                        addBtn2.addEventListener('click', addVariation2);
+                        setTimeout(() => lucide.createIcons({ nodes: [addBtn2] }), 0);
+                    }
+                    
                     if (optionsInput2) {
                         optionsInput2.addEventListener('keypress', (e) => {
                             if (e.key === 'Enter') {
                                 e.preventDefault();
-                                const value = optionsInput2.value.trim();
-                                
-                                if (value.includes(',')) {
-                                    const options = value.split(',').map(opt => opt.trim()).filter(opt => opt);
-                                    options.forEach(opt => {
-                                        if (!variationOptions2.includes(opt)) {
-                                            variationOptions2.push(opt);
-                                        }
-                                    });
-                                } else if (value && !variationOptions2.includes(value)) {
-                                    variationOptions2.push(value);
-                                }
-                                
-                                renderVariationTags(2);
-                                if (variationOptions1.length > 0 && variationOptions2.length > 0) {
-                                    renderCombinedStockTable();
-                                }
-                                optionsInput2.value = '';
+                                addVariation2();
                             }
                         });
                     }
@@ -1258,6 +1511,11 @@ const LucroCertoApp = (function() {
                 }
 
                 const currentStock = currentProduct && currentProduct.variationType === 'simple' ? currentProduct.stock : {};
+                
+                // Verifica se a variação é de cor (para mostrar opção de foto)
+                const variationNameInput = document.getElementById('variation-name-1');
+                const variationName = variationNameInput ? variationNameInput.value.toLowerCase() : '';
+                const isColorVariation = ['cor', 'cores', 'color', 'colours', 'modelo', 'estampa'].some(term => variationName.includes(term));
 
                 tableContainer.innerHTML = `
                     <div style="margin-top: 20px;">
@@ -1265,26 +1523,84 @@ const LucroCertoApp = (function() {
                             <i data-lucide="package" style="width: 16px; height: 16px; vertical-align: middle;"></i>
                             Estoque de Cada Opção
                         </h4>
-                        <table class="stock-table">
-                            <thead>
-                                <tr>
-                                    <th>Opção</th>
-                                    <th style="width: 120px;">Estoque</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${variationOptions1.map(option => `
-                                    <tr>
-                                        <td><strong>${option}</strong></td>
-                                        <td>
-                                            <input type="number" class="form-input" data-stock-option="${option}" value="${currentStock[option] || 0}" min="0" placeholder="0">
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                        ${isColorVariation && productImages.length > 0 ? `
+                            <p style="font-size: 12px; color: var(--elegant-gray); margin-bottom: 12px; background: #E8F5E9; padding: 10px; border-radius: 8px;">
+                                <i data-lucide="image" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+                                <strong>Dica:</strong> Clique nas fotos para vincular a cada ${variationName || 'opção'}. No catálogo, a foto muda quando o cliente escolher!
+                            </p>
+                        ` : ''}
+                        <div class="stock-options-list">
+                            ${variationOptions1.map(option => {
+                                const selectedPhotoIdx = variationImagesMap[option];
+                                const hasPhoto = selectedPhotoIdx !== undefined && productImages[selectedPhotoIdx];
+                                
+                                return `
+                                <div class="stock-option-row" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--white); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--light-gray);">
+                                    <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
+                                        ${isColorVariation && hasPhoto ? `
+                                            <img src="${productImages[selectedPhotoIdx]}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 2px solid var(--primary);">
+                                        ` : isColorVariation ? `
+                                            <div style="width: 40px; height: 40px; background: var(--light-gray); border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 2px dashed var(--medium-gray);">
+                                                <i data-lucide="image" style="width: 18px; height: 18px; color: var(--elegant-gray);"></i>
+                                            </div>
+                                        ` : ''}
+                                        <strong style="font-size: 14px; color: var(--dark-gray);">${option}</strong>
+                                    </div>
+                                    
+                                    ${isColorVariation && productImages.length > 0 ? `
+                                        <div class="photo-selector" style="display: flex; gap: 6px; align-items: center;">
+                                            <span style="font-size: 11px; color: var(--elegant-gray); margin-right: 4px;">Foto:</span>
+                                            ${productImages.map((img, idx) => `
+                                                <button type="button" 
+                                                    class="photo-select-btn ${selectedPhotoIdx === idx ? 'selected' : ''}" 
+                                                    data-variation-option="${option}" 
+                                                    data-photo-idx="${idx}"
+                                                    style="width: 36px; height: 36px; padding: 0; border: 2px solid ${selectedPhotoIdx === idx ? 'var(--primary)' : 'var(--light-gray)'}; border-radius: 6px; cursor: pointer; overflow: hidden; background: none; transition: all 0.2s;">
+                                                    <img src="${img}" style="width: 100%; height: 100%; object-fit: cover;">
+                                                </button>
+                                            `).join('')}
+                                            ${hasPhoto ? `
+                                                <button type="button" class="photo-clear-btn" data-variation-option="${option}" 
+                                                    style="width: 28px; height: 28px; padding: 0; border: none; background: #fee2e2; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Remover foto">
+                                                    <i data-lucide="x" style="width: 14px; height: 14px; color: #ef4444;"></i>
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                    ` : ''}
+                                    
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-size: 11px; color: var(--elegant-gray);">Qtd:</span>
+                                        <input type="number" class="form-input" data-stock-option="${option}" value="${currentStock[option] || 0}" min="0" placeholder="0" style="width: 70px; text-align: center; padding: 8px;">
+                                    </div>
+                                </div>
+                            `}).join('')}
+                        </div>
                     </div>
                 `;
+                
+                // Bind eventos de seleção de foto (clique nas miniaturas)
+                tableContainer.querySelectorAll('.photo-select-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const option = btn.dataset.variationOption;
+                        const photoIdx = parseInt(btn.dataset.photoIdx);
+                        
+                        // Atualiza o estado
+                        variationImagesMap[option] = photoIdx;
+                        
+                        // Re-renderiza
+                        renderStockTable();
+                    });
+                });
+                
+                // Bind eventos para limpar foto
+                tableContainer.querySelectorAll('.photo-clear-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const option = btn.dataset.variationOption;
+                        delete variationImagesMap[option];
+                        renderStockTable();
+                    });
+                });
+                
                 setTimeout(() => lucide.createIcons({ nodes: [tableContainer] }), 0);
             };
 
@@ -1297,6 +1613,11 @@ const LucroCertoApp = (function() {
                 }
 
                 const currentStock = currentProduct && currentProduct.variationType === 'combined' ? currentProduct.stock : {};
+                
+                // Verifica se a primeira variação é de cor
+                const variationName1Input = document.getElementById('variation-name-1');
+                const variationName1 = variationName1Input ? variationName1Input.value.toLowerCase() : '';
+                const isColorVariation = ['cor', 'cores', 'color', 'colours', 'modelo', 'estampa'].some(term => variationName1.includes(term));
 
                 tableContainer.innerHTML = `
                     <div style="margin-top: 20px;">
@@ -1304,24 +1625,87 @@ const LucroCertoApp = (function() {
                             <i data-lucide="grid" style="width: 16px; height: 16px; vertical-align: middle;"></i>
                             Estoque de Cada Combinação
                         </h4>
+                        ${isColorVariation && productImages.length > 0 ? `
+                            <p style="font-size: 12px; color: var(--elegant-gray); margin-bottom: 12px; background: #E8F5E9; padding: 10px; border-radius: 8px;">
+                                <i data-lucide="image" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+                                <strong>Dica:</strong> Clique nas fotos para vincular a cada ${variationName1 || 'cor'}. No catálogo, a foto muda automaticamente!
+                            </p>
+                        ` : ''}
                         <div class="combined-stock-grid">
-                            ${variationOptions1.map(opt1 => `
-                                <div class="combined-stock-section">
-                                    <h5 class="combined-stock-title">${opt1}</h5>
-                                    ${variationOptions2.map(opt2 => {
-                                        const key = `${opt1}-${opt2}`;
-                                        return `
-                                            <div class="combined-stock-item">
-                                                <label>${opt2}</label>
-                                                <input type="number" class="form-input" data-combined-stock="${key}" value="${currentStock[key] || 0}" min="0" placeholder="0">
+                            ${variationOptions1.map(opt1 => {
+                                const selectedPhotoIdx = variationImagesMap[opt1];
+                                const hasPhoto = selectedPhotoIdx !== undefined && productImages[selectedPhotoIdx];
+                                
+                                return `
+                                <div class="combined-stock-section" style="background: var(--white); padding: 16px; border-radius: 12px; border: 1px solid var(--light-gray);">
+                                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--light-gray);">
+                                        ${isColorVariation && hasPhoto ? `
+                                            <img src="${productImages[selectedPhotoIdx]}" style="width: 44px; height: 44px; object-fit: cover; border-radius: 8px; border: 2px solid var(--primary);">
+                                        ` : isColorVariation ? `
+                                            <div style="width: 44px; height: 44px; background: var(--light-gray); border-radius: 8px; display: flex; align-items: center; justify-content: center; border: 2px dashed var(--medium-gray);">
+                                                <i data-lucide="image" style="width: 20px; height: 20px; color: var(--elegant-gray);"></i>
                                             </div>
-                                        `;
-                                    }).join('')}
+                                        ` : ''}
+                                        <h5 class="combined-stock-title" style="margin: 0; flex: 1; font-size: 15px;">${opt1}</h5>
+                                    </div>
+                                    
+                                    ${isColorVariation && productImages.length > 0 ? `
+                                        <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 12px; flex-wrap: wrap;">
+                                            <span style="font-size: 11px; color: var(--elegant-gray); width: 100%; margin-bottom: 4px;">Vincular foto:</span>
+                                            ${productImages.map((img, idx) => `
+                                                <button type="button" 
+                                                    class="photo-select-btn-combined ${selectedPhotoIdx === idx ? 'selected' : ''}" 
+                                                    data-variation-option="${opt1}" 
+                                                    data-photo-idx="${idx}"
+                                                    style="width: 36px; height: 36px; padding: 0; border: 2px solid ${selectedPhotoIdx === idx ? 'var(--primary)' : 'var(--light-gray)'}; border-radius: 6px; cursor: pointer; overflow: hidden; background: none; transition: all 0.2s;">
+                                                    <img src="${img}" style="width: 100%; height: 100%; object-fit: cover;">
+                                                </button>
+                                            `).join('')}
+                                            ${hasPhoto ? `
+                                                <button type="button" class="photo-clear-btn-combined" data-variation-option="${opt1}" 
+                                                    style="width: 28px; height: 28px; padding: 0; border: none; background: #fee2e2; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Remover foto">
+                                                    <i data-lucide="x" style="width: 14px; height: 14px; color: #ef4444;"></i>
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                    ` : ''}
+                                    
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px;">
+                                        ${variationOptions2.map(opt2 => {
+                                            const key = `${opt1}-${opt2}`;
+                                            return `
+                                                <div class="combined-stock-item" style="text-align: center;">
+                                                    <label style="font-size: 12px; color: var(--elegant-gray); display: block; margin-bottom: 4px;">${opt2}</label>
+                                                    <input type="number" class="form-input" data-combined-stock="${key}" value="${currentStock[key] || 0}" min="0" placeholder="0" style="text-align: center; padding: 8px;">
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
                                 </div>
-                            `).join('')}
+                            `}).join('')}
                         </div>
                     </div>
                 `;
+                
+                // Bind eventos de seleção de foto (clique nas miniaturas)
+                tableContainer.querySelectorAll('.photo-select-btn-combined').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const option = btn.dataset.variationOption;
+                        const photoIdx = parseInt(btn.dataset.photoIdx);
+                        variationImagesMap[option] = photoIdx;
+                        renderCombinedStockTable();
+                    });
+                });
+                
+                // Bind eventos para limpar foto
+                tableContainer.querySelectorAll('.photo-clear-btn-combined').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const option = btn.dataset.variationOption;
+                        delete variationImagesMap[option];
+                        renderCombinedStockTable();
+                    });
+                });
+                
                 setTimeout(() => lucide.createIcons({ nodes: [tableContainer] }), 0);
             };
 
@@ -1348,6 +1732,10 @@ const LucroCertoApp = (function() {
                 // Monta objeto do produto
                 const finalPrice = SmartPricing.calculate(productCost, profitMargin).price;
                 
+                // Pegar descrição se habilitada
+                const hasDescription = document.getElementById('has-description')?.checked;
+                const description = hasDescription ? (document.getElementById('product-description')?.value.trim() || '') : '';
+                
                 const productData = {
                     id: editingProductId || `prod_${Date.now()}`,
                     name: productName,
@@ -1357,7 +1745,9 @@ const LucroCertoApp = (function() {
                     variationType: variationType,
                     variations: [],
                     stock: {},
-                    imageUrl: currentImageBase64
+                    images: productImages, // Array de imagens
+                    imageUrl: productImages[0] || '', // Primeira imagem como principal (compatibilidade)
+                    description: description
                 };
 
                 // Processa estoque baseado no tipo de variação
@@ -1379,10 +1769,14 @@ const LucroCertoApp = (function() {
 
                     productData.variations = [{ name: variationName, options: variationOptions1 }];
                     
+                    // Coleta estoque para cada opção
                     variationOptions1.forEach(option => {
                         const stockInput = document.querySelector(`[data-stock-option="${option}"]`);
                         productData.stock[option] = parseInt(stockInput?.value) || 0;
                     });
+                    
+                    // Usa o mapa de fotos vinculadas que foi construído durante a edição
+                    productData.variationImages = { ...variationImagesMap };
                 } else if (variationType === 'combined') {
                     const variationName1 = document.getElementById('variation-name-1')?.value.trim();
                     const variationName2 = document.getElementById('variation-name-2')?.value.trim();
@@ -1410,6 +1804,9 @@ const LucroCertoApp = (function() {
                             productData.stock[key] = parseInt(stockInput?.value) || 0;
                         });
                     });
+                    
+                    // Usa o mapa de fotos vinculadas que foi construído durante a edição
+                    productData.variationImages = { ...variationImagesMap };
                 }
 
                 // Salva ou atualiza produto
@@ -1894,7 +2291,7 @@ const LucroCertoApp = (function() {
         // ========== PÁGINA MEU CATÁLOGO ==========
         getMeuCatalogoHTML() {
             const { user } = StateManager.getState();
-            const catalogUrl = `${window.location.origin}/catalogo.html`;
+            const catalogUrl = `${window.location.origin}/catalogo`;
             const catalogLogo = user.catalogLogo || '';
             const catalogColor = user.catalogColor || 'pink';
             
@@ -2061,7 +2458,7 @@ const LucroCertoApp = (function() {
             // Compartilhar WhatsApp
             document.querySelector('[data-action="share-catalog-whatsapp-page"]')?.addEventListener('click', () => {
                 const { user } = StateManager.getState();
-                const catalogUrl = `${window.location.origin}/catalogo.html`;
+                const catalogUrl = `${window.location.origin}/catalogo`;
                 const msg = `Olá! 💖 Confira o catálogo da ${user.businessName || 'minha loja'}: ${catalogUrl}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
             });
@@ -2160,64 +2557,10 @@ const LucroCertoApp = (function() {
                     <i data-lucide="check" style="width: 18px; height: 18px;"></i> Salvar Configurações
                 </button>
                 
-                <div class="card catalog-card" style="margin-top: 30px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border: 2px solid var(--primary-light);">
-                    <h3><i data-lucide="shopping-bag" style="width: 20px; height: 20px; vertical-align: middle; color: var(--primary);"></i> Meu Catálogo Digital</h3>
-                    <p style="font-size: 14px; color: var(--elegant-gray); margin-bottom: 16px;">
-                        Personalize e compartilhe seu catálogo com suas clientes!
-                    </p>
-                    
-                    <!-- Logo do Catálogo -->
-                    <div class="form-group">
-                        <label><i data-lucide="image" style="width: 16px; height: 16px;"></i> Logo da sua Loja</label>
-                        <div class="catalog-logo-upload">
-                            <label class="logo-upload-box" id="catalog-logo-preview">
-                                <input type="file" id="catalog-logo-input" accept="image/*" style="display: none;">
-                                ${user.catalogLogo 
-                                    ? `<img src="${user.catalogLogo}" alt="Logo">`
-                                    : `<i data-lucide="upload" style="width: 32px; height: 32px; color: var(--elegant-gray);"></i>
-                                       <span>Adicionar Logo</span>`
-                                }
-                            </label>
-                            <small>Aparecerá no topo do seu catálogo</small>
-                        </div>
-                    </div>
-                    
-                    <!-- Paleta de Cores -->
-                    <div class="form-group">
-                        <label><i data-lucide="palette" style="width: 16px; height: 16px;"></i> Cor do Catálogo</label>
-                        <p style="font-size: 12px; color: var(--elegant-gray); margin-bottom: 12px;">Escolha a cor que combina com sua marca</p>
-                        <div class="color-palette" id="color-palette">
-                            <button type="button" class="color-option ${(user.catalogColor || 'pink') === 'pink' ? 'active' : ''}" data-color="pink" style="background: linear-gradient(135deg, #E91E63, #AD1457);" title="Rosa"></button>
-                            <button type="button" class="color-option ${user.catalogColor === 'purple' ? 'active' : ''}" data-color="purple" style="background: linear-gradient(135deg, #9C27B0, #6A1B9A);" title="Roxo"></button>
-                            <button type="button" class="color-option ${user.catalogColor === 'blue' ? 'active' : ''}" data-color="blue" style="background: linear-gradient(135deg, #2196F3, #1565C0);" title="Azul"></button>
-                            <button type="button" class="color-option ${user.catalogColor === 'teal' ? 'active' : ''}" data-color="teal" style="background: linear-gradient(135deg, #009688, #00695C);" title="Verde-azulado"></button>
-                            <button type="button" class="color-option ${user.catalogColor === 'green' ? 'active' : ''}" data-color="green" style="background: linear-gradient(135deg, #4CAF50, #2E7D32);" title="Verde"></button>
-                            <button type="button" class="color-option ${user.catalogColor === 'orange' ? 'active' : ''}" data-color="orange" style="background: linear-gradient(135deg, #FF9800, #E65100);" title="Laranja"></button>
-                            <button type="button" class="color-option ${user.catalogColor === 'red' ? 'active' : ''}" data-color="red" style="background: linear-gradient(135deg, #F44336, #C62828);" title="Vermelho"></button>
-                            <button type="button" class="color-option ${user.catalogColor === 'brown' ? 'active' : ''}" data-color="brown" style="background: linear-gradient(135deg, #795548, #4E342E);" title="Marrom"></button>
-                        </div>
-                    </div>
-                    
-                    <hr style="margin: 20px 0; border: none; border-top: 1px solid rgba(0,0,0,0.1);">
-                    
-                    <!-- Link do Catálogo -->
-                    <div class="form-group">
-                        <label><i data-lucide="link" style="width: 16px; height: 16px;"></i> Link do seu Catálogo</label>
-                        <div class="catalog-link-box" id="catalog-link-box">
-                            <input type="text" id="catalog-link" class="form-input" readonly value="${window.location.origin}/catalogo.html">
-                            <button class="btn btn-primary" data-action="copy-catalog-link" title="Copiar link">
-                                <i data-lucide="copy" style="width: 18px; height: 18px;"></i>
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
-                        <a href="./catalogo.html" target="_blank" class="btn btn-secondary" style="flex: 1; text-decoration: none; text-align: center;">
-                            <i data-lucide="eye" style="width: 18px; height: 18px;"></i> Ver Catálogo
-                        </a>
-                        <button class="btn btn-success" data-action="share-catalog-whatsapp" style="flex: 1; background: #25D366; border-color: #25D366;">
-                            <i data-lucide="message-circle" style="width: 18px; height: 18px;"></i> Compartilhar
-                        </button>
+                <div class="card" style="margin-top: 30px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border: 2px solid var(--primary-light);">
+                    <h3><i data-lucide="crown" style="width: 20px; height: 20px; vertical-align: middle; color: var(--primary);"></i> Meu Plano</h3>
+                    <div id="plan-info-section">
+                        <!-- Será preenchido dinamicamente -->
                     </div>
                 </div>
                 
@@ -2241,8 +2584,6 @@ const LucroCertoApp = (function() {
         bindConfiguracoesEvents() {
             const { user } = StateManager.getState();
             let currentProfilePhoto = user.profilePhoto || '';
-            let currentCatalogLogo = user.catalogLogo || '';
-            let currentCatalogColor = user.catalogColor || 'pink';
             
             // Upload de foto de perfil
             const photoInput = document.getElementById('profile-photo-input');
@@ -2266,40 +2607,8 @@ const LucroCertoApp = (function() {
                 });
             }
             
-            // Upload de logo do catálogo
-            const logoInput = document.getElementById('catalog-logo-input');
-            const logoPreview = document.getElementById('catalog-logo-preview');
-            
-            if (logoInput) {
-                logoInput.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        if (file.size > 2 * 1024 * 1024) {
-                            alert('❌ Imagem muito grande! Máximo 2MB.');
-                            return;
-                        }
-                        const reader = new FileReader();
-                        reader.onload = (event) => {
-                            currentCatalogLogo = event.target.result;
-                            logoPreview.innerHTML = `<img src="${currentCatalogLogo}" alt="Logo">`;
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                });
-            }
-            
-            // Seleção de cor do catálogo
-            const colorPalette = document.getElementById('color-palette');
-            if (colorPalette) {
-                colorPalette.addEventListener('click', (e) => {
-                    const colorBtn = e.target.closest('.color-option');
-                    if (colorBtn) {
-                        colorPalette.querySelectorAll('.color-option').forEach(btn => btn.classList.remove('active'));
-                        colorBtn.classList.add('active');
-                        currentCatalogColor = colorBtn.dataset.color;
-                    }
-                });
-            }
+            // Renderizar informações do plano
+            this.renderPlanInfo();
             
             // Salvar perfil
             document.querySelector('[data-action="save-profile"]')?.addEventListener('click', () => {
@@ -2313,41 +2622,82 @@ const LucroCertoApp = (function() {
                     routine: document.getElementById('profile-routine').value.trim(),
                     monthlyGoal: parseFloat(document.getElementById('profile-monthly-goal').value) || 0,
                     monthlySalesGoal: parseFloat(document.getElementById('profile-sales-goal').value) || 0,
-                    profilePhoto: currentProfilePhoto,
-                    catalogLogo: currentCatalogLogo,
-                    catalogColor: currentCatalogColor
+                    profilePhoto: currentProfilePhoto
                 };
                 
                 StateManager.setState({ user: updatedUser });
                 alert('✅ Configurações salvas com sucesso!');
             });
+        },
+        
+        // Renderizar informações do plano nas configurações
+        renderPlanInfo() {
+            const planSection = document.getElementById('plan-info-section');
+            if (!planSection) return;
             
-            // Copiar link do catálogo
-            document.querySelector('[data-action="copy-catalog-link"]')?.addEventListener('click', () => {
-                const linkInput = document.getElementById('catalog-link');
-                linkInput.select();
-                navigator.clipboard.writeText(linkInput.value).then(() => {
-                    alert('✅ Link copiado! Agora é só enviar para suas clientes.');
-                }).catch(() => {
-                    document.execCommand('copy');
-                    alert('✅ Link copiado!');
-                });
-            });
+            // Pegar dados do plano do localStorage
+            const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+            const planNames = {
+                starter: 'Starter',
+                pro: 'Profissional',
+                premium: 'Premium'
+            };
+            const planPrices = {
+                starter: { monthly: 19.90, annual: 14.92 },
+                pro: { monthly: 34.90, annual: 26.17 },
+                premium: { monthly: 49.90, annual: 37.42 }
+            };
             
-            // Compartilhar via WhatsApp
-            document.querySelector('[data-action="share-catalog-whatsapp"]')?.addEventListener('click', () => {
-                const catalogLink = document.getElementById('catalog-link').value;
-                const { user } = StateManager.getState();
-                const businessName = user.businessName || 'minha loja';
+            const currentPlan = authData.plano || 'pro';
+            const billing = authData.billing || 'monthly';
+            const planName = planNames[currentPlan] || 'Profissional';
+            const price = planPrices[currentPlan]?.[billing] || 34.90;
+            
+            // Simular data de vencimento (30 dias a partir do cadastro ou hoje para demo)
+            const createdAt = authData.createdAt ? new Date(authData.createdAt) : new Date();
+            const expiryDate = new Date(createdAt);
+            expiryDate.setDate(expiryDate.getDate() + 30);
+            
+            const today = new Date();
+            const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+            
+            planSection.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                    <div style="width: 50px; height: 50px; background: var(--primary-gradient); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                        <i data-lucide="crown" style="width: 24px; height: 24px; color: white;"></i>
+                    </div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0; color: var(--dark-gray);">Plano ${planName}</h4>
+                        <p style="margin: 4px 0 0; color: var(--elegant-gray); font-size: 14px;">
+                            R$ ${price.toFixed(2).replace('.', ',')}/mês ${billing === 'annual' ? '(anual)' : ''}
+                        </p>
+                    </div>
+                    <span class="plan-badge" style="background: ${daysUntilExpiry <= 3 ? '#FFF3CD' : '#D4EDDA'}; color: ${daysUntilExpiry <= 3 ? '#856404' : '#155724'}; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                        ${daysUntilExpiry <= 0 ? 'Vencido' : 'Ativo'}
+                    </span>
+                </div>
                 
-                const message = `✨ Olá! Dá uma olhada no catálogo da ${businessName}! 💖\n\n` +
-                                `Você pode ver todos os produtos, preços e fazer seu pedido direto pelo celular:\n\n` +
-                                `👉 ${catalogLink}\n\n` +
-                                `Te espero! 🛍️`;
+                <div style="background: var(--light-gray); padding: 12px 16px; border-radius: 10px; margin-bottom: 16px;">
+                    <p style="margin: 0; font-size: 14px; color: var(--elegant-gray);">
+                        <i data-lucide="calendar" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px;"></i>
+                        Próxima cobrança: <strong>${expiryDate.toLocaleDateString('pt-BR')}</strong>
+                        ${daysUntilExpiry <= 3 && daysUntilExpiry > 0 ? '<span style="color: #E91E63; margin-left: 8px;">(' + daysUntilExpiry + ' dias restantes)</span>' : ''}
+                    </p>
+                </div>
                 
-                const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
-                window.open(url, '_blank');
-            });
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <a href="./precos" class="btn btn-secondary" style="flex: 1; text-decoration: none; text-align: center;">
+                        <i data-lucide="arrow-up-circle" style="width: 16px; height: 16px;"></i> Mudar Plano
+                    </a>
+                    <a href="./checkout?plan=${currentPlan}&billing=${billing}" class="btn btn-primary" style="flex: 1; text-decoration: none; text-align: center;">
+                        <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i> Renovar
+                    </a>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                lucide.createIcons({ nodes: [...planSection.querySelectorAll('[data-lucide]')] });
+            }, 0);
         },
 
         // ========== PÁGINA DE CLIENTES (MINI CRM) ==========
@@ -3599,7 +3949,18 @@ const LucroCertoApp = (function() {
     //==================================
     const ProductManager = {
          getNewProductTemplate() {
-            return { id: `prod_${Date.now()}`, name: '', baseCost: 0, finalPrice: 0, variationType: 'none', variations: [], stock: {}, imageUrl: '' };
+            return { 
+                id: `prod_${Date.now()}`, 
+                name: '', 
+                baseCost: 0, 
+                finalPrice: 0, 
+                variationType: 'none', 
+                variations: [], 
+                stock: {}, 
+                images: [], // Array de múltiplas fotos
+                imageUrl: '', // Foto principal (compatibilidade)
+                description: '' // Descrição opcional
+            };
         },
         getTotalStock(product) {
             if (product.variationType === 'none') {
@@ -3689,7 +4050,7 @@ const LucroCertoApp = (function() {
                 'logout': () => {
                     if (confirm('Deseja realmente sair da sua conta?')) {
                         localStorage.removeItem('lucrocerto_logged');
-                        window.location.href = 'login.html';
+                        window.location.href = 'login';
                     }
                 },
                 'add-new-product': () => { StateManager.setState({ currentPage: 'add-edit-product', editingProductId: null }); },
@@ -3759,7 +4120,7 @@ const LucroCertoApp = (function() {
         trialBanner.innerHTML = `
             <div class="trial-banner-content">
                 <span><i data-lucide="sparkles"></i> <strong>Modo Teste Grátis</strong> - Você pode cadastrar até 3 produtos</span>
-                <a href="planos.html" class="trial-upgrade-btn">Fazer Upgrade</a>
+                <a href="planos" class="trial-upgrade-btn">Fazer Upgrade</a>
             </div>
         `;
         trialBanner.style.cssText = `
@@ -3852,7 +4213,7 @@ const LucroCertoApp = (function() {
                     <div class="benefit"><i data-lucide="check-circle"></i> Suporte prioritário</div>
                 </div>
                 <div class="trial-modal-buttons">
-                    <a href="planos.html" class="btn-upgrade">Ver Planos</a>
+                    <a href="planos" class="btn-upgrade">Ver Planos</a>
                     <button onclick="closeTrialLimitModal()" class="btn-later">Depois</button>
                 </div>
             </div>
@@ -3985,7 +4346,7 @@ const LucroCertoApp = (function() {
         banner.innerHTML = `
             <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                 <span>🎉 <strong>Parabéns!</strong> Você cadastrou 3 produtos! Para continuar, faça upgrade do seu plano.</span>
-                <a href="planos.html" style="background: white; color: #FF9800; padding: 8px 20px; border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 13px;">Ver Planos</a>
+                <a href="planos" style="background: white; color: #FF9800; padding: 8px 20px; border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 13px;">Ver Planos</a>
             </div>
         `;
         banner.style.cssText = `
@@ -4019,7 +4380,10 @@ const LucroCertoApp = (function() {
         }, 10000);
     }
 
-    return { init };
+    return { 
+        init,
+        closePlanBanner: UIManager.closePlanBanner.bind(UIManager)
+    };
 })();
 
 document.addEventListener('DOMContentLoaded', LucroCertoApp.init);

@@ -114,6 +114,100 @@ body {
     width: 40px;
 }
 
+/* BANNER DE AVISO DO PLANO */
+.plan-alert-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 3000;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    animation: slideDown 0.3s ease;
+}
+
+.plan-alert-banner.warning {
+    background: linear-gradient(135deg, #FFF3CD 0%, #FFE69C 100%);
+    color: #856404;
+    border-bottom: 2px solid #FFE69C;
+}
+
+.plan-alert-banner.danger {
+    background: linear-gradient(135deg, #F8D7DA 0%, #F5C2C7 100%);
+    color: #842029;
+    border-bottom: 2px solid #F5C2C7;
+}
+
+.plan-alert-banner a {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.plan-alert-banner .close-banner {
+    position: absolute;
+    right: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    opacity: 0.7;
+    padding: 4px;
+}
+
+.plan-alert-banner .close-banner:hover {
+    opacity: 1;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Ajustar header quando banner estiver visível */
+body.has-plan-banner .app-header {
+    top: 44px;
+}
+
+body.has-plan-banner #main-content {
+    padding-top: 44px;
+}
+
+body.has-plan-banner .side-menu {
+    top: 44px;
+    height: calc(100vh - 44px);
+}
+
+@media (min-width: 1024px) {
+    .plan-alert-banner {
+        left: 280px;
+    }
+    
+    body.has-plan-banner .app-header {
+        top: 44px;
+    }
+    
+    body.has-plan-banner #main-content {
+        margin-top: calc(56px + 44px);
+    }
+    
+    body.has-plan-banner .side-menu {
+        top: 0;
+        height: 100vh;
+    }
+}
+
 /* SIDE MENU (DRAWER) */
 .menu-overlay {
     position: fixed;
@@ -182,6 +276,11 @@ body {
     }
     
     .close-menu-btn {
+        display: none !important;
+    }
+    
+    /* Esconder header com foto/nome no desktop - evita duplicação */
+    .menu-header {
         display: none !important;
     }
     
@@ -618,12 +717,152 @@ input[type="range"]::-webkit-slider-thumb {
 
 /* ADD/EDIT PRODUCT PAGE */
 .image-upload-placeholder { width: 100px; height: 100px; background: var(--light-gray); border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--elegant-gray); border: 2px dashed #e0e0e0; cursor: pointer; margin-right: 20px; flex-shrink: 0; }
-.variation-options-container { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; background: var(--light-gray); border-radius: 12px; }
+
+/* Product Gallery */
+.product-gallery {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.gallery-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.gallery-remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    background: rgba(244, 67, 54, 0.9);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.gallery-remove-btn:hover {
+    transform: scale(1.1);
+}
+
+.gallery-remove-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.gallery-main-badge {
+    position: absolute;
+    bottom: 4px;
+    left: 4px;
+    background: var(--primary);
+    color: white;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.gallery-add-btn {
+    width: 100px;
+    height: 100px;
+    border: 2px dashed #ddd;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--elegant-gray);
+    background: var(--light-gray);
+}
+
+.gallery-add-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: #fce4ec;
+}
+
+.gallery-add-btn svg {
+    width: 24px;
+    height: 24px;
+}
+
+.gallery-add-btn span {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 28px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--primary-gradient);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
+
+.variation-options-container { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; background: var(--light-gray); border-radius: 12px; min-height: 40px; }
 .variation-tag { background: var(--primary-light); color: white; padding: 6px 10px; border-radius: 8px; display: flex; align-items: center; font-size: 14px; }
 .variation-tag button { background: none; border: none; color: white; margin-left: 8px; cursor: pointer; padding: 0; display: grid; place-items: center; }
 .stock-table { width: 100%; border-collapse: collapse; margin-top: 16px; }
 .stock-table th, .stock-table td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
-.stock-table th { font-size: 14px; color: var(--elegant-gray); }
+.stock-table th { font-size: 14px; color: white; font-weight: 600; }
 .stock-table td .form-input { max-width: 80px; text-align: center; }
 
 /* EXPENSES PAGE STYLES */

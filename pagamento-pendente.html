@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento Pendente - Lucro Certo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .pending-card {
+            background: white;
+            border-radius: 24px;
+            padding: 50px 40px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .pending-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .pending-icon svg {
+            width: 50px;
+            height: 50px;
+            color: white;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a2e;
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: #607D8B;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            background: #FFF8E1;
+            border: 2px solid #FFE082;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #E65100;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .info-box p {
+            font-size: 14px;
+            color: #37474F;
+            line-height: 1.6;
+        }
+
+        .steps {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .steps h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #37474F;
+            margin-bottom: 16px;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .step:last-child { border-bottom: none; }
+
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background: #E91E63;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            font-size: 14px;
+            color: #37474F;
+            padding-top: 3px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px 30px;
+            background: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(233, 30, 99, 0.4);
+        }
+
+        .btn svg { width: 20px; height: 20px; }
+
+        .help-text {
+            margin-top: 24px;
+            font-size: 13px;
+            color: #607D8B;
+        }
+
+        .help-text a {
+            color: #E91E63;
+            text-decoration: none;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="pending-card">
+        <div class="pending-icon">
+            <i data-lucide="loader"></i>
+        </div>
+        
+        <h1>Pagamento em Análise ⏳</h1>
+        <p class="subtitle">Estamos processando seu pagamento.</p>
+
+        <div class="info-box">
+            <h3><i data-lucide="info"></i> O que acontece agora?</h3>
+            <p>Seu pagamento está sendo analisado pelo banco ou operadora. Isso pode levar alguns minutos ou até 2 dias úteis para boletos.</p>
+        </div>
+
+        <div class="steps">
+            <h4>Próximos passos:</h4>
+            <div class="step">
+                <span class="step-number">1</span>
+                <span class="step-text">Você receberá um email quando o pagamento for confirmado</span>
+            </div>
+            <div class="step">
+                <span class="step-number">2</span>
+                <span class="step-text">Sua conta será ativada automaticamente</span>
+            </div>
+            <div class="step">
+                <span class="step-number">3</span>
+                <span class="step-text">Caso o pagamento não seja aprovado, você será notificada</span>
+            </div>
+        </div>
+
+        <a href="index" class="btn">
+            <i data-lucide="home"></i>
+            Voltar para o Início
+        </a>
+
+        <p class="help-text">
+            Dúvidas? <a href="mailto:suporte@lucrocerto.com">suporte@lucrocerto.com</a>
+        </p>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

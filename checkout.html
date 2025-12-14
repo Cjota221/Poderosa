@@ -405,34 +405,6 @@
             color: var(--elegant-gray);
         }
 
-        /* Boleto Section */
-        .boleto-form {
-            display: none;
-            text-align: center;
-        }
-
-        .boleto-form.active {
-            display: block;
-        }
-
-        .boleto-info {
-            background: var(--light-gray);
-            border-radius: 12px;
-            padding: 24px;
-        }
-
-        .boleto-info svg {
-            width: 48px;
-            height: 48px;
-            color: var(--elegant-gray);
-            margin-bottom: 12px;
-        }
-
-        .boleto-info p {
-            font-size: 14px;
-            color: var(--elegant-gray);
-        }
-
         /* Order Summary */
         .order-summary {
             background: var(--white);
@@ -859,7 +831,7 @@
     <!-- Header -->
     <header class="checkout-header">
         <div class="header-container">
-            <a href="index.html" class="logo">
+            <a href="index" class="logo">
                 <div class="logo-icon">
                     <i data-lucide="trending-up"></i>
                 </div>
@@ -950,11 +922,6 @@
                         <i data-lucide="qr-code"></i>
                         <span>PIX</span>
                     </label>
-                    <label class="payment-method" data-method="boleto">
-                        <input type="radio" name="payment" value="boleto">
-                        <i data-lucide="file-text"></i>
-                        <span>Boleto</span>
-                    </label>
                 </div>
 
                 <!-- Card Form -->
@@ -1014,15 +981,6 @@
                         <i data-lucide="qr-code"></i>
                         <p>Ao finalizar, você receberá um QR Code PIX para pagamento instantâneo.</p>
                         <p><strong>Aprovação imediata!</strong></p>
-                    </div>
-                </div>
-
-                <!-- Boleto Form -->
-                <div class="boleto-form" id="boleto-form">
-                    <div class="boleto-info">
-                        <i data-lucide="file-text"></i>
-                        <p>O boleto será gerado após a finalização.</p>
-                        <p>Prazo de compensação: até 3 dias úteis.</p>
                     </div>
                 </div>
             </div>
@@ -1123,7 +1081,7 @@
         </div>
         <h2>Pagamento Confirmado! 🎉</h2>
         <p>Seja muito bem-vinda ao Lucro Certo! Sua conta já está ativa e pronta para usar.</p>
-        <a href="index.html" class="btn-success">Acessar Minha Conta</a>
+        <a href="index" class="btn-success">Acessar Minha Conta</a>
     </div>
 
     <script>
@@ -1291,7 +1249,6 @@
                 const paymentType = method.dataset.method;
                 document.getElementById('card-form').classList.toggle('active', paymentType === 'card');
                 document.getElementById('pix-form').classList.toggle('active', paymentType === 'pix');
-                document.getElementById('boleto-form').classList.toggle('active', paymentType === 'boleto');
             });
         });
 
@@ -1356,106 +1313,369 @@
             }
         });
 
+        // ==============================================
+        // CONFIGURAÇÃO - CHECKOUT 
+        // ==============================================
+        const API_URL = 'http://localhost:3001';
+        const MP_PUBLIC_KEY = 'TEST-7c3fcc64-8693-4ec7-ae0e-8bfea931e586';
+        
+        // Inicializar Mercado Pago SDK
+        const mp = new MercadoPago(MP_PUBLIC_KEY, {
+            locale: 'pt-BR'
+        });
+        
         // Checkout button
         document.getElementById('btn-checkout').addEventListener('click', async () => {
             // Validate form
-            const nome = document.getElementById('nome').value;
-            const email = document.getElementById('email').value;
-            const cpf = document.getElementById('cpf').value;
+            const nome = document.getElementById('nome').value.trim();
+            const sobrenome = document.getElementById('sobrenome').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const cpf = document.getElementById('cpf').value.trim();
+            const telefone = document.getElementById('telefone').value.trim();
             
-            if (!nome || !email || !cpf) {
+            if (!nome || !sobrenome || !email || !cpf || !telefone) {
                 alert('Por favor, preencha todos os campos obrigatórios.');
                 return;
             }
 
-            const paymentMethod = document.querySelector('.payment-method.selected').dataset.method;
-            
-            if (paymentMethod === 'card') {
-                const cardNumber = document.getElementById('card-number').value;
-                const cardHolder = document.getElementById('card-holder').value;
-                const cardExpiry = document.getElementById('card-expiry').value;
-                const cardCvv = document.getElementById('card-cvv').value;
-                
-                if (!cardNumber || !cardHolder || !cardExpiry || !cardCvv) {
-                    alert('Por favor, preencha todos os dados do cartão.');
-                    return;
-                }
+            // Validar email
+            if (!email.includes('@') || !email.includes('.')) {
+                alert('Por favor, informe um email válido.');
+                return;
             }
+
+            // Validar CPF (formato)
+            if (cpf.replace(/\D/g, '').length !== 11) {
+                alert('Por favor, informe um CPF válido.');
+                return;
+            }
+
+            const paymentMethod = document.querySelector('.payment-method.selected').dataset.method;
 
             // Show loading
             document.getElementById('loading-overlay').classList.add('active');
+            document.querySelector('.loading-text').textContent = 'Processando pagamento...';
 
-            // Simulate payment processing
-            // In production, this would call Mercado Pago API
-            setTimeout(() => {
-                document.getElementById('loading-overlay').classList.remove('active');
+            try {
+                // Calcular preço
+                const plan = plans[currentPlan] || plans.pro;
+                let unitPrice = isAnnual ? plan.annualPrice : plan.monthlyPrice;
                 
-                // Save user data
+                // Aplicar cupom se tiver
+                if (cupomAtivo && cupomDesconto > 0) {
+                    unitPrice = unitPrice * (1 - cupomDesconto);
+                }
+
+                // ========================================
+                // PAGAMENTO COM CARTÃO
+                // ========================================
+                if (paymentMethod === 'card') {
+                    const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+                    const cardHolder = document.getElementById('card-holder').value.toUpperCase();
+                    const cardExpiry = document.getElementById('card-expiry').value;
+                    const cardCvv = document.getElementById('card-cvv').value;
+                    const installments = document.getElementById('installments').value;
+                    
+                    if (!cardNumber || !cardHolder || !cardExpiry || !cardCvv) {
+                        document.getElementById('loading-overlay').classList.remove('active');
+                        alert('Por favor, preencha todos os dados do cartão.');
+                        return;
+                    }
+
+                    // Validação básica do cartão
+                    if (cardNumber.length < 13) {
+                        document.getElementById('loading-overlay').classList.remove('active');
+                        alert('Número do cartão inválido.');
+                        return;
+                    }
+
+                    document.querySelector('.loading-text').textContent = 'Processando pagamento...';
+
+                    // *** MODO SIMULAÇÃO PARA DEMONSTRAÇÃO ***
+                    // Em produção, aqui seria a integração real com Mercado Pago
+                    // Por enquanto, simulamos o pagamento para demonstração
+                    
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    
+                    // Simular resultado baseado no nome do titular
+                    // APRO = aprovado, OTHE = rejeitado, CONT = pendente
+                    let simulatedResult = { status: 'approved', id: 'DEMO_' + Date.now() };
+                    
+                    if (cardHolder.includes('OTHE')) {
+                        simulatedResult = { status: 'rejected', status_detail: 'cc_rejected_other_reason' };
+                    } else if (cardHolder.includes('CONT')) {
+                        simulatedResult = { status: 'pending', status_detail: 'pending_contingency' };
+                    }
+                    
+                    handlePaymentResult(simulatedResult, email, nome, sobrenome);
+                    return;
+                    
+                    /* 
+                    // ========================================
+                    // CÓDIGO PARA PRODUÇÃO COM MERCADO PAGO
+                    // Descomentar quando tiver credenciais de produção
+                    // ========================================
+                    // Criar token do cartão usando o SDK do Mercado Pago
+                    const [expMonth, expYear] = cardExpiry.split('/');
+                    
+                    try {
+                        // Usar a API correta do SDK para criar token
+                        const cardTokenData = {
+                            cardNumber: cardNumber,
+                            cardholderName: cardHolder,
+                            cardExpirationMonth: expMonth,
+                            cardExpirationYear: '20' + expYear,
+                            securityCode: cardCvv,
+                            identificationType: 'CPF',
+                            identificationNumber: cpf.replace(/\D/g, '')
+                        };
+                        
+                        console.log('Criando token com dados:', cardTokenData);
+                        const tokenResponse = await mp.createCardToken(cardTokenData);
+                        console.log('Token criado:', tokenResponse);
+
+                        document.querySelector('.loading-text').textContent = 'Processando pagamento...';
+
+                        // Enviar token para o backend processar
+                        const paymentResponse = await fetch(`${API_URL}/api/process-payment`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                token: tokenResponse.id,
+                                transaction_amount: parseFloat(unitPrice.toFixed(2)),
+                                installments: parseInt(installments),
+                                payment_method_id: detectCardBrand(cardNumber),
+                                payer: {
+                                    email: email,
+                                    first_name: nome,
+                                    last_name: sobrenome,
+                                    identification: {
+                                        type: 'CPF',
+                                        number: cpf.replace(/\D/g, '')
+                                    }
+                                },
+                                description: `${plan.name} - ${isAnnual ? 'Anual' : 'Mensal'}`,
+                                plan: currentPlan,
+                                billing: isAnnual ? 'annual' : 'monthly'
+                            })
+                        });
+
+                        const paymentResult = await paymentResponse.json();
+                        handlePaymentResult(paymentResult, email, nome, sobrenome);
+                        
+                    } catch (tokenError) {
+                        console.error('Erro ao criar token:', tokenError);
+                        document.getElementById('loading-overlay').classList.remove('active');
+                        alert('Erro ao processar cartão. Verifique os dados.');
+                        return;
+                    }
+                    */
+                }
+                // ========================================
+                // PAGAMENTO COM PIX (Simulado)
+                // ========================================
+                else if (paymentMethod === 'pix') {
+                    document.querySelector('.loading-text').textContent = 'Gerando PIX...';
+                    
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    // Simular geração de PIX
+                    const pixData = {
+                        qr_code: '00020126580014br.gov.bcb.pix0136a1b2c3d4-e5f6-7890-abcd-ef1234567890520400005303986540534.905802BR5925LUCRO CERTO PAGAMENTOS6009SAO PAULO62140510LUCRO' + Date.now(),
+                        qr_code_base64: null // Não temos imagem real
+                    };
+                    
+                    document.getElementById('loading-overlay').classList.remove('active');
+                    showPixModal(pixData);
+                    return;
+
+                    /* CÓDIGO PRODUÇÃO
+                    const pixResponse = await fetch(`${API_URL}/api/create-pix`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            transaction_amount: parseFloat(unitPrice.toFixed(2)),
+                            payer: {
+                                email: email,
+                                first_name: nome,
+                                last_name: sobrenome,
+                                identification: {
+                                    type: 'CPF',
+                                    number: cpf.replace(/\D/g, '')
+                                }
+                            },
+                            description: `${plan.name} - ${isAnnual ? 'Anual' : 'Mensal'}`,
+                            plan: currentPlan,
+                            billing: isAnnual ? 'annual' : 'monthly'
+                        })
+                    });
+
+                    const pixResult = await pixResponse.json();
+                    
+                    if (pixResult.qr_code) {
+                        document.getElementById('loading-overlay').classList.remove('active');
+                        showPixModal(pixResult);
+                    } else {
+                        throw new Error(pixResult.error || 'Erro ao gerar PIX');
+                    }
+                    */
+                }
+
+            } catch (error) {
+                console.error('Erro no checkout:', error);
+                document.getElementById('loading-overlay').classList.remove('active');
+                alert(`❌ ${error.message || 'Erro ao processar pagamento'}`);
+            }
+        });
+
+        // Detectar bandeira do cartão
+        function detectCardBrand(number) {
+            const patterns = {
+                visa: /^4/,
+                master: /^5[1-5]/,
+                amex: /^3[47]/,
+                elo: /^(636368|438935|504175|451416|636297)/,
+                hipercard: /^(606282|3841)/
+            };
+            
+            for (const [brand, pattern] of Object.entries(patterns)) {
+                if (pattern.test(number)) return brand;
+            }
+            return 'visa'; // default
+        }
+
+        // Alias para compatibilidade
+        const getCardBrand = detectCardBrand;
+
+        // Tratar resultado do pagamento
+        function handlePaymentResult(result, email, nome, sobrenome) {
+            document.getElementById('loading-overlay').classList.remove('active');
+            
+            if (result.status === 'approved') {
+                // Pagamento aprovado!
                 const authData = {
                     email: email,
-                    nome: nome,
-                    cpf: cpf,
+                    nome: `${nome} ${sobrenome}`,
                     plano: currentPlan,
+                    planoNome: (plans[currentPlan] || plans.pro).name,
                     billing: isAnnual ? 'annual' : 'monthly',
-                    createdAt: new Date().toISOString()
+                    createdAt: new Date().toISOString(),
+                    paymentId: result.id
                 };
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
                 localStorage.setItem('lucrocerto_logged', 'true');
-
-                // Show success
+                localStorage.removeItem('lucrocerto_trial'); // Remove trial
+                
                 document.getElementById('success-overlay').classList.add('active');
                 lucide.createIcons();
-            }, 2500);
-        });
+                
+            } else if (result.status === 'in_process' || result.status === 'pending') {
+                // Pagamento pendente
+                alert('⏳ Pagamento em análise!\n\nVocê receberá um email quando for confirmado.');
+                window.location.href = 'pagamento-pendente';
+                
+            } else {
+                // Pagamento recusado
+                let errorMsg = 'Pagamento não aprovado.';
+                if (result.status_detail) {
+                    const errorMessages = {
+                        'cc_rejected_bad_filled_card_number': 'Número do cartão incorreto',
+                        'cc_rejected_bad_filled_date': 'Data de validade incorreta',
+                        'cc_rejected_bad_filled_other': 'Dados do cartão incorretos',
+                        'cc_rejected_bad_filled_security_code': 'CVV incorreto',
+                        'cc_rejected_blacklist': 'Cartão não permitido',
+                        'cc_rejected_call_for_authorize': 'Ligue para sua operadora',
+                        'cc_rejected_card_disabled': 'Cartão desabilitado',
+                        'cc_rejected_insufficient_amount': 'Saldo insuficiente',
+                        'cc_rejected_invalid_installments': 'Parcelas inválidas',
+                        'cc_rejected_max_attempts': 'Limite de tentativas excedido'
+                    };
+                    errorMsg = errorMessages[result.status_detail] || result.status_detail;
+                }
+                alert(`❌ ${errorMsg}\n\nTente outro cartão ou forma de pagamento.`);
+            }
+        }
 
-        // Initialize
-        initPlan();
-
-        /*
-        =====================================================
-        INTEGRAÇÃO MERCADO PAGO - CÓDIGO PARA PRODUÇÃO
-        =====================================================
+        // Modal do PIX
+        function showPixModal(pixData) {
+            const modal = document.createElement('div');
+            modal.className = 'pix-modal';
+            modal.innerHTML = `
+                <div class="pix-modal-content">
+                    <h2>📱 Pague com PIX</h2>
+                    <p>Escaneie o QR Code ou copie o código</p>
+                    <div class="qr-container" style="background: #f5f5f5; padding: 30px; border-radius: 10px; margin: 20px 0;">
+                        ${pixData.qr_code_base64 
+                            ? `<img src="data:image/png;base64,${pixData.qr_code_base64}" alt="QR Code PIX" style="max-width: 200px;">`
+                            : `<div style="font-size: 60px;">📱</div><p style="font-size: 12px; color: #666; margin-top: 10px;">QR Code simulado</p>`
+                        }
+                    </div>
+                    <div class="pix-code" style="display: flex; gap: 8px; margin: 15px 0;">
+                        <input type="text" value="${pixData.qr_code}" readonly id="pix-code-input" 
+                               style="flex: 1; padding: 12px; border: 2px solid #eee; border-radius: 8px; font-size: 11px;">
+                        <button onclick="copyPixCode()" style="padding: 12px 20px; background: #E91E63; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Copiar</button>
+                    </div>
+                    <p class="pix-expiry" style="color: #FF9800; font-size: 14px;">⏰ Válido por 30 minutos</p>
+                    <button onclick="this.closest('.pix-modal').remove(); simulatePaymentApproval();" 
+                            style="margin-top: 20px; padding: 15px 40px; background: linear-gradient(135deg, #4CAF50, #8BC34A); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 16px;">
+                        ✅ Simular Pagamento Aprovado
+                    </button>
+                    <button onclick="this.closest('.pix-modal').remove()" 
+                            style="margin-top: 10px; padding: 10px 20px; background: #eee; color: #333; border: none; border-radius: 8px; cursor: pointer; display: block; margin-left: auto; margin-right: auto;">
+                        Fechar
+                    </button>
+                </div>
+            `;
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.8); display: flex; align-items: center;
+                justify-content: center; z-index: 10000;
+            `;
+            document.body.appendChild(modal);
+        }
         
-        // 1. Inicializar SDK do Mercado Pago
-        const mp = new MercadoPago('SUA_PUBLIC_KEY');
-        
-        // 2. Criar Card Token
-        async function createCardToken() {
-            const cardData = {
-                cardNumber: document.getElementById('card-number').value.replace(/\s/g, ''),
-                cardholderName: document.getElementById('card-holder').value,
-                cardExpirationMonth: document.getElementById('card-expiry').value.split('/')[0],
-                cardExpirationYear: '20' + document.getElementById('card-expiry').value.split('/')[1],
-                securityCode: document.getElementById('card-cvv').value,
-                identificationType: 'CPF',
-                identificationNumber: document.getElementById('cpf').value.replace(/\D/g, '')
+        // Simular aprovação de pagamento (para demo)
+        function simulatePaymentApproval() {
+            const checkoutData = JSON.parse(localStorage.getItem('lucrocerto_checkout_data') || '{}');
+            const authData = {
+                email: checkoutData.email || 'demo@teste.com',
+                nome: checkoutData.nome || 'Usuário Demo',
+                plano: currentPlan,
+                planoNome: (plans[currentPlan] || plans.pro).name,
+                billing: isAnnual ? 'annual' : 'monthly',
+                createdAt: new Date().toISOString(),
+                paymentId: 'PIX_' + Date.now()
             };
+            localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
+            localStorage.setItem('lucrocerto_logged', 'true');
+            localStorage.removeItem('lucrocerto_trial');
             
-            const token = await mp.createCardToken(cardData);
-            return token.id;
+            document.getElementById('success-overlay').classList.add('active');
+            lucide.createIcons();
         }
+
+        // Copiar código PIX
+        function copyPixCode() {
+            const input = document.getElementById('pix-code-input');
+            input.select();
+            document.execCommand('copy');
+            alert('✅ Código PIX copiado!');
+        }
+
+        // Inicializar
+        initPlan();
         
-        // 3. Enviar pagamento para seu backend
-        async function processPayment(tokenId) {
-            const response = await fetch('/api/process-payment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    token: tokenId,
+        // Salvar dados do checkout para uso posterior
+        document.querySelectorAll('#nome, #sobrenome, #email, #cpf, #telefone').forEach(input => {
+            input.addEventListener('change', () => {
+                localStorage.setItem('lucrocerto_checkout_data', JSON.stringify({
+                    nome: document.getElementById('nome').value + ' ' + document.getElementById('sobrenome').value,
                     email: document.getElementById('email').value,
-                    amount: isAnnual ? plans[currentPlan].annualPrice * 12 : plans[currentPlan].monthlyPrice,
-                    plan: currentPlan,
-                    billing: isAnnual ? 'annual' : 'monthly'
-                })
+                    cpf: document.getElementById('cpf').value,
+                    telefone: document.getElementById('telefone').value
+                }));
             });
-            return response.json();
-        }
-        
-        // 4. Para assinaturas recorrentes, usar Mercado Pago Subscriptions
-        // https://www.mercadopago.com.br/developers/pt/docs/subscriptions/landing
-        
-        =====================================================
-        */
+        });
     </script>
 </body>
 </html>
