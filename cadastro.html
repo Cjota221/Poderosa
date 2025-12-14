@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro - Lucro Certo</title>
+    <title>Criar Conta - Lucro Certo</title>
     <meta name="description" content="Crie sua conta no Lucro Certo - O app de gestão para mulheres empreendedoras">
     
     <!-- PWA & Mobile Meta Tags -->
@@ -63,20 +63,14 @@
             border-radius: 24px;
             box-shadow: var(--shadow-medium);
             width: 100%;
-            max-width: 480px;
+            max-width: 450px;
             padding: 40px 32px;
             animation: slideUp 0.5s ease;
         }
 
         @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .auth-logo {
@@ -122,8 +116,56 @@
         .auth-subtitle {
             color: var(--elegant-gray);
             text-align: center;
-            margin-bottom: 28px;
+            margin-bottom: 24px;
             font-size: 14px;
+        }
+
+        /* Banner de plano */
+        .plan-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .plan-banner .plan-name {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .plan-banner .plan-details {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        /* Success Banner */
+        .success-banner {
+            background: linear-gradient(135deg, #4CAF50, #8BC34A);
+            color: white;
+            padding: 14px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* Warning Banner - sem pagamento */
+        .warning-banner {
+            background: linear-gradient(135deg, #FF9800, #FFC107);
+            color: #333;
+            padding: 14px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .warning-banner a {
+            color: #333;
+            font-weight: 600;
         }
 
         .form-row {
@@ -134,10 +176,6 @@
 
         .form-group {
             margin-bottom: 18px;
-        }
-
-        .form-group.full-width {
-            grid-column: 1 / -1;
         }
 
         .form-group label {
@@ -182,12 +220,13 @@
             box-shadow: 0 0 0 4px rgba(233, 30, 99, 0.1);
         }
 
-        .form-input::placeholder {
-            color: #aaa;
-        }
-
         .form-input.no-icon {
             padding-left: 14px;
+        }
+
+        .form-input[readonly] {
+            background: #f0f0f0;
+            cursor: not-allowed;
         }
 
         .toggle-password {
@@ -207,6 +246,7 @@
             height: 18px;
         }
 
+        /* Password strength */
         .password-strength {
             margin-top: 8px;
         }
@@ -236,7 +276,7 @@
         }
 
         .password-requirements {
-            margin-top: 12px;
+            margin-top: 10px;
             padding: 12px;
             background: var(--light-gray);
             border-radius: 10px;
@@ -248,12 +288,10 @@
             gap: 8px;
             font-size: 12px;
             color: var(--elegant-gray);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
-        .requirement:last-child {
-            margin-bottom: 0;
-        }
+        .requirement:last-child { margin-bottom: 0; }
 
         .requirement svg {
             width: 14px;
@@ -264,25 +302,20 @@
             color: var(--success);
         }
 
-        .requirement.valid svg {
-            color: var(--success);
-        }
-
+        /* Checkbox */
         .checkbox-label {
             display: flex;
             align-items: flex-start;
             gap: 10px;
-            cursor: pointer;
-            color: var(--dark-gray);
             font-size: 13px;
-            line-height: 1.5;
+            color: var(--elegant-gray);
+            cursor: pointer;
         }
 
-        .checkbox-label input {
+        .checkbox-label input[type="checkbox"] {
             width: 18px;
             height: 18px;
             accent-color: var(--primary);
-            flex-shrink: 0;
             margin-top: 2px;
         }
 
@@ -291,13 +324,10 @@
             text-decoration: none;
         }
 
-        .checkbox-label a:hover {
-            text-decoration: underline;
-        }
-
+        /* Button */
         .btn-primary {
             width: 100%;
-            padding: 14px 24px;
+            padding: 14px;
             background: var(--primary-gradient);
             color: white;
             border: none;
@@ -306,11 +336,11 @@
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: var(--transition-smooth);
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            transition: var(--transition-smooth);
             margin-top: 24px;
         }
 
@@ -326,10 +356,36 @@
         }
 
         .btn-primary svg {
-            width: 20px;
-            height: 20px;
+            width: 18px;
+            height: 18px;
         }
 
+        /* Messages */
+        .error-message, .success-message {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+
+        .success-message {
+            background: #E8F5E9;
+            color: #2E7D32;
+        }
+
+        .error-message.show, .success-message.show {
+            display: flex;
+        }
+
+        /* Divider */
         .divider {
             display: flex;
             align-items: center;
@@ -338,8 +394,7 @@
             font-size: 13px;
         }
 
-        .divider::before,
-        .divider::after {
+        .divider::before, .divider::after {
             content: '';
             flex: 1;
             height: 1px;
@@ -350,6 +405,7 @@
             padding: 0 16px;
         }
 
+        /* Social Login */
         .social-login {
             display: flex;
             gap: 12px;
@@ -357,20 +413,20 @@
 
         .btn-social {
             flex: 1;
-            padding: 12px 16px;
+            padding: 12px;
             border: 2px solid var(--light-gray);
             border-radius: 12px;
-            background: white;
+            background: var(--white);
             font-family: 'Poppins', sans-serif;
             font-size: 14px;
             font-weight: 500;
             color: var(--dark-gray);
             cursor: pointer;
-            transition: var(--transition-smooth);
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
+            transition: var(--transition-smooth);
         }
 
         .btn-social:hover {
@@ -383,6 +439,7 @@
             height: 20px;
         }
 
+        /* Footer */
         .auth-footer {
             text-align: center;
             margin-top: 24px;
@@ -396,214 +453,18 @@
             font-weight: 600;
         }
 
-        .auth-footer a:hover {
-            text-decoration: underline;
-        }
-
-        .error-message,
-        .success-message {
-            padding: 12px 16px;
-            border-radius: 10px;
-            font-size: 14px;
-            margin-bottom: 20px;
-            display: none;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .error-message {
-            background: #FFEBEE;
-            color: #C62828;
-        }
-
-        .success-message {
-            background: #E8F5E9;
-            color: #2E7D32;
-        }
-
-        .error-message.show,
-        .success-message.show {
-            display: flex;
-        }
-
-        /* Plan selection */
-        .plan-selector {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .plan-selector.three-plans {
-            grid-template-columns: 1fr;
-        }
-
-        .plan-option {
-            position: relative;
-            padding: 16px;
-            border: 2px solid var(--light-gray);
-            border-radius: 14px;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .plan-selector.three-plans .plan-option {
-            flex-direction: row;
-            justify-content: space-between;
-        }
-
-        .plan-option:hover {
-            border-color: var(--primary-light);
-        }
-
-        .plan-option.selected {
-            border-color: var(--primary);
-            background: rgba(233, 30, 99, 0.05);
-        }
-
-        .plan-option input {
-            position: absolute;
-            opacity: 0;
-        }
-
-        .plan-badge {
-            position: absolute;
-            top: -8px;
-            right: 12px;
-            background: var(--primary-gradient);
-            color: white;
-            font-size: 10px;
-            font-weight: 600;
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-
-        .plan-badge.gold {
-            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
-            color: #333;
-        }
-
-        .plan-name {
-            font-weight: 600;
-            color: var(--dark-gray);
-            margin-bottom: 2px;
-            font-size: 15px;
-        }
-
-        .plan-price {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-
-        .plan-price span {
-            font-size: 12px;
-            font-weight: 400;
-            color: var(--elegant-gray);
-        }
-
-        .plan-features {
-            margin-top: 4px;
-            font-size: 11px;
-            color: var(--elegant-gray);
-        }
-
-        .plan-link {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .plan-link a {
-            color: var(--primary);
-            font-size: 13px;
-            text-decoration: none;
-        }
-
-        .plan-link a:hover {
-            text-decoration: underline;
-        }
-
-        /* Mobile adjustments */
         @media (max-width: 480px) {
             .auth-card {
-                padding: 28px 20px;
-                border-radius: 20px;
+                padding: 30px 20px;
             }
 
             .form-row {
                 grid-template-columns: 1fr;
             }
-
-            .plan-selector {
-                grid-template-columns: 1fr;
-            }
-
-            .social-login {
-                flex-direction: column;
-            }
-        }
-
-        /* Background decoration */
-        .bg-decoration {
-            position: fixed;
-            z-index: -1;
-        }
-
-        .bg-decoration.top-right {
-            top: -100px;
-            right: -100px;
-            width: 300px;
-            height: 300px;
-            background: var(--primary-gradient);
-            border-radius: 50%;
-            opacity: 0.1;
-        }
-
-        .bg-decoration.bottom-left {
-            bottom: -150px;
-            left: -150px;
-            width: 400px;
-            height: 400px;
-            background: var(--primary-gradient);
-            border-radius: 50%;
-            opacity: 0.08;
-        }
-
-        /* Steps indicator */
-        .steps-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 24px;
-        }
-
-        .step-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--light-gray);
-            transition: var(--transition-smooth);
-        }
-
-        .step-dot.active {
-            background: var(--primary);
-            width: 30px;
-            border-radius: 5px;
-        }
-
-        .step-dot.completed {
-            background: var(--success);
         }
     </style>
 </head>
 <body>
-    <!-- Background decorations -->
-    <div class="bg-decoration top-right"></div>
-    <div class="bg-decoration bottom-left"></div>
-
     <div class="auth-container">
         <div class="auth-card">
             <!-- Logo -->
@@ -614,17 +475,27 @@
                 <h1>Lucro Certo</h1>
             </div>
 
-            <!-- Steps indicator -->
-            <div class="steps-indicator">
-                <div class="step-dot active" id="step-dot-1"></div>
-                <div class="step-dot" id="step-dot-2"></div>
+            <!-- Banner do Plano (preenchido via JS) -->
+            <div id="plan-banner" class="plan-banner" style="display: none;">
+                <div class="plan-name" id="plan-name-display">⭐ Plano Profissional</div>
+                <div class="plan-details" id="plan-details-display">Seu plano está ativo!</div>
+            </div>
+
+            <!-- Banner de Sucesso do Pagamento -->
+            <div id="success-banner" class="success-banner" style="display: none;">
+                ✅ <strong>Pagamento confirmado!</strong> Complete seu cadastro abaixo.
+            </div>
+
+            <!-- Banner de Aviso - sem pagamento -->
+            <div id="warning-banner" class="warning-banner" style="display: none;">
+                ⚠️ Você precisa assinar um plano primeiro. <a href="precos">Ver planos</a>
             </div>
 
             <!-- Title -->
             <h2 class="auth-title">Crie sua conta ✨</h2>
-            <p class="auth-subtitle">Comece a lucrar mais em poucos minutos</p>
+            <p class="auth-subtitle">Preencha os dados para acessar o sistema</p>
 
-            <!-- Error/Success messages -->
+            <!-- Messages -->
             <div class="error-message" id="error-message">
                 <i data-lucide="alert-circle"></i>
                 <span id="error-text">Erro ao criar conta</span>
@@ -635,11 +506,11 @@
                 <span>Conta criada com sucesso! Redirecionando...</span>
             </div>
 
-            <!-- Step 1: Basic Info -->
-            <form id="register-form-step1">
+            <!-- Form -->
+            <form id="register-form">
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="nome">Nome</label>
+                        <label for="nome">Nome *</label>
                         <div class="input-wrapper">
                             <span class="input-icon"><i data-lucide="user"></i></span>
                             <input type="text" id="nome" class="form-input" placeholder="Seu nome" required>
@@ -649,13 +520,13 @@
                     <div class="form-group">
                         <label for="sobrenome">Sobrenome</label>
                         <div class="input-wrapper">
-                            <input type="text" id="sobrenome" class="form-input no-icon" placeholder="Seu sobrenome" required>
+                            <input type="text" id="sobrenome" class="form-input no-icon" placeholder="Seu sobrenome">
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="email">Email</label>
+                    <label for="email">Email *</label>
                     <div class="input-wrapper">
                         <span class="input-icon"><i data-lucide="mail"></i></span>
                         <input type="email" id="email" class="form-input" placeholder="seu@email.com" required>
@@ -666,28 +537,12 @@
                     <label for="telefone">WhatsApp</label>
                     <div class="input-wrapper">
                         <span class="input-icon"><i data-lucide="smartphone"></i></span>
-                        <input type="tel" id="telefone" class="form-input" placeholder="(11) 99999-9999" required>
+                        <input type="tel" id="telefone" class="form-input" placeholder="(11) 99999-9999">
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="negocio">Tipo de Negócio</label>
-                    <div class="input-wrapper">
-                        <span class="input-icon"><i data-lucide="store"></i></span>
-                        <input type="text" id="negocio" class="form-input" placeholder="Ex: Confeitaria, Artesanato, Loja...">
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary">
-                    Continuar
-                    <i data-lucide="arrow-right"></i>
-                </button>
-            </form>
-
-            <!-- Step 2: Password & Plan -->
-            <form id="register-form-step2" style="display: none;">
-                <div class="form-group">
-                    <label for="password">Crie sua senha</label>
+                    <label for="password">Crie sua senha *</label>
                     <div class="input-wrapper">
                         <span class="input-icon"><i data-lucide="lock"></i></span>
                         <input type="password" id="password" class="form-input" placeholder="••••••••" required>
@@ -706,54 +561,17 @@
                     <div class="password-requirements">
                         <div class="requirement" id="req-length">
                             <i data-lucide="circle"></i>
-                            <span>Mínimo 8 caracteres</span>
-                        </div>
-                        <div class="requirement" id="req-upper">
-                            <i data-lucide="circle"></i>
-                            <span>Uma letra maiúscula</span>
-                        </div>
-                        <div class="requirement" id="req-number">
-                            <i data-lucide="circle"></i>
-                            <span>Um número</span>
+                            <span>Mínimo 6 caracteres</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="password-confirm">Confirme sua senha</label>
+                    <label for="password-confirm">Confirme sua senha *</label>
                     <div class="input-wrapper">
                         <span class="input-icon"><i data-lucide="lock"></i></span>
                         <input type="password" id="password-confirm" class="form-input" placeholder="••••••••" required>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Escolha seu plano</label>
-                    <div class="plan-selector three-plans">
-                        <label class="plan-option" data-plan="starter">
-                            <input type="radio" name="plano" value="starter">
-                            <div class="plan-name">Starter</div>
-                            <div class="plan-price">R$ 19,90<span>/mês</span></div>
-                            <div class="plan-features">20 produtos • 20 clientes</div>
-                        </label>
-                        <label class="plan-option selected" data-plan="pro">
-                            <input type="radio" name="plano" value="pro" checked>
-                            <div class="plan-badge">⭐ Popular</div>
-                            <div class="plan-name">Profissional</div>
-                            <div class="plan-price">R$ 34,90<span>/mês</span></div>
-                            <div class="plan-features">Ilimitado + Catálogo</div>
-                        </label>
-                        <label class="plan-option" data-plan="premium">
-                            <input type="radio" name="plano" value="premium">
-                            <div class="plan-badge gold">👑 VIP</div>
-                            <div class="plan-name">Premium</div>
-                            <div class="plan-price">R$ 49,90<span>/mês</span></div>
-                            <div class="plan-features">Tudo + Suporte 24h</div>
-                        </label>
-                    </div>
-                    <p class="plan-link">
-                        <a href="planos" target="_blank">Ver detalhes dos planos →</a>
-                    </p>
                 </div>
 
                 <div class="form-group">
@@ -766,11 +584,6 @@
                 <button type="submit" class="btn-primary" id="btn-register">
                     <i data-lucide="rocket"></i>
                     Criar minha conta
-                </button>
-
-                <button type="button" class="btn-primary" id="btn-back" style="background: var(--light-gray); color: var(--dark-gray); margin-top: 12px;">
-                    <i data-lucide="arrow-left"></i>
-                    Voltar
                 </button>
             </form>
 
@@ -807,84 +620,37 @@
         const paymentData = JSON.parse(localStorage.getItem('lucrocerto_payment') || '{}');
         const hasPaidPlan = paymentData.status === 'aprovado';
         
-        // If user has paid plan, use that data
-        const finalPlan = hasPaidPlan ? paymentData.plano : (planFromUrl || 'pro');
-        const finalEmail = emailFromUrl || paymentData.email || '';
-
-        // Pre-fill email if available
-        if (finalEmail) {
-            document.getElementById('email').value = finalEmail;
-            // If email came from payment, make it readonly
-            if (hasPaidPlan && paymentData.email) {
-                document.getElementById('email').readOnly = true;
-                document.getElementById('email').style.backgroundColor = '#f0f0f0';
-            }
-        }
-
-        // Show payment status banner if user paid
-        if (hasPaidPlan) {
-            const banner = document.createElement('div');
-            banner.innerHTML = `
-                <div style="background: linear-gradient(135deg, #4CAF50, #8BC34A); color: white; padding: 12px 20px; text-align: center; font-size: 14px; margin-bottom: 20px; border-radius: 12px;">
-                    ✅ <strong>Pagamento confirmado!</strong> Complete seu cadastro para acessar o sistema.
-                </div>
-            `;
-            document.querySelector('.auth-card').prepend(banner);
-        }
-
-        // Form data storage
-        let formData = {
-            nome: '',
-            sobrenome: '',
-            email: finalEmail,
-            telefone: '',
-            negocio: '',
-            password: '',
-            plano: finalPlan
+        // Plan names
+        const planNames = {
+            starter: '🚀 Plano Starter',
+            pro: '⭐ Plano Profissional',
+            premium: '👑 Plano Premium'
         };
 
-        // Pre-select plan from URL or payment
-        if (finalPlan) {
-            const planOptions = document.querySelectorAll('.plan-option');
-            planOptions.forEach(option => {
-                option.classList.remove('selected');
-                if (option.dataset.plan === finalPlan) {
-                    option.classList.add('selected');
-                    option.querySelector('input').checked = true;
-                }
-            });
-            
-            // If user already paid, hide plan selector
-            if (hasPaidPlan) {
-                const planSelector = document.querySelector('.plan-selector');
-                const planLabel = planSelector?.previousElementSibling;
-                const planLink = document.querySelector('.plan-link');
-                
-                if (planSelector) {
-                    planSelector.innerHTML = `
-                        <div style="background: var(--light-gray); padding: 16px; border-radius: 12px; text-align: center;">
-                            <div style="font-size: 18px; font-weight: 600; color: var(--primary);">
-                                ${finalPlan === 'starter' ? '🚀 Plano Starter' : finalPlan === 'pro' ? '⭐ Plano Profissional' : '👑 Plano Premium'}
-                            </div>
-                            <div style="font-size: 13px; color: var(--elegant-gray); margin-top: 4px;">
-                                Plano já contratado • ${paymentData.periodo === 'anual' ? 'Cobrança anual' : 'Cobrança mensal'}
-                            </div>
-                        </div>
-                    `;
-                }
-                if (planLabel) planLabel.textContent = 'Seu plano';
-                if (planLink) planLink.style.display = 'none';
-            }
+        // Get final plan and email
+        const finalPlan = hasPaidPlan ? paymentData.plano : planFromUrl;
+        const finalEmail = emailFromUrl || paymentData.email || '';
+
+        // Show appropriate banners
+        if (hasPaidPlan) {
+            // Pagamento confirmado
+            document.getElementById('success-banner').style.display = 'block';
+            document.getElementById('plan-banner').style.display = 'block';
+            document.getElementById('plan-name-display').textContent = planNames[paymentData.plano] || '⭐ Seu Plano';
+            document.getElementById('plan-details-display').textContent = 
+                paymentData.periodo === 'anual' ? 'Cobrança anual • Economia de 25%' : 'Cobrança mensal';
+        } else {
+            // Sem pagamento - mostrar aviso
+            document.getElementById('warning-banner').style.display = 'block';
         }
 
-        // Elements
-        const step1 = document.getElementById('register-form-step1');
-        const step2 = document.getElementById('register-form-step2');
-        const stepDot1 = document.getElementById('step-dot-1');
-        const stepDot2 = document.getElementById('step-dot-2');
-        const errorMessage = document.getElementById('error-message');
-        const successMessage = document.getElementById('success-message');
-        const errorText = document.getElementById('error-text');
+        // Pre-fill email
+        if (finalEmail) {
+            document.getElementById('email').value = finalEmail;
+            if (hasPaidPlan) {
+                document.getElementById('email').readOnly = true;
+            }
+        }
 
         // Phone mask
         const telefoneInput = document.getElementById('telefone');
@@ -895,33 +661,6 @@
                 value = value.replace(/(\d{5})(\d)/, '$1-$2');
             }
             e.target.value = value;
-        });
-
-        // Step 1 submission
-        step1.addEventListener('submit', (e) => {
-            e.preventDefault();
-            
-            formData.nome = document.getElementById('nome').value;
-            formData.sobrenome = document.getElementById('sobrenome').value;
-            formData.email = document.getElementById('email').value;
-            formData.telefone = document.getElementById('telefone').value;
-            formData.negocio = document.getElementById('negocio').value;
-
-            // Go to step 2
-            step1.style.display = 'none';
-            step2.style.display = 'block';
-            stepDot1.classList.remove('active');
-            stepDot1.classList.add('completed');
-            stepDot2.classList.add('active');
-        });
-
-        // Back button
-        document.getElementById('btn-back').addEventListener('click', () => {
-            step2.style.display = 'none';
-            step1.style.display = 'block';
-            stepDot2.classList.remove('active');
-            stepDot1.classList.remove('completed');
-            stepDot1.classList.add('active');
         });
 
         // Toggle password visibility
@@ -941,39 +680,25 @@
         const strengthFill = document.getElementById('strength-fill');
         const strengthText = document.getElementById('strength-text');
         const reqLength = document.getElementById('req-length');
-        const reqUpper = document.getElementById('req-upper');
-        const reqNumber = document.getElementById('req-number');
 
         passwordInput.addEventListener('input', (e) => {
             const password = e.target.value;
-            let strength = 0;
-
-            // Check requirements
-            const hasLength = password.length >= 8;
-            const hasUpper = /[A-Z]/.test(password);
-            const hasNumber = /[0-9]/.test(password);
-
-            // Update requirement indicators
+            
+            // Check length
+            const hasLength = password.length >= 6;
             updateRequirement(reqLength, hasLength);
-            updateRequirement(reqUpper, hasUpper);
-            updateRequirement(reqNumber, hasNumber);
-
-            // Calculate strength
-            if (hasLength) strength++;
-            if (hasUpper) strength++;
-            if (hasNumber) strength++;
 
             // Update strength bar
             strengthFill.className = 'strength-fill';
             if (password.length === 0) {
                 strengthText.textContent = 'Digite sua senha';
-            } else if (strength === 1) {
+            } else if (password.length < 6) {
                 strengthFill.classList.add('weak');
-                strengthText.textContent = 'Senha fraca';
-            } else if (strength === 2) {
+                strengthText.textContent = 'Senha muito curta';
+            } else if (password.length < 10) {
                 strengthFill.classList.add('medium');
-                strengthText.textContent = 'Senha média';
-            } else if (strength === 3) {
+                strengthText.textContent = 'Senha boa';
+            } else {
                 strengthFill.classList.add('strong');
                 strengthText.textContent = 'Senha forte! 💪';
             }
@@ -990,37 +715,31 @@
             lucide.createIcons();
         }
 
-        // Plan selection
-        const planOptions = document.querySelectorAll('.plan-option');
-        planOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                planOptions.forEach(o => o.classList.remove('selected'));
-                option.classList.add('selected');
-                formData.plano = option.querySelector('input').value;
-            });
-        });
+        // Form submission
+        const form = document.getElementById('register-form');
+        const errorMessage = document.getElementById('error-message');
+        const successMessage = document.getElementById('success-message');
+        const errorText = document.getElementById('error-text');
 
-        // Step 2 submission (final registration)
-        step2.addEventListener('submit', async (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const nome = document.getElementById('nome').value.trim();
+            const sobrenome = document.getElementById('sobrenome').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const telefone = document.getElementById('telefone').value.trim();
             const password = document.getElementById('password').value;
             const passwordConfirm = document.getElementById('password-confirm').value;
             const terms = document.getElementById('terms').checked;
 
-            // Validate password
-            if (password.length < 8) {
-                showError('A senha deve ter pelo menos 8 caracteres');
+            // Validations
+            if (!nome) {
+                showError('Digite seu nome');
                 return;
             }
 
-            if (!/[A-Z]/.test(password)) {
-                showError('A senha deve ter pelo menos uma letra maiúscula');
-                return;
-            }
-
-            if (!/[0-9]/.test(password)) {
-                showError('A senha deve ter pelo menos um número');
+            if (password.length < 6) {
+                showError('A senha deve ter pelo menos 6 caracteres');
                 return;
             }
 
@@ -1034,40 +753,35 @@
                 return;
             }
 
-            formData.password = password;
-
             try {
-                // Salvar dados localmente (em produção, enviar para API)
+                // Save user data
                 const authData = {
-                    email: formData.email,
-                    password: formData.password,
-                    nome: formData.nome,
-                    sobrenome: formData.sobrenome,
-                    telefone: formData.telefone,
-                    negocio: formData.negocio,
-                    plano: formData.plano,
+                    email: email,
+                    password: password,
+                    nome: nome,
+                    sobrenome: sobrenome,
+                    telefone: telefone,
+                    plano: finalPlan || 'pro',
                     createdAt: new Date().toISOString()
                 };
 
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
                 localStorage.setItem('lucrocerto_logged', 'true');
 
-                // Atualizar estado do app com dados do usuário
+                // Update app state
                 const appState = JSON.parse(localStorage.getItem('lucrocerto_appState') || '{}');
                 appState.user = {
-                    name: `${formData.nome} ${formData.sobrenome}`,
-                    email: formData.email,
-                    phone: formData.telefone,
-                    businessType: formData.negocio,
-                    plan: formData.plano
+                    name: `${nome} ${sobrenome}`.trim(),
+                    email: email,
+                    phone: telefone,
+                    plan: finalPlan || 'pro'
                 };
                 localStorage.setItem('lucrocerto_appState', JSON.stringify(appState));
 
-                // Mostrar sucesso
+                // Show success and redirect
                 successMessage.classList.add('show');
                 errorMessage.classList.remove('show');
 
-                // Redirecionar
                 setTimeout(() => {
                     window.location.href = 'index';
                 }, 1500);
@@ -1085,9 +799,8 @@
 
         // Google signup
         document.getElementById('google-signup').addEventListener('click', () => {
-            // Verificar se tem pagamento aprovado
             if (!hasPaidPlan) {
-                if (confirm('🔒 Para criar sua conta, você precisa primeiro assinar um plano.\n\nDeseja conhecer nossos planos?')) {
+                if (confirm('🔒 Para criar sua conta, você precisa primeiro assinar um plano.\n\nDeseja ver os planos disponíveis?')) {
                     window.location.href = 'precos';
                 }
                 return;
@@ -1100,39 +813,31 @@
                     <div style="background: white; padding: 30px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center;">
                         <img src="https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" style="width: 60px; margin-bottom: 20px;">
                         <h3 style="margin-bottom: 16px; color: #202124;">Criar conta com o Google</h3>
-                        <p style="color: #5f6368; font-size: 14px; margin-bottom: 20px;">Selecione uma conta Google para criar sua conta no Lucro Certo</p>
+                        <p style="color: #5f6368; font-size: 14px; margin-bottom: 20px;">Selecione sua conta Google</p>
                         
-                        <div id="google-accounts" style="margin-bottom: 20px;">
-                            <div class="google-account-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; cursor: pointer; margin-bottom: 8px; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #E91E63, #F06292); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">${finalEmail ? finalEmail.charAt(0).toUpperCase() : 'U'}</div>
-                                <div style="text-align: left;">
-                                    <div style="font-weight: 500; color: #202124;">${finalEmail || 'Escolher conta Google'}</div>
-                                    <div style="font-size: 12px; color: #5f6368;">Conta verificada</div>
-                                </div>
+                        <div class="google-account-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #E91E63, #F06292); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">${finalEmail ? finalEmail.charAt(0).toUpperCase() : 'U'}</div>
+                            <div style="text-align: left;">
+                                <div style="font-weight: 500; color: #202124;">${finalEmail || 'sua.conta@gmail.com'}</div>
+                                <div style="font-size: 12px; color: #5f6368;">Conta verificada</div>
                             </div>
                         </div>
                         
-                        <p style="font-size: 12px; color: #5f6368; margin-bottom: 16px;">
-                            Ao continuar, você concorda com os Termos de Uso e Política de Privacidade.
-                        </p>
-                        
-                        <button id="cancel-google" style="background: none; border: none; color: #1a73e8; font-size: 14px; cursor: pointer; padding: 8px 16px;">Cancelar</button>
+                        <button id="cancel-google" style="margin-top: 20px; background: none; border: none; color: #1a73e8; font-size: 14px; cursor: pointer; padding: 8px 16px;">Cancelar</button>
                     </div>
                 </div>
             `;
             document.body.appendChild(googleModal);
             
-            // Clique na conta simulada
+            // Click account
             googleModal.querySelector('.google-account-option').addEventListener('click', () => {
-                // Criar conta automaticamente com dados do Google (simulado)
                 const googleAuthData = {
                     email: finalEmail || 'usuario@gmail.com',
-                    password: 'google_oauth_' + Date.now(), // Em produção, não precisa de senha
+                    password: 'google_oauth_' + Date.now(),
                     nome: 'Usuário',
                     sobrenome: 'Google',
                     telefone: '',
-                    negocio: '',
-                    plano: finalPlan,
+                    plano: finalPlan || 'pro',
                     createdAt: new Date().toISOString(),
                     loginMethod: 'google'
                 };
@@ -1140,31 +845,21 @@
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(googleAuthData));
                 localStorage.setItem('lucrocerto_logged', 'true');
                 
-                // Atualizar estado do app
                 const appState = JSON.parse(localStorage.getItem('lucrocerto_appState') || '{}');
                 appState.user = {
-                    name: googleAuthData.nome + ' ' + googleAuthData.sobrenome,
+                    name: 'Usuário Google',
                     email: googleAuthData.email,
                     phone: '',
-                    businessType: '',
-                    plan: finalPlan
+                    plan: finalPlan || 'pro'
                 };
                 localStorage.setItem('lucrocerto_appState', JSON.stringify(appState));
                 
-                // Redirecionar para o app
                 window.location.href = 'index';
             });
             
-            // Cancelar
+            // Cancel
             googleModal.querySelector('#cancel-google').addEventListener('click', () => {
                 googleModal.remove();
-            });
-            
-            // Fechar ao clicar fora
-            googleModal.querySelector('div').addEventListener('click', (e) => {
-                if (e.target === googleModal.querySelector('div')) {
-                    googleModal.remove();
-                }
             });
         });
     </script>
