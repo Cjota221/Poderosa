@@ -473,7 +473,7 @@
 
             <!-- Footer -->
             <div class="auth-footer">
-                Não tem uma conta? <a href="cadastro">Cadastre-se grátis</a>
+                Não tem uma conta? <a href="precos">Conheça nossos planos</a>
             </div>
         </div>
     </div>
@@ -553,9 +553,73 @@
             document.getElementById('remember').checked = true;
         }
 
-        // Google login (placeholder)
+        // Google login
         document.getElementById('google-login').addEventListener('click', () => {
-            alert('🚧 Login com Google será implementado em breve!\n\nPor enquanto, faça login com email e senha.');
+            // Verificar se tem plano pago
+            const paymentData = JSON.parse(localStorage.getItem('lucrocerto_payment') || '{}');
+            const hasPaidPlan = paymentData.status === 'aprovado';
+            
+            if (!hasPaidPlan) {
+                // Se não tem plano, direciona para escolher
+                if (confirm('� Para usar o Lucro Certo, você precisa assinar um plano.\n\nDeseja conhecer nossos planos?')) {
+                    window.location.href = 'precos';
+                }
+                return;
+            }
+            
+            // Simular login com Google (em produção, usar Firebase Auth ou Google OAuth)
+            // Esta é uma simulação para desenvolvimento
+            const googleModal = document.createElement('div');
+            googleModal.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+                    <div style="background: white; padding: 30px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center;">
+                        <img src="https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" style="width: 60px; margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 16px; color: #202124;">Fazer login com o Google</h3>
+                        <p style="color: #5f6368; font-size: 14px; margin-bottom: 20px;">Selecione uma conta para continuar no Lucro Certo</p>
+                        
+                        <div id="google-accounts" style="margin-bottom: 20px;">
+                            <div class="google-account-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; cursor: pointer; margin-bottom: 8px; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #E91E63, #F06292); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">${paymentData.email ? paymentData.email.charAt(0).toUpperCase() : 'U'}</div>
+                                <div style="text-align: left;">
+                                    <div style="font-weight: 500; color: #202124;">${paymentData.email || 'usuario@email.com'}</div>
+                                    <div style="font-size: 12px; color: #5f6368;">Conta verificada</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button id="cancel-google" style="background: none; border: none; color: #1a73e8; font-size: 14px; cursor: pointer; padding: 8px 16px;">Cancelar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(googleModal);
+            
+            // Clique na conta simulada
+            googleModal.querySelector('.google-account-option').addEventListener('click', () => {
+                // Verificar se já tem cadastro
+                const savedAuth = localStorage.getItem('lucrocerto_auth');
+                
+                if (savedAuth) {
+                    // Já tem conta, faz login
+                    localStorage.setItem('lucrocerto_logged', 'true');
+                    window.location.href = 'index';
+                } else {
+                    // Não tem conta ainda, redireciona para cadastro
+                    const email = paymentData.email || '';
+                    window.location.href = `cadastro?email=${encodeURIComponent(email)}&plano=${paymentData.plano || 'pro'}`;
+                }
+            });
+            
+            // Cancelar
+            googleModal.querySelector('#cancel-google').addEventListener('click', () => {
+                googleModal.remove();
+            });
+            
+            // Fechar ao clicar fora
+            googleModal.querySelector('div').addEventListener('click', (e) => {
+                if (e.target === googleModal.querySelector('div')) {
+                    googleModal.remove();
+                }
+            });
         });
     </script>
 </body>

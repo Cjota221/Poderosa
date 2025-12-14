@@ -798,31 +798,83 @@
         // Initialize Lucide icons
         lucide.createIcons();
 
-        // Get plan from URL
+        // Get params from URL
         const urlParams = new URLSearchParams(window.location.search);
+        const emailFromUrl = urlParams.get('email');
         const planFromUrl = urlParams.get('plano');
+
+        // Check if payment was made
+        const paymentData = JSON.parse(localStorage.getItem('lucrocerto_payment') || '{}');
+        const hasPaidPlan = paymentData.status === 'aprovado';
+        
+        // If user has paid plan, use that data
+        const finalPlan = hasPaidPlan ? paymentData.plano : (planFromUrl || 'pro');
+        const finalEmail = emailFromUrl || paymentData.email || '';
+
+        // Pre-fill email if available
+        if (finalEmail) {
+            document.getElementById('email').value = finalEmail;
+            // If email came from payment, make it readonly
+            if (hasPaidPlan && paymentData.email) {
+                document.getElementById('email').readOnly = true;
+                document.getElementById('email').style.backgroundColor = '#f0f0f0';
+            }
+        }
+
+        // Show payment status banner if user paid
+        if (hasPaidPlan) {
+            const banner = document.createElement('div');
+            banner.innerHTML = `
+                <div style="background: linear-gradient(135deg, #4CAF50, #8BC34A); color: white; padding: 12px 20px; text-align: center; font-size: 14px; margin-bottom: 20px; border-radius: 12px;">
+                    ✅ <strong>Pagamento confirmado!</strong> Complete seu cadastro para acessar o sistema.
+                </div>
+            `;
+            document.querySelector('.auth-card').prepend(banner);
+        }
 
         // Form data storage
         let formData = {
             nome: '',
             sobrenome: '',
-            email: '',
+            email: finalEmail,
             telefone: '',
             negocio: '',
             password: '',
-            plano: planFromUrl || 'pro' // Default to pro if not specified
+            plano: finalPlan
         };
 
-        // Pre-select plan from URL
-        if (planFromUrl) {
+        // Pre-select plan from URL or payment
+        if (finalPlan) {
             const planOptions = document.querySelectorAll('.plan-option');
             planOptions.forEach(option => {
                 option.classList.remove('selected');
-                if (option.dataset.plan === planFromUrl) {
+                if (option.dataset.plan === finalPlan) {
                     option.classList.add('selected');
                     option.querySelector('input').checked = true;
                 }
             });
+            
+            // If user already paid, hide plan selector
+            if (hasPaidPlan) {
+                const planSelector = document.querySelector('.plan-selector');
+                const planLabel = planSelector?.previousElementSibling;
+                const planLink = document.querySelector('.plan-link');
+                
+                if (planSelector) {
+                    planSelector.innerHTML = `
+                        <div style="background: var(--light-gray); padding: 16px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 18px; font-weight: 600; color: var(--primary);">
+                                ${finalPlan === 'starter' ? '🚀 Plano Starter' : finalPlan === 'pro' ? '⭐ Plano Profissional' : '👑 Plano Premium'}
+                            </div>
+                            <div style="font-size: 13px; color: var(--elegant-gray); margin-top: 4px;">
+                                Plano já contratado • ${paymentData.periodo === 'anual' ? 'Cobrança anual' : 'Cobrança mensal'}
+                            </div>
+                        </div>
+                    `;
+                }
+                if (planLabel) planLabel.textContent = 'Seu plano';
+                if (planLink) planLink.style.display = 'none';
+            }
         }
 
         // Elements
@@ -1031,9 +1083,89 @@
             successMessage.classList.remove('show');
         }
 
-        // Google signup (placeholder)
+        // Google signup
         document.getElementById('google-signup').addEventListener('click', () => {
-            alert('🚧 Cadastro com Google será implementado em breve!\n\nPor enquanto, faça o cadastro com email e senha.');
+            // Verificar se tem pagamento aprovado
+            if (!hasPaidPlan) {
+                if (confirm('🔒 Para criar sua conta, você precisa primeiro assinar um plano.\n\nDeseja conhecer nossos planos?')) {
+                    window.location.href = 'precos';
+                }
+                return;
+            }
+            
+            // Simular cadastro com Google
+            const googleModal = document.createElement('div');
+            googleModal.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+                    <div style="background: white; padding: 30px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center;">
+                        <img src="https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" style="width: 60px; margin-bottom: 20px;">
+                        <h3 style="margin-bottom: 16px; color: #202124;">Criar conta com o Google</h3>
+                        <p style="color: #5f6368; font-size: 14px; margin-bottom: 20px;">Selecione uma conta Google para criar sua conta no Lucro Certo</p>
+                        
+                        <div id="google-accounts" style="margin-bottom: 20px;">
+                            <div class="google-account-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; cursor: pointer; margin-bottom: 8px; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #E91E63, #F06292); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">${finalEmail ? finalEmail.charAt(0).toUpperCase() : 'U'}</div>
+                                <div style="text-align: left;">
+                                    <div style="font-weight: 500; color: #202124;">${finalEmail || 'Escolher conta Google'}</div>
+                                    <div style="font-size: 12px; color: #5f6368;">Conta verificada</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p style="font-size: 12px; color: #5f6368; margin-bottom: 16px;">
+                            Ao continuar, você concorda com os Termos de Uso e Política de Privacidade.
+                        </p>
+                        
+                        <button id="cancel-google" style="background: none; border: none; color: #1a73e8; font-size: 14px; cursor: pointer; padding: 8px 16px;">Cancelar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(googleModal);
+            
+            // Clique na conta simulada
+            googleModal.querySelector('.google-account-option').addEventListener('click', () => {
+                // Criar conta automaticamente com dados do Google (simulado)
+                const googleAuthData = {
+                    email: finalEmail || 'usuario@gmail.com',
+                    password: 'google_oauth_' + Date.now(), // Em produção, não precisa de senha
+                    nome: 'Usuário',
+                    sobrenome: 'Google',
+                    telefone: '',
+                    negocio: '',
+                    plano: finalPlan,
+                    createdAt: new Date().toISOString(),
+                    loginMethod: 'google'
+                };
+                
+                localStorage.setItem('lucrocerto_auth', JSON.stringify(googleAuthData));
+                localStorage.setItem('lucrocerto_logged', 'true');
+                
+                // Atualizar estado do app
+                const appState = JSON.parse(localStorage.getItem('lucrocerto_appState') || '{}');
+                appState.user = {
+                    name: googleAuthData.nome + ' ' + googleAuthData.sobrenome,
+                    email: googleAuthData.email,
+                    phone: '',
+                    businessType: '',
+                    plan: finalPlan
+                };
+                localStorage.setItem('lucrocerto_appState', JSON.stringify(appState));
+                
+                // Redirecionar para o app
+                window.location.href = 'index';
+            });
+            
+            // Cancelar
+            googleModal.querySelector('#cancel-google').addEventListener('click', () => {
+                googleModal.remove();
+            });
+            
+            // Fechar ao clicar fora
+            googleModal.querySelector('div').addEventListener('click', (e) => {
+                if (e.target === googleModal.querySelector('div')) {
+                    googleModal.remove();
+                }
+            });
         });
     </script>
 </body>

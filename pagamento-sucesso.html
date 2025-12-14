@@ -186,9 +186,9 @@
             <li><i data-lucide="check-circle"></i> Cancele quando quiser, sem multa</li>
         </ul>
 
-        <a href="index" class="btn-access">
-            <i data-lucide="sparkles"></i>
-            Acessar Minha Conta
+        <a href="#" class="btn-access" id="btn-criar-conta">
+            <i data-lucide="user-plus"></i>
+            Criar Minha Conta
         </a>
 
         <p class="help-text">
@@ -201,10 +201,11 @@
     <script>
         lucide.createIcons();
 
-        // Pegar info do plano da URL
+        // Pegar info do plano e email da URL
         const params = new URLSearchParams(window.location.search);
         const plano = params.get('plano');
         const periodo = params.get('periodo');
+        const email = params.get('email');
 
         const planos = {
             starter: { nome: 'Plano Starter', mensal: 19.90, anual: 178.92 },
@@ -223,9 +224,22 @@
             }
         }
 
-        // Salvar como logado
-        localStorage.setItem('lucrocerto_logged', 'true');
-        localStorage.removeItem('lucrocerto_trial');
+        // Salvar dados do pagamento aprovado no localStorage
+        const paymentData = {
+            email: email || '',
+            plano: plano || 'pro',
+            periodo: periodo || 'mensal',
+            dataAprovacao: new Date().toISOString(),
+            status: 'aprovado'
+        };
+        localStorage.setItem('lucrocerto_payment', JSON.stringify(paymentData));
+
+        // Botão de criar conta leva para cadastro com email
+        document.getElementById('btn-criar-conta').addEventListener('click', (e) => {
+            e.preventDefault();
+            const cadastroUrl = email ? `cadastro?email=${encodeURIComponent(email)}&plano=${plano}` : 'cadastro';
+            window.location.href = cadastroUrl;
+        });
 
         // Confetti animation
         const canvas = document.getElementById('confetti');
