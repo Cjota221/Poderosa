@@ -3048,7 +3048,7 @@ const LucroCertoApp = (function() {
             const { products, clients } = StateManager.getState();
             
             const clientOptions = (clients || []).map(c => 
-                `<option value="${c.id}">${c.name}</option>`
+                `<option value="${c.id}" data-phone="${c.phone || ''}">${c.name}</option>`
             ).join('');
             
             return `
@@ -3060,15 +3060,30 @@ const LucroCertoApp = (function() {
                 </div>
                 
                 <div class="card">
-                    <h3><i data-lucide="user" style="width: 20px; height: 20px; vertical-align: middle;"></i> Cliente</h3>
-                    <div class="client-select-row">
-                        <select id="sale-client" class="form-input" style="flex: 1;">
-                            <option value="">-- Selecionar cliente --</option>
-                            ${clientOptions}
-                        </select>
-                        <button class="btn btn-secondary" data-action="quick-add-client" title="Novo cliente">
-                            <i data-lucide="user-plus"></i>
-                        </button>
+                    <h3><i data-lucide="user" style="width: 20px; height: 20px; vertical-align: middle;"></i> Dados do Cliente</h3>
+                    
+                    <div class="form-group">
+                        <label>Cliente cadastrado (opcional)</label>
+                        <div class="client-select-row">
+                            <select id="sale-client" class="form-input" style="flex: 1;">
+                                <option value="">-- Selecionar cliente --</option>
+                                ${clientOptions}
+                            </select>
+                            <button class="btn btn-secondary" data-action="quick-add-client" title="Novo cliente">
+                                <i data-lucide="user-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="sale-client-name">Nome do cliente *</label>
+                            <input type="text" id="sale-client-name" class="form-input" placeholder="Ex: Maria Silva">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="sale-client-phone">WhatsApp *</label>
+                            <input type="tel" id="sale-client-phone" class="form-input" placeholder="(00) 00000-0000">
+                        </div>
                     </div>
                 </div>
                 
@@ -3080,6 +3095,26 @@ const LucroCertoApp = (function() {
                     <button class="btn btn-secondary btn-full" data-action="add-sale-item" style="margin-top: 16px;">
                         <i data-lucide="plus"></i> Adicionar Produto
                     </button>
+                </div>
+                
+                <div class="card">
+                    <h3><i data-lucide="truck" style="width: 20px; height: 20px; vertical-align: middle;"></i> Custos Adicionais</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="sale-shipping">Frete / Entrega (R$)</label>
+                            <input type="number" id="sale-shipping" class="form-input" placeholder="0,00" step="0.01" min="0" value="0">
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="sale-discount">Desconto (R$)</label>
+                            <input type="number" id="sale-discount" class="form-input" placeholder="0,00" step="0.01" min="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sale-notes">Observações</label>
+                        <textarea id="sale-notes" class="form-input" rows="2" placeholder="Ex: Entregar sábado às 14h"></textarea>
+                    </div>
                 </div>
                 
                 <div class="card" style="margin-bottom: 100px;">
@@ -3102,10 +3137,20 @@ const LucroCertoApp = (function() {
                             <span><i data-lucide="credit-card"></i> Crédito</span>
                         </label>
                     </div>
+                    
+                    <label class="checkbox-label" style="margin-top: 16px;">
+                        <input type="checkbox" id="send-whatsapp" checked>
+                        <span>Enviar resumo do pedido para WhatsApp do cliente</span>
+                    </label>
                 </div>
                 
                 <div class="sale-total-bar">
                     <div class="sale-total-info">
+                        <div class="sale-subtotals">
+                            <span id="sale-subtotal">Subtotal: R$ 0,00</span>
+                            <span id="sale-shipping-total">Frete: R$ 0,00</span>
+                            <span id="sale-discount-total">Desconto: -R$ 0,00</span>
+                        </div>
                         <span class="sale-total-label">Total</span>
                         <span class="sale-total-value" id="sale-total">R$ 0,00</span>
                     </div>
@@ -3142,7 +3187,7 @@ const LucroCertoApp = (function() {
                 
                 <!-- Modal Selecionar Produto -->
                 <div id="product-select-modal" class="modal" style="display: none;">
-                    <div class="modal-content">
+                    <div class="modal-content modal-lg">
                         <div class="modal-header">
                             <h3><i data-lucide="package"></i> Selecionar Produto</h3>
                             <button class="modal-close" data-action="close-product-modal">&times;</button>
@@ -3155,14 +3200,46 @@ const LucroCertoApp = (function() {
                             <div id="sale-products-list" class="sale-products-grid">
                                 ${products.map(p => `
                                     <div class="sale-product-item" data-product-id="${p.id}">
-                                        <img src="${p.imageUrl || `https://placehold.co/60x60/f06292/ffffff?text=${p.name.charAt(0)}`}" alt="${p.name}">
+                                        <img src="${p.imageUrl || (p.images && p.images[0]) || `https://placehold.co/60x60/f06292/ffffff?text=${p.name.charAt(0)}`}" alt="${p.name}">
                                         <div class="sale-product-info">
                                             <span class="sale-product-name">${p.name}</span>
-                                            <span class="sale-product-price">R$ ${p.finalPrice.toFixed(2)}</span>
+                                            <span class="sale-product-price">R$ ${(p.finalPrice || 0).toFixed(2)}</span>
                                         </div>
                                     </div>
                                 `).join('')}
                             </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Modal Selecionar Variação -->
+                <div id="variation-select-modal" class="modal" style="display: none;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3><i data-lucide="palette"></i> Selecionar Variação</h3>
+                            <button class="modal-close" data-action="close-variation-modal">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="variation-product-preview" style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eee;">
+                                <img id="variation-product-img" src="" alt="" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;">
+                                <div>
+                                    <strong id="variation-product-name"></strong>
+                                    <div id="variation-product-price" style="color: var(--primary); font-weight: 600;"></div>
+                                </div>
+                            </div>
+                            
+                            <div id="variation-options-container"></div>
+                            
+                            <div id="variation-stock-alert" style="display: none; background: #FFF3CD; color: #856404; padding: 12px; border-radius: 8px; margin-top: 16px;">
+                                <i data-lucide="alert-triangle" style="width: 16px; height: 16px; vertical-align: middle;"></i>
+                                <span id="variation-stock-message"></span>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" data-action="close-variation-modal">Cancelar</button>
+                            <button class="btn btn-primary" id="confirm-variation-btn" data-action="confirm-variation">
+                                <i data-lucide="check"></i> Adicionar
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -3172,11 +3249,61 @@ const LucroCertoApp = (function() {
         bindNovaVendaEvents() {
             const { products, clients } = StateManager.getState();
             let saleItems = [];
-            let currentItemIndex = null;
+            let selectedProduct = null;
+            let selectedVariations = {};
             
+            // Atualizar totais
             const updateSaleTotal = () => {
-                const total = saleItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-                document.getElementById('sale-total').textContent = `R$ ${total.toFixed(2)}`;
+                const subtotal = saleItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+                const shipping = parseFloat(document.getElementById('sale-shipping')?.value) || 0;
+                const discount = parseFloat(document.getElementById('sale-discount')?.value) || 0;
+                const total = subtotal + shipping - discount;
+                
+                document.getElementById('sale-subtotal').textContent = `Subtotal: R$ ${subtotal.toFixed(2)}`;
+                document.getElementById('sale-shipping-total').textContent = `Frete: R$ ${shipping.toFixed(2)}`;
+                document.getElementById('sale-discount-total').textContent = `Desconto: -R$ ${discount.toFixed(2)}`;
+                document.getElementById('sale-total').textContent = `R$ ${Math.max(0, total).toFixed(2)}`;
+            };
+            
+            // Preencher dados quando selecionar cliente
+            document.getElementById('sale-client')?.addEventListener('change', (e) => {
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                const client = clients?.find(c => c.id === e.target.value);
+                
+                if (client) {
+                    document.getElementById('sale-client-name').value = client.name || '';
+                    document.getElementById('sale-client-phone').value = client.phone || '';
+                }
+            });
+            
+            // Atualizar total quando mudar frete/desconto
+            document.getElementById('sale-shipping')?.addEventListener('input', updateSaleTotal);
+            document.getElementById('sale-discount')?.addEventListener('input', updateSaleTotal);
+            
+            // Verificar estoque disponível
+            const getAvailableStock = (product, variation1, variation2) => {
+                if (!product.stock) return 999; // Sem controle de estoque
+                
+                if (product.variationType === 'none') {
+                    return product.stock.total || 0;
+                } else if (product.variationType === 'simple') {
+                    return product.stock[variation1] || 0;
+                } else if (product.variationType === 'combined') {
+                    const key = `${variation1}-${variation2}`;
+                    return product.stock[key] || 0;
+                }
+                return 0;
+            };
+            
+            // Obter foto da variação
+            const getVariationImage = (product, variation) => {
+                if (product.variationImages && product.variationImages[variation]) {
+                    const imgIndex = product.variationImages[variation];
+                    if (product.images && product.images[imgIndex]) {
+                        return product.images[imgIndex];
+                    }
+                }
+                return product.imageUrl || (product.images && product.images[0]) || `https://placehold.co/60x60/f06292/ffffff?text=${product.name.charAt(0)}`;
             };
             
             const renderSaleItems = () => {
@@ -3191,15 +3318,16 @@ const LucroCertoApp = (function() {
                 } else {
                     container.innerHTML = saleItems.map((item, index) => `
                         <div class="sale-item-row">
+                            <img src="${item.imageUrl}" alt="${item.productName}" style="width: 50px; height: 50px; border-radius: 8px; object-fit: cover;">
                             <div class="sale-item-info">
                                 <span class="sale-item-name">${item.productName}</span>
                                 ${item.variation ? `<span class="sale-item-variation">${item.variation}</span>` : ''}
-                                <span class="sale-item-price">R$ ${item.price.toFixed(2)}</span>
+                                <span class="sale-item-price">R$ ${item.price.toFixed(2)} un.</span>
                             </div>
                             <div class="sale-item-quantity">
                                 <button class="qty-btn" data-action="decrease-qty" data-index="${index}">-</button>
                                 <span>${item.quantity}</span>
-                                <button class="qty-btn" data-action="increase-qty" data-index="${index}">+</button>
+                                <button class="qty-btn" data-action="increase-qty" data-index="${index}" ${item.quantity >= item.maxStock ? 'disabled style="opacity: 0.5;"' : ''}>+</button>
                             </div>
                             <button class="btn-icon-small danger" data-action="remove-sale-item" data-index="${index}">
                                 <i data-lucide="trash-2"></i>
@@ -3224,8 +3352,12 @@ const LucroCertoApp = (function() {
                 container.querySelectorAll('[data-action="increase-qty"]').forEach(btn => {
                     btn.addEventListener('click', () => {
                         const idx = parseInt(btn.dataset.index);
-                        saleItems[idx].quantity++;
-                        renderSaleItems();
+                        if (saleItems[idx].quantity < saleItems[idx].maxStock) {
+                            saleItems[idx].quantity++;
+                            renderSaleItems();
+                        } else {
+                            alert(`⚠️ Estoque máximo disponível: ${saleItems[idx].maxStock} unidades`);
+                        }
                     });
                 });
                 
@@ -3254,36 +3386,252 @@ const LucroCertoApp = (function() {
                     const product = products.find(p => p.id === productId);
                     if (!product) return;
                     
-                    // Verifica se tem variação
-                    if (product.variationType === 'simple' && product.variations[0]) {
-                        // TODO: Modal para selecionar variação
-                        const variation = product.variations[0].options[0]; // Pega primeira opção por enquanto
-                        saleItems.push({
-                            productId: product.id,
-                            productName: product.name,
-                            variation: variation,
-                            price: product.finalPrice,
-                            quantity: 1
-                        });
-                    } else {
+                    selectedProduct = product;
+                    selectedVariations = {};
+                    
+                    // Se não tem variação, adiciona direto
+                    if (product.variationType === 'none' || !product.variations || product.variations.length === 0) {
+                        const stock = getAvailableStock(product, null, null);
+                        if (stock <= 0) {
+                            alert('❌ Produto esgotado!');
+                            return;
+                        }
+                        
                         saleItems.push({
                             productId: product.id,
                             productName: product.name,
                             variation: null,
-                            price: product.finalPrice,
-                            quantity: 1
+                            variationKey: null,
+                            price: product.finalPrice || 0,
+                            quantity: 1,
+                            maxStock: stock,
+                            imageUrl: product.imageUrl || (product.images && product.images[0]) || ''
                         });
+                        
+                        document.getElementById('product-select-modal').style.display = 'none';
+                        renderSaleItems();
+                        return;
                     }
                     
+                    // Fechar modal de produtos
                     document.getElementById('product-select-modal').style.display = 'none';
-                    renderSaleItems();
+                    
+                    // Abrir modal de variação
+                    showVariationModal(product);
                 });
             });
             
-            // Fechar modal
+            // Mostrar modal de variação
+            function showVariationModal(product) {
+                const modal = document.getElementById('variation-select-modal');
+                const container = document.getElementById('variation-options-container');
+                
+                // Preview do produto
+                document.getElementById('variation-product-img').src = product.imageUrl || (product.images && product.images[0]) || '';
+                document.getElementById('variation-product-name').textContent = product.name;
+                document.getElementById('variation-product-price').textContent = `R$ ${(product.finalPrice || 0).toFixed(2)}`;
+                
+                // Esconder alerta de estoque
+                document.getElementById('variation-stock-alert').style.display = 'none';
+                
+                // Renderizar opções de variação
+                if (product.variationType === 'simple') {
+                    const variation = product.variations[0];
+                    container.innerHTML = `
+                        <div class="form-group">
+                            <label><strong>${variation.name}</strong></label>
+                            <div class="variation-options-grid">
+                                ${variation.options.map(opt => {
+                                    const stock = product.stock?.[opt] || 0;
+                                    const isOutOfStock = stock <= 0;
+                                    return `
+                                        <button class="variation-option-btn ${isOutOfStock ? 'out-of-stock' : ''}" 
+                                                data-variation-type="${variation.name}" 
+                                                data-variation-value="${opt}"
+                                                data-stock="${stock}"
+                                                ${isOutOfStock ? 'disabled' : ''}>
+                                            ${opt}
+                                            ${isOutOfStock ? '<span class="stock-badge esgotado">Esgotado</span>' : `<span class="stock-badge">${stock} un.</span>`}
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else if (product.variationType === 'combined') {
+                    const var1 = product.variations[0];
+                    const var2 = product.variations[1];
+                    
+                    container.innerHTML = `
+                        <div class="form-group">
+                            <label><strong>${var1.name}</strong></label>
+                            <div class="variation-options-grid" id="variation-1-options">
+                                ${var1.options.map(opt => `
+                                    <button class="variation-option-btn" 
+                                            data-variation-type="${var1.name}" 
+                                            data-variation-value="${opt}"
+                                            data-variation-index="1">
+                                        ${opt}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <div class="form-group" id="variation-2-container" style="display: none; margin-top: 16px;">
+                            <label><strong>${var2.name}</strong></label>
+                            <div class="variation-options-grid" id="variation-2-options"></div>
+                        </div>
+                    `;
+                    
+                    // Bind eventos para variação 1
+                    setTimeout(() => {
+                        document.querySelectorAll('#variation-1-options .variation-option-btn').forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                // Desmarcar outros
+                                document.querySelectorAll('#variation-1-options .variation-option-btn').forEach(b => b.classList.remove('selected'));
+                                btn.classList.add('selected');
+                                
+                                selectedVariations.var1 = btn.dataset.variationValue;
+                                selectedVariations.var1Name = btn.dataset.variationType;
+                                
+                                // Mostrar opções do segundo nível
+                                const container2 = document.getElementById('variation-2-container');
+                                const options2 = document.getElementById('variation-2-options');
+                                
+                                options2.innerHTML = var2.options.map(opt => {
+                                    const key = `${selectedVariations.var1}-${opt}`;
+                                    const stock = product.stock?.[key] || 0;
+                                    const isOutOfStock = stock <= 0;
+                                    return `
+                                        <button class="variation-option-btn ${isOutOfStock ? 'out-of-stock' : ''}" 
+                                                data-variation-type="${var2.name}" 
+                                                data-variation-value="${opt}"
+                                                data-stock="${stock}"
+                                                data-variation-index="2"
+                                                ${isOutOfStock ? 'disabled' : ''}>
+                                            ${opt}
+                                            ${isOutOfStock ? '<span class="stock-badge esgotado">Esgotado</span>' : `<span class="stock-badge">${stock} un.</span>`}
+                                        </button>
+                                    `;
+                                }).join('');
+                                
+                                container2.style.display = 'block';
+                                
+                                // Bind eventos variação 2
+                                document.querySelectorAll('#variation-2-options .variation-option-btn:not([disabled])').forEach(btn2 => {
+                                    btn2.addEventListener('click', () => {
+                                        document.querySelectorAll('#variation-2-options .variation-option-btn').forEach(b => b.classList.remove('selected'));
+                                        btn2.classList.add('selected');
+                                        
+                                        selectedVariations.var2 = btn2.dataset.variationValue;
+                                        selectedVariations.var2Name = btn2.dataset.variationType;
+                                        selectedVariations.stock = parseInt(btn2.dataset.stock);
+                                        
+                                        // Atualizar imagem se tiver foto da variação
+                                        const newImg = getVariationImage(product, selectedVariations.var1);
+                                        document.getElementById('variation-product-img').src = newImg;
+                                    });
+                                });
+                            });
+                        });
+                    }, 100);
+                }
+                
+                // Bind eventos para variação simples
+                setTimeout(() => {
+                    if (product.variationType === 'simple') {
+                        document.querySelectorAll('.variation-option-btn:not([disabled])').forEach(btn => {
+                            btn.addEventListener('click', () => {
+                                document.querySelectorAll('.variation-option-btn').forEach(b => b.classList.remove('selected'));
+                                btn.classList.add('selected');
+                                
+                                selectedVariations.var1 = btn.dataset.variationValue;
+                                selectedVariations.var1Name = btn.dataset.variationType;
+                                selectedVariations.stock = parseInt(btn.dataset.stock);
+                                
+                                // Atualizar imagem se tiver foto da variação
+                                const newImg = getVariationImage(product, selectedVariations.var1);
+                                document.getElementById('variation-product-img').src = newImg;
+                            });
+                        });
+                    }
+                }, 100);
+                
+                modal.style.display = 'flex';
+                lucide.createIcons({ nodes: [modal] });
+            }
+            
+            // Confirmar variação
+            document.querySelector('[data-action="confirm-variation"]')?.addEventListener('click', () => {
+                if (!selectedProduct) return;
+                
+                let variationText = '';
+                let variationKey = '';
+                let stock = 0;
+                let imageUrl = selectedProduct.imageUrl || (selectedProduct.images && selectedProduct.images[0]) || '';
+                
+                if (selectedProduct.variationType === 'simple') {
+                    if (!selectedVariations.var1) {
+                        alert('❌ Selecione uma opção');
+                        return;
+                    }
+                    variationText = selectedVariations.var1;
+                    variationKey = selectedVariations.var1;
+                    stock = selectedVariations.stock || 0;
+                    imageUrl = getVariationImage(selectedProduct, selectedVariations.var1);
+                } else if (selectedProduct.variationType === 'combined') {
+                    if (!selectedVariations.var1 || !selectedVariations.var2) {
+                        alert('❌ Selecione todas as opções');
+                        return;
+                    }
+                    variationText = `${selectedVariations.var1} / ${selectedVariations.var2}`;
+                    variationKey = `${selectedVariations.var1}-${selectedVariations.var2}`;
+                    stock = selectedVariations.stock || 0;
+                    imageUrl = getVariationImage(selectedProduct, selectedVariations.var1);
+                }
+                
+                if (stock <= 0) {
+                    alert('❌ Variação esgotada!');
+                    return;
+                }
+                
+                // Verificar se já tem esse item na lista
+                const existingIndex = saleItems.findIndex(item => 
+                    item.productId === selectedProduct.id && item.variationKey === variationKey
+                );
+                
+                if (existingIndex >= 0) {
+                    if (saleItems[existingIndex].quantity < stock) {
+                        saleItems[existingIndex].quantity++;
+                    } else {
+                        alert(`⚠️ Estoque máximo: ${stock} unidades`);
+                    }
+                } else {
+                    saleItems.push({
+                        productId: selectedProduct.id,
+                        productName: selectedProduct.name,
+                        variation: variationText,
+                        variationKey: variationKey,
+                        price: selectedProduct.finalPrice || 0,
+                        quantity: 1,
+                        maxStock: stock,
+                        imageUrl: imageUrl
+                    });
+                }
+                
+                document.getElementById('variation-select-modal').style.display = 'none';
+                renderSaleItems();
+            });
+            
+            // Fechar modais
             document.querySelectorAll('[data-action="close-product-modal"]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.getElementById('product-select-modal').style.display = 'none';
+                });
+            });
+            
+            document.querySelectorAll('[data-action="close-variation-modal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.getElementById('variation-select-modal').style.display = 'none';
                 });
             });
             
@@ -3306,19 +3654,39 @@ const LucroCertoApp = (function() {
                     return;
                 }
                 
+                const clientName = document.getElementById('sale-client-name').value.trim();
+                const clientPhone = document.getElementById('sale-client-phone').value.trim();
+                
+                if (!clientName) {
+                    alert('❌ Digite o nome do cliente');
+                    document.getElementById('sale-client-name').focus();
+                    return;
+                }
+                
                 const clientId = document.getElementById('sale-client').value;
                 const client = clients?.find(c => c.id === clientId);
                 const paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value;
-                const total = saleItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+                const shipping = parseFloat(document.getElementById('sale-shipping')?.value) || 0;
+                const discount = parseFloat(document.getElementById('sale-discount')?.value) || 0;
+                const notes = document.getElementById('sale-notes')?.value.trim() || '';
+                const sendWhatsApp = document.getElementById('send-whatsapp')?.checked;
+                
+                const subtotal = saleItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+                const total = subtotal + shipping - discount;
                 
                 const sale = {
                     id: `sale_${Date.now()}`,
                     date: new Date().toISOString(),
                     clientId: clientId || null,
-                    clientName: client?.name || null,
+                    clientName: clientName,
+                    clientPhone: clientPhone,
                     items: saleItems,
                     paymentMethod: paymentMethod,
-                    total: total
+                    shipping: shipping,
+                    discount: discount,
+                    subtotal: subtotal,
+                    total: Math.max(0, total),
+                    notes: notes
                 };
                 
                 // Atualiza estoque dos produtos
@@ -3327,12 +3695,12 @@ const LucroCertoApp = (function() {
                     const soldItems = saleItems.filter(item => item.productId === p.id);
                     if (soldItems.length === 0) return p;
                     
-                    const updatedProduct = { ...p };
+                    const updatedProduct = { ...p, stock: { ...p.stock } };
                     soldItems.forEach(item => {
                         if (p.variationType === 'none') {
                             updatedProduct.stock.total = Math.max(0, (updatedProduct.stock.total || 0) - item.quantity);
-                        } else if (item.variation) {
-                            updatedProduct.stock[item.variation] = Math.max(0, (updatedProduct.stock[item.variation] || 0) - item.quantity);
+                        } else if (item.variationKey) {
+                            updatedProduct.stock[item.variationKey] = Math.max(0, (updatedProduct.stock[item.variationKey] || 0) - item.quantity);
                         }
                     });
                     return updatedProduct;
@@ -3346,11 +3714,28 @@ const LucroCertoApp = (function() {
                             return {
                                 ...c,
                                 purchases: (c.purchases || 0) + 1,
-                                totalSpent: (c.totalSpent || 0) + total
+                                totalSpent: (c.totalSpent || 0) + total,
+                                phone: clientPhone || c.phone
                             };
                         }
                         return c;
                     });
+                }
+                
+                // Se é cliente novo (não selecionou do dropdown), cadastra
+                if (!clientId && clientName) {
+                    const newClient = {
+                        id: `cli_${Date.now()}`,
+                        name: clientName,
+                        phone: clientPhone,
+                        email: '',
+                        notes: '',
+                        purchases: 1,
+                        totalSpent: total,
+                        createdAt: new Date().toISOString()
+                    };
+                    updatedClients = [...updatedClients, newClient];
+                    sale.clientId = newClient.id;
                 }
                 
                 // Atualiza faturamento
@@ -3367,8 +3752,61 @@ const LucroCertoApp = (function() {
                     currentPage: 'vendas'
                 });
                 
+                // Enviar para WhatsApp se marcado
+                if (sendWhatsApp && clientPhone) {
+                    const message = generateWhatsAppMessage(sale, saleItems, user);
+                    const phoneClean = clientPhone.replace(/\D/g, '');
+                    const whatsappUrl = `https://wa.me/55${phoneClean}?text=${encodeURIComponent(message)}`;
+                    window.open(whatsappUrl, '_blank');
+                }
+                
                 alert(`✅ Venda de R$ ${total.toFixed(2)} registrada com sucesso!`);
             });
+            
+            // Gerar mensagem para WhatsApp
+            function generateWhatsAppMessage(sale, items, user) {
+                const businessName = user?.businessName || user?.name || 'Lucro Certo';
+                const date = new Date().toLocaleDateString('pt-BR');
+                
+                let message = `🛍️ *PEDIDO CONFIRMADO!*\n`;
+                message += `━━━━━━━━━━━━━━━\n`;
+                message += `Olá, *${sale.clientName}*! 💖\n\n`;
+                message += `Seu pedido foi registrado com sucesso!\n\n`;
+                message += `📦 *ITENS DO PEDIDO:*\n`;
+                
+                items.forEach((item, index) => {
+                    message += `\n${index + 1}. *${item.productName}*\n`;
+                    if (item.variation) {
+                        message += `   📐 ${item.variation}\n`;
+                    }
+                    message += `   💰 R$ ${item.price.toFixed(2)} x ${item.quantity} = R$ ${(item.price * item.quantity).toFixed(2)}\n`;
+                });
+                
+                message += `\n━━━━━━━━━━━━━━━\n`;
+                message += `📋 *RESUMO:*\n`;
+                message += `   Subtotal: R$ ${sale.subtotal.toFixed(2)}\n`;
+                
+                if (sale.shipping > 0) {
+                    message += `   Frete: R$ ${sale.shipping.toFixed(2)}\n`;
+                }
+                if (sale.discount > 0) {
+                    message += `   Desconto: -R$ ${sale.discount.toFixed(2)}\n`;
+                }
+                
+                message += `\n💳 *TOTAL: R$ ${sale.total.toFixed(2)}*\n`;
+                message += `💰 Pagamento: ${sale.paymentMethod}\n`;
+                
+                if (sale.notes) {
+                    message += `\n📝 Obs: ${sale.notes}\n`;
+                }
+                
+                message += `\n━━━━━━━━━━━━━━━\n`;
+                message += `📅 Data: ${date}\n`;
+                message += `🏪 *${businessName}*\n`;
+                message += `\nObrigada pela preferência! 🙏✨`;
+                
+                return message;
+            }
             
             // Click fora do modal
             document.getElementById('product-select-modal')?.addEventListener('click', (e) => {
@@ -3377,8 +3815,13 @@ const LucroCertoApp = (function() {
                 }
             });
             
+            document.getElementById('variation-select-modal')?.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal')) {
+                    e.target.style.display = 'none';
+                }
+            });
+            
             // ===== CADASTRO RÁPIDO DE CLIENTE =====
-            // Abrir modal
             document.querySelector('[data-action="quick-add-client"]')?.addEventListener('click', () => {
                 document.getElementById('quick-client-modal').style.display = 'flex';
                 document.getElementById('quick-client-name').value = '';
@@ -3386,14 +3829,12 @@ const LucroCertoApp = (function() {
                 lucide.createIcons({ nodes: [document.getElementById('quick-client-modal')] });
             });
             
-            // Fechar modal
             document.querySelectorAll('[data-action="close-quick-client-modal"]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.getElementById('quick-client-modal').style.display = 'none';
                 });
             });
             
-            // Salvar cliente rápido
             document.querySelector('[data-action="save-quick-client"]')?.addEventListener('click', () => {
                 const name = document.getElementById('quick-client-name').value.trim();
                 if (!name) {
@@ -3401,10 +3842,12 @@ const LucroCertoApp = (function() {
                     return;
                 }
                 
+                const phone = document.getElementById('quick-client-phone').value.trim();
+                
                 const newClient = {
                     id: `cli_${Date.now()}`,
                     name: name,
-                    phone: document.getElementById('quick-client-phone').value.trim(),
+                    phone: phone,
                     email: '',
                     notes: '',
                     purchases: 0,
@@ -3412,24 +3855,26 @@ const LucroCertoApp = (function() {
                     createdAt: new Date().toISOString()
                 };
                 
-                // Salva no state (vai para a lista de clientes)
                 const { clients: currentClients } = StateManager.getState();
                 const updatedClients = [...(currentClients || []), newClient];
                 StateManager.setState({ clients: updatedClients });
                 
-                // Atualiza o select de clientes e seleciona o novo
+                // Atualiza o select e campos
                 const selectClient = document.getElementById('sale-client');
                 const newOption = document.createElement('option');
                 newOption.value = newClient.id;
                 newOption.textContent = newClient.name;
+                newOption.dataset.phone = phone;
                 selectClient.appendChild(newOption);
                 selectClient.value = newClient.id;
                 
-                // Fecha modal
+                // Preenche os campos
+                document.getElementById('sale-client-name').value = name;
+                document.getElementById('sale-client-phone').value = phone;
+                
                 document.getElementById('quick-client-modal').style.display = 'none';
             });
             
-            // Click fora do modal de cliente
             document.getElementById('quick-client-modal')?.addEventListener('click', (e) => {
                 if (e.target.classList.contains('modal')) {
                     e.target.style.display = 'none';
@@ -4159,6 +4604,7 @@ const LucroCertoApp = (function() {
         
         document.body.prepend(trialBanner);
         document.body.style.paddingTop = '50px';
+        document.body.classList.add('has-trial-banner');
         
         setTimeout(() => lucide.createIcons({ nodes: [trialBanner] }), 100);
         

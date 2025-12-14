@@ -189,6 +189,20 @@ body.has-plan-banner .side-menu {
     height: calc(100vh - 44px);
 }
 
+/* Ajustar header quando banner de TRIAL estiver visível */
+body.has-trial-banner .app-header {
+    top: 50px;
+}
+
+body.has-trial-banner #main-content {
+    padding-top: 50px;
+}
+
+body.has-trial-banner .side-menu {
+    top: 50px;
+    height: calc(100vh - 50px);
+}
+
 @media (min-width: 1024px) {
     .plan-alert-banner {
         left: 280px;
@@ -203,6 +217,20 @@ body.has-plan-banner .side-menu {
     }
     
     body.has-plan-banner .side-menu {
+        top: 0;
+        height: 100vh;
+    }
+    
+    /* Trial banner em desktop */
+    body.has-trial-banner .app-header {
+        top: 50px;
+    }
+    
+    body.has-trial-banner #main-content {
+        margin-top: calc(56px + 50px);
+    }
+    
+    body.has-trial-banner .side-menu {
         top: 0;
         height: 100vh;
     }
@@ -2310,6 +2338,18 @@ input[type="range"]::-webkit-slider-thumb {
     flex-direction: column;
 }
 
+.sale-subtotals {
+    display: flex;
+    flex-direction: column;
+    font-size: 11px;
+    color: var(--elegant-gray);
+    margin-bottom: 4px;
+}
+
+.sale-subtotals span {
+    line-height: 1.3;
+}
+
 .sale-total-label {
     font-size: 12px;
     color: var(--elegant-gray);
@@ -3202,6 +3242,329 @@ input[type="range"]::-webkit-slider-thumb {
     border-radius: 10px;
     background: rgba(233, 30, 99, 0.15);
     color: var(--primary);
+    font-weight: 600;
+}
+
+/* ==========================================
+   NOVA VENDA - ESTILOS APRIMORADOS
+   ========================================== */
+
+/* Seção de Cliente */
+.client-info-section {
+    background: var(--light-gray);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.client-info-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.client-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.client-fields .form-group {
+    margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+    .client-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Seção de custos adicionais */
+.sale-costs-section {
+    background: var(--light-gray);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.costs-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.costs-grid .form-group {
+    margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+    .costs-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Grid de variações */
+.variation-options-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.variation-option-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    background: white;
+    border: 2px solid var(--light-gray);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    min-width: 80px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.variation-option-btn:hover:not(:disabled) {
+    border-color: var(--primary);
+    background: rgba(233, 30, 99, 0.05);
+}
+
+.variation-option-btn.selected {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.variation-option-btn.selected .stock-badge {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+.variation-option-btn.out-of-stock {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--light-gray);
+}
+
+.variation-option-btn .stock-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    background: rgba(76, 175, 80, 0.15);
+    color: #388E3C;
+    border-radius: 6px;
+    margin-top: 4px;
+    font-weight: 600;
+}
+
+.variation-option-btn .stock-badge.esgotado {
+    background: rgba(244, 67, 54, 0.15);
+    color: #d32f2f;
+}
+
+/* Modal de seleção de variação */
+#variation-select-modal .modal-content {
+    max-width: 400px;
+}
+
+.variation-product-preview {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--light-gray);
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.variation-product-preview img {
+    width: 70px;
+    height: 70px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.variation-product-preview .info h4 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--dark-gray);
+}
+
+.variation-product-preview .info p {
+    margin: 4px 0 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.variation-stock-alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: rgba(244, 67, 54, 0.1);
+    border-radius: 8px;
+    color: #d32f2f;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+/* Checkbox de WhatsApp */
+.whatsapp-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(37, 211, 102, 0.1);
+    border-radius: 10px;
+    margin-top: 12px;
+    cursor: pointer;
+}
+
+.whatsapp-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: #25D366;
+}
+
+.whatsapp-option label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: #128C7E;
+    font-weight: 500;
+}
+
+.whatsapp-option svg {
+    color: #25D366;
+}
+
+/* Observações */
+.sale-notes {
+    width: 100%;
+    min-height: 60px;
+    padding: 12px;
+    border: 2px solid var(--light-gray);
+    border-radius: 10px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 14px;
+    transition: var(--transition-smooth);
+}
+
+.sale-notes:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Resumo da venda */
+.sale-summary {
+    background: var(--light-gray);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.sale-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    font-size: 14px;
+    color: var(--elegant-gray);
+}
+
+.sale-summary-row.total {
+    border-top: 2px solid var(--primary);
+    margin-top: 8px;
+    padding-top: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--dark-gray);
+}
+
+.sale-summary-row.total span:last-child {
+    color: var(--primary);
+}
+
+/* Botão pequeno de ícone */
+.btn-icon-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: var(--light-gray);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-smooth);
+}
+
+.btn-icon-small svg {
+    width: 16px;
+    height: 16px;
+}
+
+.btn-icon-small.danger:hover {
+    background: rgba(244, 67, 54, 0.15);
+    color: #d32f2f;
+}
+
+/* Seções colapsáveis */
+.section-collapsible {
+    background: white;
+    border-radius: 12px;
+    box-shadow: var(--shadow-light);
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    cursor: pointer;
+    background: var(--light-gray);
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-content {
+    padding: 16px;
+}
+
+/* Produtos sem estoque no modal */
+.sale-product-item.out-of-stock {
+    opacity: 0.6;
+    pointer-events: none;
+    position: relative;
+}
+
+.sale-product-item.out-of-stock::after {
+    content: 'Esgotado';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(244, 67, 54, 0.9);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
     font-weight: 600;
 }
 
