@@ -671,6 +671,54 @@
             font-size: 15px;
         }
 
+        /* ===== CTA SECTION ===== */
+        .cta-section {
+            padding: 60px 20px;
+            text-align: center;
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .cta-section h2 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .cta-section p {
+            font-size: 16px;
+            opacity: 0.95;
+            margin-bottom: 28px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            color: var(--primary);
+            padding: 16px 36px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: var(--transition-smooth);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+        }
+
+        .cta-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
         /* ===== FOOTER ===== */
         .page-footer {
             padding: 30px 20px;
@@ -840,7 +888,7 @@
     </section>
 
     <!-- Plans Section -->
-    <section class="plans-section">
+    <section class="plans-section" id="planos">
         <div class="plans-container" id="plans-container">
             <!-- Starter -->
             <div class="plan-card" data-plan="starter">
@@ -1278,6 +1326,16 @@
                 Você não tem nada a perder!
             </p>
         </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <h2>Pronta para lucrar mais?</h2>
+        <p>Junte-se a milhares de empreendedoras que já transformaram seus negócios.</p>
+        <a href="#planos" class="cta-btn">
+            <i data-lucide="rocket"></i>
+            Começar Agora
+        </a>
     </section>
 
     <!-- Footer -->
