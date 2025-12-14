@@ -116,6 +116,11 @@ Ajudar revendedoras a:
 
 ## 🏷️ LOGOTIPO
 
+### Símbolo/Favicon
+![Símbolo Lucro Certo](https://i.ibb.co/PGFqVkq4/simbolo.jpg)
+
+**URL do Símbolo**: `https://i.ibb.co/PGFqVkq4/simbolo.jpg`
+
 ### Conceito
 O logo é composto por:
 1. **Ícone**: Gráfico de linha ascendente (📈) representando crescimento e lucro
