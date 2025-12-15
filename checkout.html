@@ -1143,8 +1143,10 @@
 
         // Get plan from URL
         const urlParams = new URLSearchParams(window.location.search);
-        let currentPlan = urlParams.get('plano') || 'pro';
-        let isAnnual = false;
+        let currentPlan = urlParams.get('plan') || urlParams.get('plano') || 'pro';
+        let isAnnual = urlParams.get('billing') === 'annual' || false;
+        
+        console.log('📋 Checkout iniciado:', { currentPlan, isAnnual, url: window.location.href });
         
         // Verificar cupom (da URL ou localStorage)
         let cupomAtivo = urlParams.get('cupom') || localStorage.getItem('lucrocerto_cupom') || null;
