@@ -2,9 +2,13 @@
 # Landing page principal (página de preços/planos)
 /                   /index.html             200
 
-# Sistema interno (dashboard/app)
+# Sistema interno - ÁREA PAGA (após pagamento aprovado)
 /app                /app.html               200
 /dashboard          /app.html               200
+
+# Sistema interno - ÁREA DE TESTE GRÁTIS (trial 7 dias)
+/trial              /app.html?trial=true    200
+/teste              /app.html?trial=true    200
 
 # Páginas de autenticação e comerciais
 /login              /login.html             200

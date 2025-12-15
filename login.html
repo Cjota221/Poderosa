@@ -570,11 +570,11 @@
                     localStorage.removeItem('lucrocerto_remember');
                 }
 
-                // Redirecionar para a área da empreendedora - se primeiro login, mostra tour
+                // Redirecionar para a área da empreendedora (URL limpa sem .html)
                 if (result.isFirstLogin) {
-                    window.location.href = '/app.html?welcome=true';
+                    window.location.href = '/app?welcome=true';
                 } else {
-                    window.location.href = '/app.html';
+                    window.location.href = '/app';
                 }
                 
             } catch (error) {

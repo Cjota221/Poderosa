@@ -807,9 +807,9 @@
                 successMessage.classList.add('show');
                 errorMessage.classList.remove('show');
 
-                // Redirecionar para a área da empreendedora com tour de boas-vindas
+                // Redirecionar para a área da empreendedora com tour (URL limpa)
                 setTimeout(() => {
-                    window.location.href = '/app.html?welcome=true';
+                    window.location.href = '/app?welcome=true';
                 }, 1500);
 
             } catch (error) {

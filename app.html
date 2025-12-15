@@ -106,10 +106,19 @@
     <script>
         // Verificar se o usuário está logado
         (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const isTrial = urlParams.get('trial') === 'true';
+            
+            // Se for trial, configurar localStorage
+            if (isTrial) {
+                localStorage.setItem('lucrocerto_trial', 'true');
+                console.log('🧪 Modo TRIAL ativado via URL');
+            }
+            
             const isLogged = localStorage.getItem('lucrocerto_logged');
             if (!isLogged || isLogged !== 'true') {
                 // Redirecionar para login se não estiver logado
-                window.location.href = 'login';
+                window.location.href = '/login';
             }
         })();
         
@@ -138,9 +147,11 @@
                 }
             }
             
-            // Limpar parâmetro welcome da URL
+            // Limpar parâmetro welcome da URL (mantém trial se existir)
             if (showWelcome) {
-                window.history.replaceState({}, '', '/app.html');
+                const isTrial = urlParams.get('trial') === 'true';
+                const cleanUrl = isTrial ? '/app?trial=true' : '/app';
+                window.history.replaceState({}, '', cleanUrl);
             }
         });
         
@@ -155,167 +166,430 @@
                 }
             }
             
-            const tourOverlay = document.createElement('div');
-            tourOverlay.id = 'welcome-tour';
-            tourOverlay.innerHTML = `
-                <div class="tour-backdrop"></div>
-                <div class="tour-modal">
-                    <div class="tour-step" data-step="1">
-                        <div class="tour-icon">🎉</div>
-                        <h2>Bem-vinda ao Lucro Certo!</h2>
-                        <p>Olá <strong>${authData.nome?.split(' ')[0] || 'empreendedora'}</strong>! Seu pagamento foi confirmado e sua conta está ativa.</p>
-                        <p class="tour-plan">Seu plano: <strong>${getPlanName(authData.plano)}</strong></p>
-                        <button class="tour-btn" onclick="nextTourStep(2)">Começar tour rápido →</button>
-                        <button class="tour-skip" onclick="closeTour()">Pular e começar a usar</button>
+            // Tour interativo com spotlight
+            const tourSteps = [
+                {
+                    title: `Bem-vinda, ${authData.nome?.split(' ')[0] || 'empreendedora'}! 🎉`,
+                    text: `Seu pagamento foi confirmado e sua conta <strong>${getPlanName(authData.plano)}</strong> está ativa! Vou te mostrar rapidinho como usar.`,
+                    target: null, // Sem target = modal centralizado
+                    placement: 'center'
+                },
+                {
+                    title: 'Dashboard - Sua Visão Geral 📊',
+                    text: 'Aqui você acompanha tudo: vendas do mês, produtos mais vendidos e seu lucro. Tudo atualizado em tempo real!',
+                    target: '#dashboard',
+                    placement: 'center'
+                },
+                {
+                    title: 'Menu Principal 📱',
+                    text: 'Use este menu para navegar entre todas as áreas do app. É seu ponto de partida!',
+                    target: '#hamburger-btn',
+                    placement: 'bottom'
+                },
+                {
+                    title: 'Produtos - Cadastre seu Estoque 📦',
+                    text: 'Clique aqui para adicionar seus produtos. O sistema calcula automaticamente a margem de lucro pra você!',
+                    target: '[data-page="produtos"]',
+                    placement: 'right',
+                    openMenu: true
+                },
+                {
+                    title: 'Vendas - Registre Rapidinho 💰',
+                    text: 'Aqui você registra cada venda. É super rápido: escolhe o produto, quantidade e pronto! Seu lucro é calculado na hora.',
+                    target: '[data-page="vendas"]',
+                    placement: 'right'
+                },
+                {
+                    title: 'Tudo Pronto! 🚀',
+                    text: 'Pronta para começar? <strong>Dica:</strong> Comece cadastrando seus produtos na aba "Produtos"!',
+                    target: null,
+                    placement: 'center',
+                    closeMenu: true
+                }
+            ];
+            
+            let currentStep = 0;
+            
+            // Criar overlay e elementos do tour
+            const tourHTML = `
+                <div id="tour-overlay" class="tour-overlay"></div>
+                <div id="tour-spotlight" class="tour-spotlight"></div>
+                <div id="tour-tooltip" class="tour-tooltip">
+                    <div class="tour-tooltip-header">
+                        <h3 id="tour-title"></h3>
+                        <button class="tour-close" onclick="closeTour()">✕</button>
                     </div>
-                    
-                    <div class="tour-step" data-step="2" style="display: none;">
-                        <div class="tour-icon">📊</div>
-                        <h2>Dashboard</h2>
-                        <p>Aqui você vê um resumo do seu negócio: vendas, produtos mais vendidos e métricas importantes.</p>
-                        <div class="tour-nav">
-                            <button class="tour-btn-secondary" onclick="nextTourStep(1)">← Voltar</button>
-                            <button class="tour-btn" onclick="nextTourStep(3)">Próximo →</button>
+                    <div id="tour-content" class="tour-tooltip-content"></div>
+                    <div class="tour-tooltip-footer">
+                        <div class="tour-progress">
+                            <span id="tour-step-count">1 de 6</span>
                         </div>
-                    </div>
-                    
-                    <div class="tour-step" data-step="3" style="display: none;">
-                        <div class="tour-icon">📦</div>
-                        <h2>Produtos</h2>
-                        <p>Cadastre seus produtos com custo e preço de venda. O sistema calcula automaticamente sua margem de lucro!</p>
-                        <div class="tour-nav">
-                            <button class="tour-btn-secondary" onclick="nextTourStep(2)">← Voltar</button>
-                            <button class="tour-btn" onclick="nextTourStep(4)">Próximo →</button>
+                        <div class="tour-buttons">
+                            <button class="tour-btn-skip" onclick="closeTour()">Pular tour</button>
+                            <button class="tour-btn-next" onclick="nextTourStep()">
+                                <span id="tour-btn-text">Próximo</span>
+                                <span class="tour-btn-arrow">→</span>
+                            </button>
                         </div>
-                    </div>
-                    
-                    <div class="tour-step" data-step="4" style="display: none;">
-                        <div class="tour-icon">💰</div>
-                        <h2>Vendas</h2>
-                        <p>Registre suas vendas de forma rápida e veja seus lucros crescerem. Tudo organizado em um só lugar!</p>
-                        <div class="tour-nav">
-                            <button class="tour-btn-secondary" onclick="nextTourStep(3)">← Voltar</button>
-                            <button class="tour-btn" onclick="nextTourStep(5)">Próximo →</button>
-                        </div>
-                    </div>
-                    
-                    <div class="tour-step" data-step="5" style="display: none;">
-                        <div class="tour-icon">🚀</div>
-                        <h2>Tudo pronto!</h2>
-                        <p>Agora é só começar a usar. Dica: comece cadastrando seus produtos!</p>
-                        <button class="tour-btn tour-btn-success" onclick="closeTour()">Começar a usar! ✨</button>
                     </div>
                 </div>
             `;
             
-            // Adicionar estilos do tour
+            const tourContainer = document.createElement('div');
+            tourContainer.id = 'interactive-tour';
+            tourContainer.innerHTML = tourHTML;
+            document.body.appendChild(tourContainer);
+            
+            // Estilos do tour
             const tourStyles = document.createElement('style');
+            tourStyles.id = 'tour-styles';
             tourStyles.textContent = `
-                #welcome-tour {
+                #interactive-tour {
                     position: fixed;
                     top: 0;
                     left: 0;
                     right: 0;
                     bottom: 0;
-                    z-index: 99999;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
+                    z-index: 999999;
+                    pointer-events: none;
                 }
-                .tour-backdrop {
-                    position: absolute;
+                
+                .tour-overlay {
+                    position: fixed;
                     top: 0;
                     left: 0;
                     right: 0;
                     bottom: 0;
-                    background: rgba(0,0,0,0.8);
+                    background: rgba(0, 0, 0, 0.75);
+                    backdrop-filter: blur(2px);
+                    pointer-events: all;
+                    animation: tourFadeIn 0.3s ease;
                 }
-                .tour-modal {
-                    position: relative;
-                    background: white;
-                    border-radius: 24px;
-                    padding: 40px;
-                    max-width: 450px;
-                    width: 90%;
-                    text-align: center;
-                    animation: tourSlideUp 0.4s ease;
+                
+                @keyframes tourFadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
                 }
-                @keyframes tourSlideUp {
-                    from { opacity: 0; transform: translateY(30px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                .tour-icon {
-                    font-size: 60px;
-                    margin-bottom: 20px;
-                }
-                .tour-modal h2 {
-                    color: #37474F;
-                    margin-bottom: 12px;
-                    font-size: 24px;
-                }
-                .tour-modal p {
-                    color: #607D8B;
-                    margin-bottom: 12px;
-                    line-height: 1.6;
-                }
-                .tour-plan {
-                    background: linear-gradient(135deg, #E91E63, #F06292);
-                    color: white !important;
-                    padding: 10px 20px;
-                    border-radius: 10px;
-                    display: inline-block;
-                    margin: 10px 0 20px !important;
-                }
-                .tour-btn {
-                    background: linear-gradient(135deg, #E91E63, #F06292);
-                    color: white;
-                    border: none;
-                    padding: 14px 28px;
+                
+                .tour-spotlight {
+                    position: absolute;
+                    background: transparent;
+                    border: 3px solid #E91E63;
                     border-radius: 12px;
-                    font-size: 15px;
+                    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75),
+                                0 0 30px rgba(233, 30, 99, 0.6),
+                                inset 0 0 30px rgba(233, 30, 99, 0.2);
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                    pointer-events: none;
+                    z-index: 999998;
+                }
+                
+                .tour-tooltip {
+                    position: absolute;
+                    background: white;
+                    border-radius: 16px;
+                    padding: 0;
+                    max-width: 400px;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3),
+                                0 0 1px rgba(0, 0, 0, 0.2);
+                    pointer-events: all;
+                    z-index: 999999;
+                    animation: tourSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                }
+                
+                @keyframes tourSlideIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px) scale(0.95);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0) scale(1);
+                    }
+                }
+                
+                .tour-tooltip-header {
+                    padding: 24px 24px 16px;
+                    border-bottom: 1px solid #f0f0f0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                }
+                
+                .tour-tooltip-header h3 {
+                    margin: 0;
+                    font-size: 20px;
+                    color: #37474F;
                     font-weight: 600;
+                    flex: 1;
+                }
+                
+                .tour-close {
+                    background: none;
+                    border: none;
+                    font-size: 24px;
+                    color: #9E9E9E;
                     cursor: pointer;
-                    transition: transform 0.2s, box-shadow 0.2s;
+                    padding: 0;
+                    width: 32px;
+                    height: 32px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 8px;
+                    transition: all 0.2s;
                 }
-                .tour-btn:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
-                }
-                .tour-btn-secondary {
+                
+                .tour-close:hover {
                     background: #f5f5f5;
                     color: #37474F;
-                    border: none;
-                    padding: 14px 24px;
-                    border-radius: 12px;
-                    font-size: 14px;
+                }
+                
+                .tour-tooltip-content {
+                    padding: 20px 24px;
+                    color: #607D8B;
+                    font-size: 15px;
+                    line-height: 1.6;
+                }
+                
+                .tour-tooltip-footer {
+                    padding: 16px 24px 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-top: 1px solid #f0f0f0;
+                }
+                
+                .tour-progress {
+                    font-size: 13px;
+                    color: #9E9E9E;
                     font-weight: 500;
-                    cursor: pointer;
                 }
-                .tour-btn-success {
-                    background: linear-gradient(135deg, #4CAF50, #8BC34A);
+                
+                .tour-buttons {
+                    display: flex;
+                    gap: 12px;
                 }
-                .tour-skip {
-                    display: block;
-                    margin-top: 16px;
+                
+                .tour-btn-skip {
                     background: none;
                     border: none;
                     color: #9E9E9E;
-                    font-size: 13px;
+                    font-size: 14px;
                     cursor: pointer;
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                    transition: all 0.2s;
+                    font-weight: 500;
                 }
-                .tour-skip:hover {
+                
+                .tour-btn-skip:hover {
+                    background: #f5f5f5;
                     color: #607D8B;
                 }
-                .tour-nav {
+                
+                .tour-btn-next {
+                    background: linear-gradient(135deg, #E91E63, #F06292);
+                    color: white;
+                    border: none;
+                    padding: 10px 24px;
+                    border-radius: 10px;
+                    font-size: 15px;
+                    font-weight: 600;
+                    cursor: pointer;
                     display: flex;
-                    gap: 12px;
-                    justify-content: center;
-                    margin-top: 20px;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.2s;
+                    box-shadow: 0 4px 12px rgba(233, 30, 99, 0.3);
+                }
+                
+                .tour-btn-next:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(233, 30, 99, 0.4);
+                }
+                
+                .tour-btn-next:active {
+                    transform: translateY(0);
+                }
+                
+                .tour-btn-arrow {
+                    font-size: 18px;
+                    transition: transform 0.2s;
+                }
+                
+                .tour-btn-next:hover .tour-btn-arrow {
+                    transform: translateX(4px);
+                }
+                
+                .tour-btn-finish {
+                    background: linear-gradient(135deg, #4CAF50, #8BC34A);
+                }
+                
+                /* Tooltip arrow */
+                .tour-tooltip::before {
+                    content: '';
+                    position: absolute;
+                    width: 0;
+                    height: 0;
+                    border: 12px solid transparent;
+                }
+                
+                .tour-tooltip[data-placement="top"]::before {
+                    bottom: -24px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    border-top-color: white;
+                }
+                
+                .tour-tooltip[data-placement="bottom"]::before {
+                    top: -24px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    border-bottom-color: white;
+                }
+                
+                .tour-tooltip[data-placement="left"]::before {
+                    right: -24px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    border-left-color: white;
+                }
+                
+                .tour-tooltip[data-placement="right"]::before {
+                    left: -24px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    border-right-color: white;
+                }
+                
+                /* Responsivo */
+                @media (max-width: 768px) {
+                    .tour-tooltip {
+                        max-width: calc(100vw - 40px);
+                        left: 20px !important;
+                        right: 20px !important;
+                        top: auto !important;
+                        bottom: 20px !important;
+                    }
+                    
+                    .tour-tooltip::before {
+                        display: none;
+                    }
                 }
             `;
-            
             document.head.appendChild(tourStyles);
-            document.body.appendChild(tourOverlay);
+            
+            // Função para mostrar step
+            window.showTourStep = function(step) {
+                const stepData = tourSteps[step];
+                const tooltip = document.getElementById('tour-tooltip');
+                const spotlight = document.getElementById('tour-spotlight');
+                const title = document.getElementById('tour-title');
+                const content = document.getElementById('tour-content');
+                const stepCount = document.getElementById('tour-step-count');
+                const btnText = document.getElementById('tour-btn-text');
+                const btnNext = document.querySelector('.tour-btn-next');
+                
+                // Abrir menu se necessário
+                if (stepData.openMenu) {
+                    document.getElementById('side-menu')?.classList.add('active');
+                    document.getElementById('menu-overlay')?.classList.add('active');
+                }
+                
+                // Fechar menu se necessário
+                if (stepData.closeMenu) {
+                    document.getElementById('side-menu')?.classList.remove('active');
+                    document.getElementById('menu-overlay')?.classList.remove('active');
+                }
+                
+                title.textContent = stepData.title;
+                content.innerHTML = stepData.text;
+                stepCount.textContent = `${step + 1} de ${tourSteps.length}`;
+                
+                // Último step
+                if (step === tourSteps.length - 1) {
+                    btnText.textContent = 'Começar a usar!';
+                    btnNext.classList.add('tour-btn-finish');
+                } else {
+                    btnText.textContent = 'Próximo';
+                    btnNext.classList.remove('tour-btn-finish');
+                }
+                
+                if (stepData.target) {
+                    // Destacar elemento específico
+                    const targetEl = document.querySelector(stepData.target);
+                    if (targetEl) {
+                        const rect = targetEl.getBoundingClientRect();
+                        const padding = 8;
+                        
+                        spotlight.style.display = 'block';
+                        spotlight.style.top = (rect.top - padding) + 'px';
+                        spotlight.style.left = (rect.left - padding) + 'px';
+                        spotlight.style.width = (rect.width + padding * 2) + 'px';
+                        spotlight.style.height = (rect.height + padding * 2) + 'px';
+                        
+                        // Posicionar tooltip
+                        tooltip.setAttribute('data-placement', stepData.placement);
+                        positionTooltip(tooltip, rect, stepData.placement);
+                    }
+                } else {
+                    // Modal centralizado (sem spotlight)
+                    spotlight.style.display = 'none';
+                    tooltip.removeAttribute('data-placement');
+                    tooltip.style.left = '50%';
+                    tooltip.style.top = '50%';
+                    tooltip.style.transform = 'translate(-50%, -50%)';
+                    tooltip.style.bottom = 'auto';
+                }
+            };
+            
+            function positionTooltip(tooltip, targetRect, placement) {
+                const margin = 20;
+                
+                tooltip.style.transform = 'none';
+                
+                switch (placement) {
+                    case 'bottom':
+                        tooltip.style.top = (targetRect.bottom + margin) + 'px';
+                        tooltip.style.left = (targetRect.left + targetRect.width / 2) + 'px';
+                        tooltip.style.transform = 'translateX(-50%)';
+                        break;
+                    case 'top':
+                        tooltip.style.bottom = (window.innerHeight - targetRect.top + margin) + 'px';
+                        tooltip.style.left = (targetRect.left + targetRect.width / 2) + 'px';
+                        tooltip.style.transform = 'translateX(-50%)';
+                        tooltip.style.top = 'auto';
+                        break;
+                    case 'right':
+                        tooltip.style.left = (targetRect.right + margin) + 'px';
+                        tooltip.style.top = (targetRect.top + targetRect.height / 2) + 'px';
+                        tooltip.style.transform = 'translateY(-50%)';
+                        break;
+                    case 'left':
+                        tooltip.style.right = (window.innerWidth - targetRect.left + margin) + 'px';
+                        tooltip.style.top = (targetRect.top + targetRect.height / 2) + 'px';
+                        tooltip.style.transform = 'translateY(-50%)';
+                        tooltip.style.left = 'auto';
+                        break;
+                    default: // center
+                        tooltip.style.left = '50%';
+                        tooltip.style.top = '50%';
+                        tooltip.style.transform = 'translate(-50%, -50%)';
+                }
+            }
+            
+            window.nextTourStep = function() {
+                currentStep++;
+                if (currentStep >= tourSteps.length) {
+                    closeTour();
+                } else {
+                    showTourStep(currentStep);
+                }
+            };
+            
+            // Iniciar tour
+            showTourStep(0);
         }
         
         function getPlanName(plano) {
@@ -337,9 +611,19 @@
         };
         
         window.closeTour = function() {
-            const tour = document.getElementById('welcome-tour');
+            const tour = document.getElementById('interactive-tour');
+            const styles = document.getElementById('tour-styles');
+            
+            // Fechar menu se aberto
+            document.getElementById('side-menu')?.classList.remove('active');
+            document.getElementById('menu-overlay')?.classList.remove('active');
+            
             if (tour) {
-                tour.remove();
+                tour.style.animation = 'tourFadeOut 0.3s ease';
+                setTimeout(() => tour.remove(), 300);
+            }
+            if (styles) {
+                styles.remove();
             }
         };
     </script>
