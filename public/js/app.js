@@ -3121,11 +3121,11 @@ const LucroCertoApp = (function() {
             
             // Modal de edição
             const modal = document.createElement('div');
-            modal.className = 'modal-overlay active';
+            modal.className = 'modal';
             modal.innerHTML = `
-                <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-content">
                     <div class="modal-header">
-                        <h3>✏️ Editar Venda</h3>
+                        <h3><i data-lucide="edit"></i> Editar Venda</h3>
                         <button class="modal-close" data-action="close-edit-modal">
                             <i data-lucide="x"></i>
                         </button>
@@ -3155,11 +3155,13 @@ const LucroCertoApp = (function() {
                                 Total: R$ ${sale.total.toFixed(2)}
                             </div>
                         </div>
-                        <div style="display: flex; gap: 12px;">
-                            <button class="btn btn-secondary" data-action="close-edit-modal" style="flex: 1;">Cancelar</button>
-                            <button class="btn btn-primary" data-action="save-sale-edit" style="flex: 1;">Salvar</button>
-                        </div>
-                        <button class="btn btn-danger" data-action="delete-sale" style="width: 100%; margin-top: 12px;">
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-action="close-edit-modal">Cancelar</button>
+                        <button class="btn btn-primary" data-action="save-sale-edit">Salvar</button>
+                    </div>
+                    <div style="padding: 0 20px 20px;">
+                        <button class="btn btn-danger" data-action="delete-sale" style="width: 100%;">
                             <i data-lucide="trash-2"></i> Excluir Venda
                         </button>
                     </div>
@@ -3172,9 +3174,15 @@ const LucroCertoApp = (function() {
             // Fechar modal
             modal.querySelectorAll('[data-action="close-edit-modal"]').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    modal.classList.remove('active');
-                    setTimeout(() => modal.remove(), 300);
+                    modal.remove();
                 });
+            });
+            
+            // Fechar ao clicar fora
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
             });
             
             // Salvar alterações
@@ -3190,11 +3198,8 @@ const LucroCertoApp = (function() {
                 StateManager.setState({ sales: updatedSales });
                 DataManager.save('appState', StateManager.getState());
                 
-                modal.classList.remove('active');
-                setTimeout(() => {
-                    modal.remove();
-                    this.updateActiveContent();
-                }, 300);
+                modal.remove();
+                this.updateActiveContent();
             });
             
             // Excluir venda
@@ -3204,11 +3209,8 @@ const LucroCertoApp = (function() {
                     StateManager.setState({ sales: updatedSales });
                     DataManager.save('appState', StateManager.getState());
                     
-                    modal.classList.remove('active');
-                    setTimeout(() => {
-                        modal.remove();
-                        this.updateActiveContent();
-                    }, 300);
+                    modal.remove();
+                    this.updateActiveContent();
                 }
             });
         },

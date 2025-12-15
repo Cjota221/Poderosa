@@ -1605,7 +1605,7 @@ input[type="range"]::-webkit-slider-thumb {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 10000;
     padding: 20px;
     animation: fadeIn 0.2s ease;
 }
@@ -1618,6 +1618,15 @@ input[type="range"]::-webkit-slider-thumb {
     max-height: 80vh;
     overflow-y: auto;
     animation: slideUp 0.3s ease;
+    position: relative;
+    z-index: 10001;
+}
+
+@media (min-width: 1024px) {
+    .modal-content {
+        max-width: 500px;
+        max-height: 85vh;
+    }
 }
 
 @keyframes slideUp {
@@ -2315,6 +2324,11 @@ input[type="range"]::-webkit-slider-thumb {
     padding: 16px;
     border-radius: 12px;
     box-shadow: var(--shadow-soft);
+    transition: var(--transition-smooth);
+}
+
+.sale-card:hover {
+    box-shadow: var(--shadow-medium);
 }
 
 .sale-header {
@@ -2328,6 +2342,38 @@ input[type="range"]::-webkit-slider-thumb {
     display: flex;
     align-items: center;
     gap: 12px;
+}
+
+.btn-icon {
+    background: var(--light-gray);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    color: var(--elegant-gray);
+}
+
+.btn-icon:hover {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.05);
+}
+
+@media (min-width: 1024px) {
+    .sales-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: 16px;
+    }
+    
+    .sale-card {
+        height: 100%;
+    }
 }
 
 .sale-date {
