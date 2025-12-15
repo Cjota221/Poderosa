@@ -97,8 +97,13 @@ exports.handler = async (event, context) => {
         console.log('✅ Pagamento processado:', result.id, result.status);
 
         // Se pagamento aprovado, salvar no banco de dados
+        console.log('=== VERIFICANDO SUPABASE ===');
+        console.log('SUPABASE_URL:', supabaseUrl ? 'Configurado' : 'NÃO CONFIGURADO');
+        console.log('SUPABASE_SERVICE_KEY:', supabaseServiceKey ? 'Configurado' : 'NÃO CONFIGURADO');
+        
         if (result.status === 'approved' && supabaseUrl && supabaseServiceKey) {
             try {
+                console.log('📦 Iniciando salvamento no Supabase...');
                 const supabase = createClient(supabaseUrl, supabaseServiceKey);
                 
                 // Extrair dados do body original
@@ -108,13 +113,21 @@ exports.handler = async (event, context) => {
                 const nome = bodyData.payer?.first_name || '';
                 const sobrenome = bodyData.payer?.last_name || '';
                 const nomeCompleto = `${nome} ${sobrenome}`.trim();
+                
+                console.log('📧 Email:', payer.email);
+                console.log('📋 Plano:', plano);
+                console.log('📅 Período:', periodo);
 
                 // Verificar se usuário já existe
-                const { data: existingUser } = await supabase
+                const { data: existingUser, error: searchError } = await supabase
                     .from('usuarios')
                     .select('id')
                     .eq('email', payer.email.toLowerCase())
                     .single();
+                
+                if (searchError && searchError.code !== 'PGRST116') {
+                    console.error('Erro ao buscar usuário:', searchError);
+                }
 
                 let userId;
 
