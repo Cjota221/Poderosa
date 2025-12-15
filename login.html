@@ -526,7 +526,7 @@
                         if (remember) {
                             localStorage.setItem('lucrocerto_remember', email);
                         }
-                        window.location.href = 'index';
+                        window.location.href = 'app.html';
                         return;
                     }
                 }
@@ -536,7 +536,7 @@
                 const testMode = !savedAuth;
                 if (testMode) {
                     localStorage.setItem('lucrocerto_logged', 'true');
-                    window.location.href = 'index';
+                    window.location.href = 'app.html';
                     return;
                 }
 
@@ -565,8 +565,8 @@
             
             if (!hasPaidPlan) {
                 // Se não tem plano, direciona para escolher
-                if (confirm('� Para usar o Lucro Certo, você precisa assinar um plano.\n\nDeseja conhecer nossos planos?')) {
-                    window.location.href = 'precos';
+                if (confirm('📋 Para usar o Lucro Certo, você precisa assinar um plano.\n\nDeseja conhecer nossos planos?')) {
+                    window.location.href = 'index.html';
                 }
                 return;
             }
@@ -605,7 +605,7 @@
                 if (savedAuth) {
                     // Já tem conta, faz login
                     localStorage.setItem('lucrocerto_logged', 'true');
-                    window.location.href = 'index';
+                    window.location.href = 'app.html';
                 } else {
                     // Não tem conta ainda, redireciona para cadastro
                     const email = paymentData.email || '';

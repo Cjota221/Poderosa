@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucro Certo - Empoderamento Financeiro Feminino</title>
+    <meta name="description" content="O primeiro app de gestão financeira criado especialmente para mulheres empreendedoras. Intuitivo, inteligente e empoderador.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/jpeg" href="https://i.ibb.co/PGFqVkq4/simbolo.jpg">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/PGFqVkq4/simbolo.jpg">
+    
+    <!-- PWA & Mobile Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Lucro Certo">
+    <meta name="apple-mobile-web-app-title" content="Lucro Certo">
+    <meta name="theme-color" content="#E91E63">
+    <meta name="msapplication-navbutton-color" content="#E91E63">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="start_url" content="/">
+    <link rel="manifest" href="data:application/json;base64,ewogICAgIm5hbWUiOiAiTHVjcm8gQ2VydG8iLAogICAgInNob3J0X25hbWUiOiAiTHVjcm8gQ2VydG8iLAogICAgImRlc2NyaXB0aW9uIjogIk8gcHJpbWVpcm8gYXBwIGRlIGdlc3TDo28gZmluYW5jZWlyYSBjcmphZG8gZXNwZWNpYWxtZW50ZSBwYXJhIG11bGhlcmVzIGVtcHJlZW5kZWRvcmFzLiIsCiAgICAiaWNvbnMiOiBbCiAgICAgICAgewogICAgICAgICAgICAic3JjIjogImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEg0c0lBQXdJREFnNEtoNk0wZ0FCSUdOQmxZU0Z3QUFBUVVCQUFvZ0lCZGNKRlJvTENCaVlYUmxjaUJrUFNKaGRYUnZjbWxqWVhScGIyNGdkR2x1Y21WemFYUW9JSGh0Ykc5bloybGtaWElnTHo0S0lRPT0iLAogICAgICAgICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICAgICAgfSwKICAgICAgICB7CiAgICAgICAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSDRzSUFEd0lEQWc0S2g2TTBnQUJOSUdaR2x6YVhwbGMzUnZjV1Z5TGdBRUFBazRDaUFrS1NjZ0pTNDhMMlJsYzNRZ2JHRjVJR2hsSUdScGJXbDBJRkpsY21sbGNpQW5QQzlrWFNCNWNtbHVaU0FvSURJPSIsCiAgICAgICAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgICAgICAgInR5cGUiOiAiaW1hZ2Uvc3ZnK3htbCIKICAgICAgICB9CiAgICBdLAogICAgInN0YXJ0X3VybCI6ICIuIiwKICAgICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICAgInRoZW1lX2NvbG9yIjogIiNFOTFFNjMiLAogICAgImJhY2tncm91bmRfY29sb3IiOiAiI2Y4ZjhmYyIKfQ==">
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="./public/css/styles.css?v=2.2">
+    
+    <!-- External Libraries -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+    <div id="app-container">
+        <!-- Banner de Aviso do Plano -->
+        <div id="plan-alert-banner" class="plan-alert-banner" style="display: none;"></div>
+        
+        <!-- Header with Hamburger Menu -->
+        <header class="app-header" id="app-header">
+            <button class="hamburger-btn" id="hamburger-btn" data-action="toggle-menu">
+                <i data-lucide="menu"></i>
+            </button>
+            <h1 class="app-title">Lucro Certo</h1>
+            <div class="header-spacer"></div>
+        </header>
+
+        <!-- Side Menu (Drawer) -->
+        <div class="menu-overlay" id="menu-overlay" data-action="close-menu"></div>
+        <nav class="side-menu" id="side-menu">
+            <div class="menu-header">
+                <div class="menu-user-info" id="menu-user-info"></div>
+                <button class="close-menu-btn" data-action="close-menu">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <ul class="menu-list" id="menu-list"></ul>
+            <div class="menu-footer">
+                <p>Lucro Certo v2.0</p>
+                <p>Feito com 💖 para empreendedoras</p>
+            </div>
+        </nav>
+
+        <!-- Main content area where pages are rendered -->
+        <main id="main-content">
+            <div id="dashboard" class="page"></div>
+            <div id="produtos" class="page"></div>
+            <div id="add-edit-product" class="page"></div>
+            <div id="despesas" class="page"></div>
+            <div id="precificar" class="page"></div>
+            <div id="metas" class="page"></div>
+            <div id="relatorios" class="page"></div>
+            <div id="configuracoes" class="page"></div>
+            <div id="clientes" class="page"></div>
+            <div id="vendas" class="page"></div>
+            <div id="nova-venda" class="page"></div>
+            <div id="financeiro" class="page"></div>
+            <div id="meu-catalogo" class="page"></div>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav" id="bottom-nav"></nav>
+    </div>
+
+    <!-- Achievement Modal -->
+    <div id="achievement-modal" class="achievement-modal">
+        <div class="achievement-content">
+            <div id="achievement-icon" class="achievement-icon"></div>
+            <h3 id="achievement-title" class="achievement-title"></h3>
+            <p id="achievement-description"></p>
+            <button id="achievement-close-btn" class="btn btn-primary">Continuar Arrasando!</button>
+        </div>
+    </div>
+
+    <!-- Auth Check Script -->
+    <script>
+        // Verificar se o usuário está logado
+        (function() {
+            const isLogged = localStorage.getItem('lucrocerto_logged');
+            if (!isLogged || isLogged !== 'true') {
+                // Redirecionar para login se não estiver logado
+                window.location.href = 'login';
+            }
+        })();
+    </script>
+
+    <!-- Application Script -->
+    <script src="./public/js/app.js?v=2.3"></script>
+</body>
+</html>

@@ -1,12 +1,18 @@
 # Netlify Redirects - URLs limpas sem .html
-# Cada página acessível sem extensão
+# Landing page principal (página de preços/planos)
+/                   /index.html             200
 
+# Sistema interno (dashboard/app)
+/app                /app.html               200
+/dashboard          /app.html               200
+
+# Páginas de autenticação e comerciais
 /login              /login.html             200
 /cadastro           /cadastro.html          200
 /catalogo           /catalogo.html          200
 /checkout           /checkout.html          200
-/precos             /precos.html            200
-/planos             /precos.html            200
+/precos             /index.html             200
+/planos             /index.html             200
 /admin              /admin.html             200
 /pagamento-sucesso  /pagamento-sucesso.html 200
 /pagamento-erro     /pagamento-erro.html    200
