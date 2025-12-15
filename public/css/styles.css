@@ -492,6 +492,37 @@ main {
     display: block;
 }
 
+/* APP FOOTER */
+.app-footer {
+    background: linear-gradient(135deg, #f8f8fc 0%, #ffffff 100%);
+    border-top: 1px solid #eee;
+    padding: 24px 20px 90px;
+    text-align: center;
+    margin-top: 40px;
+}
+
+.footer-slogan {
+    font-size: 18px;
+    font-weight: 600;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+}
+
+.footer-credits {
+    font-size: 13px;
+    color: var(--elegant-gray);
+}
+
+@media (min-width: 769px) {
+    .app-footer {
+        padding: 24px 20px;
+        margin-left: 240px;
+    }
+}
+
 /* BOTTOM NAVIGATION */
 .bottom-nav {
     position: fixed;
