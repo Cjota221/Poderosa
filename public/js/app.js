@@ -96,6 +96,7 @@ const LucroCertoApp = (function() {
             this.renderNav();
             this.renderSideMenu();
             this.checkPlanStatus(); // Verificar status do plano
+            this.showWelcomeMessage(); // Mostrar mensagem de boas-vindas
             StateManager.subscribe(this.updateActiveContent.bind(this));
             StateManager.subscribe(this.updateNav.bind(this));
             StateManager.subscribe(this.updateSideMenu.bind(this));
@@ -231,6 +232,58 @@ const LucroCertoApp = (function() {
                 banner.style.display = 'none';
                 document.body.classList.remove('has-plan-banner');
             }
+        },
+        
+        // Mostrar mensagem de boas-vindas
+        showWelcomeMessage() {
+            // Verificar se já mostrou hoje
+            const lastWelcome = localStorage.getItem('lucrocerto_last_welcome');
+            const today = new Date().toDateString();
+            
+            if (lastWelcome === today) return; // Já mostrou hoje
+            
+            // Pegar nome do usuário
+            const { user } = StateManager.getState();
+            const userName = user.name ? user.name.split(' ')[0] : 'Empreendedora';
+            
+            // Frases motivacionais aleatórias
+            const messages = [
+                `Olá, ${userName}! Bem-vinda de volta! ✨`,
+                `Que bom te ver, ${userName}! Pronta para lucrar hoje? 💰`,
+                `Bem-vinda de volta, ${userName}! Vamos arrasar nas vendas? 🚀`,
+                `Oi, ${userName}! Mais um dia de sucesso te espera! 💪`,
+                `Olá, ${userName}! Seu negócio está crescendo! 📈`,
+                `Bem-vinda, ${userName}! Hora de fazer o que você faz de melhor! 💖`,
+                `Oi, ${userName}! Que tal bater aquela meta hoje? 🎯`
+            ];
+            
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            
+            // Criar toast de boas-vindas
+            const toast = document.createElement('div');
+            toast.className = 'welcome-toast';
+            toast.innerHTML = `
+                <div class="welcome-toast-icon">
+                    <i data-lucide="sparkles"></i>
+                </div>
+                <span>${randomMessage}</span>
+            `;
+            document.body.appendChild(toast);
+            
+            // Inicializar ícone
+            setTimeout(() => {
+                lucide.createIcons({ nodes: [...toast.querySelectorAll('[data-lucide]')] });
+                toast.classList.add('show');
+            }, 300);
+            
+            // Remover após 4 segundos
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+            
+            // Salvar que já mostrou hoje
+            localStorage.setItem('lucrocerto_last_welcome', today);
         },
         
         // Fechar banner de aviso do plano
@@ -4537,11 +4590,13 @@ const LucroCertoApp = (function() {
                     shipping: 150
                 },
                 achievements: [],
-                currentPage: 'dashboard'
+                currentPage: 'dashboard' // Sempre inicia no dashboard
             };
             StateManager.setState(DemoData);
         } else {
-             StateManager.setState(savedState);
+            // Garantir que sempre inicie no dashboard
+            savedState.currentPage = 'dashboard';
+            StateManager.setState(savedState);
         }
         
         UIManager.init();

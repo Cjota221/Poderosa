@@ -781,7 +781,7 @@
                 errorMessage.classList.remove('show');
 
                 setTimeout(() => {
-                    window.location.href = 'app.html';
+                    window.location.href = '/app';
                 }, 1500);
 
             } catch (error) {
@@ -845,7 +845,7 @@
                 };
                 localStorage.setItem('lucrocerto_appState', JSON.stringify(appState));
                 
-                window.location.href = 'app.html';
+                window.location.href = '/app';
             });
             
             // Cancel

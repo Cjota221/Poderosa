@@ -910,6 +910,57 @@ input[type="range"]::-webkit-slider-thumb {
 .achievement-icon .lucide { width: 64px; height: 64px; stroke-width: 1.5; }
 .achievement-title { margin-bottom: 12px; }
 
+/* WELCOME TOAST */
+.welcome-toast {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: linear-gradient(135deg, #E91E63, #F06292);
+    color: white;
+    padding: 16px 24px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(233, 30, 99, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 9999;
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.welcome-toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.welcome-toast-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.welcome-toast-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+@media (max-width: 768px) {
+    .welcome-toast {
+        top: 70px;
+        right: 10px;
+        left: 10px;
+        font-size: 14px;
+        padding: 14px 20px;
+    }
+}
+
 /* ANIMATIONS */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 

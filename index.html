@@ -1475,7 +1475,7 @@
             const isLogged = localStorage.getItem('lucrocerto_logged');
             if (isLogged === 'true') {
                 // Se já está logado, redireciona direto para o sistema
-                window.location.href = 'app.html';
+                window.location.href = '/app';
             }
         })();
     </script>
@@ -2364,8 +2364,7 @@
             localStorage.setItem('lucrocerto_appState', JSON.stringify(appState));
 
             // Redirecionar para o app
-            alert('🎉 Teste grátis ativado!\n\nVocê tem 7 dias para experimentar o Lucro Certo com até 3 produtos.');
-            window.location.href = 'app.html';
+            window.location.href = '/app';
         });
 
         // ========== Lead Popup (Cupom) ==========

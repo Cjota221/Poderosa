@@ -526,7 +526,7 @@
                         if (remember) {
                             localStorage.setItem('lucrocerto_remember', email);
                         }
-                        window.location.href = 'app.html';
+                        window.location.href = '/app';
                         return;
                     }
                 }
@@ -536,7 +536,7 @@
                 const testMode = !savedAuth;
                 if (testMode) {
                     localStorage.setItem('lucrocerto_logged', 'true');
-                    window.location.href = 'app.html';
+                    window.location.href = '/app';
                     return;
                 }
 
@@ -605,7 +605,7 @@
                 if (savedAuth) {
                     // Já tem conta, faz login
                     localStorage.setItem('lucrocerto_logged', 'true');
-                    window.location.href = 'app.html';
+                    window.location.href = '/app';
                 } else {
                     // Não tem conta ainda, redireciona para cadastro
                     const email = paymentData.email || '';
