@@ -1087,10 +1087,10 @@
             <i data-lucide="check"></i>
         </div>
         <h2>Pagamento Confirmado! 🎉</h2>
-        <p>Agora vamos criar sua conta para você acessar o Lucro Certo!</p>
-        <a href="#" class="btn-success" id="btn-goto-cadastro">
-            <i data-lucide="user-plus"></i>
-            Criar Minha Conta
+        <p>Sua assinatura está ativa! Clique abaixo para acessar o sistema.</p>
+        <a href="admin.html" class="btn-success" id="btn-goto-cadastro">
+            <i data-lucide="layout-dashboard"></i>
+            Acessar o Sistema
         </a>
     </div>
 
@@ -1574,10 +1574,13 @@
             }
         }
 
-        // Modal do PIX
+        // Modal do PIX com verificação de pagamento
+        let pixPollingInterval = null;
+        
         function showPixModal(pixData) {
             const modal = document.createElement('div');
             modal.className = 'pix-modal';
+            modal.id = 'pix-modal';
             modal.innerHTML = `
                 <div class="pix-modal-content">
                     <h2>📱 Pague com PIX</h2>
@@ -1594,8 +1597,13 @@
                         <button onclick="copyPixCode()" style="padding: 12px 20px; background: #E91E63; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">Copiar</button>
                     </div>
                     <p class="pix-expiry" style="color: #FF9800; font-size: 14px;">⏰ Válido por 30 minutos</p>
-                    <p style="color: #4CAF50; font-size: 14px; margin-top: 10px;">✅ Após o pagamento, você receberá a confirmação por email</p>
-                    <button onclick="this.closest('.pix-modal').remove()" 
+                    <div id="pix-status" style="background: #E3F2FD; padding: 12px; border-radius: 8px; margin-top: 15px;">
+                        <p style="color: #1976D2; font-size: 14px; margin: 0;">
+                            <span class="pix-spinner" style="display: inline-block; width: 14px; height: 14px; border: 2px solid #1976D2; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; vertical-align: middle;"></span>
+                            Aguardando pagamento...
+                        </p>
+                    </div>
+                    <button onclick="closePixModal()" 
                             style="margin-top: 20px; padding: 12px 30px; background: #eee; color: #333; border: none; border-radius: 8px; cursor: pointer; display: block; margin-left: auto; margin-right: auto;">
                         Fechar
                     </button>
@@ -1606,6 +1614,12 @@
                 background: rgba(0,0,0,0.8); display: flex; align-items: center;
                 justify-content: center; z-index: 10000;
             `;
+            
+            // Adicionar estilo de animação
+            const style = document.createElement('style');
+            style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+            modal.appendChild(style);
+            
             document.body.appendChild(modal);
             
             // Gerar QR Code se não veio imagem base64
@@ -1621,6 +1635,102 @@
                         correctLevel: QRCode.CorrectLevel.H
                     });
                 }
+            }
+            
+            // Iniciar verificação de status do pagamento
+            // O pix-payment retorna 'id', não 'payment_id'
+            const paymentId = pixData.payment_id || pixData.id;
+            if (paymentId) {
+                startPixStatusPolling(paymentId);
+            }
+        }
+        
+        // Verificar status do PIX periodicamente
+        function startPixStatusPolling(paymentId) {
+            console.log('🔄 Iniciando polling para pagamento:', paymentId);
+            
+            // Verificar a cada 5 segundos
+            pixPollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${API_URL}/check-payment`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ payment_id: paymentId })
+                    });
+                    
+                    const result = await response.json();
+                    console.log('📊 Status PIX:', result.status);
+                    
+                    if (result.status === 'approved') {
+                        // PIX PAGO! 🎉
+                        clearInterval(pixPollingInterval);
+                        pixPollingInterval = null;
+                        
+                        // Atualizar status no modal
+                        const statusDiv = document.getElementById('pix-status');
+                        if (statusDiv) {
+                            statusDiv.style.background = '#E8F5E9';
+                            statusDiv.innerHTML = `
+                                <p style="color: #2E7D32; font-size: 16px; margin: 0; font-weight: 600;">
+                                    ✅ Pagamento confirmado!
+                                </p>
+                            `;
+                        }
+                        
+                        // Salvar dados de autenticação
+                        const checkoutData = JSON.parse(localStorage.getItem('lucrocerto_checkout_data') || '{}');
+                        const authData = {
+                            email: checkoutData.email || '',
+                            nome: checkoutData.nome || '',
+                            plano: currentPlan,
+                            planoNome: (plans[currentPlan] || plans.pro).name,
+                            billing: isAnnual ? 'annual' : 'monthly',
+                            createdAt: new Date().toISOString(),
+                            paymentId: paymentId
+                        };
+                        localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
+                        localStorage.setItem('lucrocerto_logged', 'true');
+                        localStorage.removeItem('lucrocerto_trial');
+                        
+                        // Fechar modal e mostrar sucesso após 1.5s
+                        setTimeout(() => {
+                            closePixModal();
+                            document.getElementById('success-overlay').classList.add('active');
+                            lucide.createIcons();
+                        }, 1500);
+                    }
+                } catch (error) {
+                    console.error('Erro ao verificar status:', error);
+                }
+            }, 5000); // 5 segundos
+            
+            // Parar após 30 minutos (expiração do PIX)
+            setTimeout(() => {
+                if (pixPollingInterval) {
+                    clearInterval(pixPollingInterval);
+                    pixPollingInterval = null;
+                    const statusDiv = document.getElementById('pix-status');
+                    if (statusDiv) {
+                        statusDiv.style.background = '#FFEBEE';
+                        statusDiv.innerHTML = `
+                            <p style="color: #C62828; font-size: 14px; margin: 0;">
+                                ⏰ PIX expirado. Gere um novo.
+                            </p>
+                        `;
+                    }
+                }
+            }, 30 * 60 * 1000);
+        }
+        
+        // Fechar modal do PIX
+        function closePixModal() {
+            if (pixPollingInterval) {
+                clearInterval(pixPollingInterval);
+                pixPollingInterval = null;
+            }
+            const modal = document.getElementById('pix-modal');
+            if (modal) {
+                modal.remove();
             }
         }
 
