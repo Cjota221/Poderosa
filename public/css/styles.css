@@ -2189,19 +2189,20 @@ input[type="range"]::-webkit-slider-thumb {
 /* Vendas */
 .sales-summary {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 16px;
     margin: 20px 0;
+    max-width: 600px;
 }
 
 .summary-card {
     background: white;
-    padding: 20px;
-    border-radius: 16px;
+    padding: 16px;
+    border-radius: 12px;
     box-shadow: var(--shadow-soft);
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
 }
 
 .summary-card.today {
@@ -2269,6 +2270,12 @@ input[type="range"]::-webkit-slider-thumb {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 12px;
+}
+
+.sale-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .sale-date {

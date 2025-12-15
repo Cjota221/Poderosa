@@ -3030,7 +3030,12 @@ const LucroCertoApp = (function() {
                                 <i data-lucide="calendar" style="width: 14px; height: 14px;"></i>
                                 ${formattedDate} às ${formattedTime}
                             </div>
-                            <span class="sale-total">R$ ${s.total.toFixed(2)}</span>
+                            <div class="sale-header-right">
+                                <span class="sale-total">R$ ${s.total.toFixed(2)}</span>
+                                <button class="btn-icon" data-action="edit-sale" data-sale-id="${s.id}" title="Editar venda">
+                                    <i data-lucide="edit-2" style="width: 16px; height: 16px;"></i>
+                                </button>
+                            </div>
                         </div>
                         <div class="sale-details">
                             ${s.clientName ? `<span class="sale-client"><i data-lucide="user"></i> ${s.clientName}</span>` : ''}
@@ -3095,7 +3100,117 @@ const LucroCertoApp = (function() {
         },
         
         bindVendasEvents() {
-            // Eventos básicos - navegação já funciona pelo sistema global
+            // Botão editar venda
+            document.querySelectorAll('[data-action="edit-sale"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const saleId = btn.getAttribute('data-sale-id');
+                    this.editSale(saleId);
+                });
+            });
+        },
+        
+        editSale(saleId) {
+            const { sales } = StateManager.getState();
+            const sale = sales.find(s => s.id === saleId);
+            
+            if (!sale) {
+                alert('Venda não encontrada!');
+                return;
+            }
+            
+            // Modal de edição
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay active';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3>✏️ Editar Venda</h3>
+                        <button class="modal-close" data-action="close-edit-modal">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Cliente</label>
+                            <input type="text" id="edit-client-name" class="form-input" value="${sale.clientName || ''}" placeholder="Nome do cliente">
+                        </div>
+                        <div class="form-group">
+                            <label>Método de Pagamento</label>
+                            <select id="edit-payment-method" class="form-input">
+                                <option value="Dinheiro" ${sale.paymentMethod === 'Dinheiro' ? 'selected' : ''}>💵 Dinheiro</option>
+                                <option value="PIX" ${sale.paymentMethod === 'PIX' ? 'selected' : ''}>📱 PIX</option>
+                                <option value="Cartão de Débito" ${sale.paymentMethod === 'Cartão de Débito' ? 'selected' : ''}>💳 Débito</option>
+                                <option value="Cartão de Crédito" ${sale.paymentMethod === 'Cartão de Crédito' ? 'selected' : ''}>💳 Crédito</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Data e Hora</label>
+                            <input type="datetime-local" id="edit-sale-date" class="form-input" value="${new Date(sale.date).toISOString().slice(0, 16)}">
+                        </div>
+                        <div style="background: var(--light-gray); padding: 12px; border-radius: 8px; margin-bottom: 16px;">
+                            <strong>Itens da venda:</strong>
+                            ${sale.items.map(item => `<div style="margin-top: 8px;">• ${item.quantity}x ${item.productName} - R$ ${(item.price * item.quantity).toFixed(2)}</div>`).join('')}
+                            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #ddd; font-weight: 600;">
+                                Total: R$ ${sale.total.toFixed(2)}
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-secondary" data-action="close-edit-modal" style="flex: 1;">Cancelar</button>
+                            <button class="btn btn-primary" data-action="save-sale-edit" style="flex: 1;">Salvar</button>
+                        </div>
+                        <button class="btn btn-danger" data-action="delete-sale" style="width: 100%; margin-top: 12px;">
+                            <i data-lucide="trash-2"></i> Excluir Venda
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            lucide.createIcons({ nodes: [...modal.querySelectorAll('[data-lucide]')] });
+            
+            // Fechar modal
+            modal.querySelectorAll('[data-action="close-edit-modal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modal.classList.remove('active');
+                    setTimeout(() => modal.remove(), 300);
+                });
+            });
+            
+            // Salvar alterações
+            modal.querySelector('[data-action="save-sale-edit"]').addEventListener('click', () => {
+                const updatedSale = {
+                    ...sale,
+                    clientName: document.getElementById('edit-client-name').value,
+                    paymentMethod: document.getElementById('edit-payment-method').value,
+                    date: new Date(document.getElementById('edit-sale-date').value).toISOString()
+                };
+                
+                const updatedSales = sales.map(s => s.id === saleId ? updatedSale : s);
+                StateManager.setState({ sales: updatedSales });
+                DataManager.save('appState', StateManager.getState());
+                
+                modal.classList.remove('active');
+                setTimeout(() => {
+                    modal.remove();
+                    this.updateActiveContent();
+                }, 300);
+            });
+            
+            // Excluir venda
+            modal.querySelector('[data-action="delete-sale"]').addEventListener('click', () => {
+                if (confirm('Tem certeza que deseja excluir esta venda? Esta ação não pode ser desfeita.')) {
+                    const updatedSales = sales.filter(s => s.id !== saleId);
+                    StateManager.setState({ sales: updatedSales });
+                    DataManager.save('appState', StateManager.getState());
+                    
+                    modal.classList.remove('active');
+                    setTimeout(() => {
+                        modal.remove();
+                        this.updateActiveContent();
+                    }, 300);
+                }
+            });
         },
 
         // ========== PÁGINA NOVA VENDA ==========
