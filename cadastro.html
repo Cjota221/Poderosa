@@ -610,15 +610,19 @@
         // Initialize Lucide icons
         lucide.createIcons();
 
-        // Get params from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const emailFromUrl = urlParams.get('email');
-        const planFromUrl = urlParams.get('plano');
+        // API Base URL
+        const API_URL = '/.netlify/functions';
 
-        // Check if payment was made
-        const paymentData = JSON.parse(localStorage.getItem('lucrocerto_payment') || '{}');
-        const hasPaidPlan = paymentData.status === 'aprovado';
+        // Get email from localStorage (salvo durante checkout)
+        const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+        const checkoutData = JSON.parse(localStorage.getItem('lucrocerto_checkout_data') || '{}');
         
+        // Email do pagamento (prioridade: auth > checkout > URL)
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentEmail = authData.email || checkoutData.email || urlParams.get('email') || '';
+        const paymentPlan = authData.plano || urlParams.get('plano') || 'starter';
+        const paymentName = authData.nome || checkoutData.nome || '';
+
         // Plan names
         const planNames = {
             starter: '🚀 Plano Starter',
@@ -626,27 +630,29 @@
             premium: '👑 Plano Premium'
         };
 
-        // Get final plan and email
-        const finalPlan = hasPaidPlan ? paymentData.plano : planFromUrl;
-        const finalEmail = emailFromUrl || paymentData.email || '';
-
-        // Show appropriate banners
-        if (hasPaidPlan) {
-            // Pagamento confirmado - mostrar plano
+        // Se tem email do pagamento, mostrar banner de sucesso
+        if (paymentEmail) {
             document.getElementById('success-banner').style.display = 'block';
             document.getElementById('plan-banner').style.display = 'block';
-            document.getElementById('plan-name-display').textContent = planNames[paymentData.plano] || '⭐ Seu Plano';
-            document.getElementById('plan-details-display').textContent = 
-                paymentData.periodo === 'anual' ? 'Cobrança anual • Economia de 25%' : 'Cobrança mensal';
-        }
-        // Não mostrar warning - pessoa pode criar conta normalmente
-        // O sistema vai verificar o plano depois do cadastro
-
-        // Pre-fill email
-        if (finalEmail) {
-            document.getElementById('email').value = finalEmail;
-            if (hasPaidPlan) {
-                document.getElementById('email').readOnly = true;
+            document.getElementById('plan-name-display').textContent = planNames[paymentPlan] || '⭐ Seu Plano';
+            document.getElementById('plan-details-display').textContent = 'Use o mesmo email do pagamento';
+            
+            // Pré-preencher campos
+            document.getElementById('email').value = paymentEmail;
+            
+            // Adicionar aviso visual sobre o email
+            const emailInput = document.getElementById('email');
+            const emailNote = document.createElement('p');
+            emailNote.className = 'email-note';
+            emailNote.innerHTML = '⚠️ <strong>Use o mesmo email do pagamento</strong> para vincular sua assinatura';
+            emailNote.style.cssText = 'font-size: 12px; color: #FF9800; margin-top: 6px;';
+            emailInput.parentElement.parentElement.appendChild(emailNote);
+            
+            // Pré-preencher nome se disponível
+            if (paymentName) {
+                const nameParts = paymentName.split(' ');
+                document.getElementById('nome').value = nameParts[0] || '';
+                document.getElementById('sobrenome').value = nameParts.slice(1).join(' ') || '';
             }
         }
 
@@ -718,13 +724,14 @@
         const errorMessage = document.getElementById('error-message');
         const successMessage = document.getElementById('success-message');
         const errorText = document.getElementById('error-text');
+        const btnRegister = document.getElementById('btn-register');
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
             const nome = document.getElementById('nome').value.trim();
             const sobrenome = document.getElementById('sobrenome').value.trim();
-            const email = document.getElementById('email').value.trim();
+            const email = document.getElementById('email').value.trim().toLowerCase();
             const telefone = document.getElementById('telefone').value.trim();
             const password = document.getElementById('password').value;
             const passwordConfirm = document.getElementById('password-confirm').value;
@@ -733,6 +740,11 @@
             // Validations
             if (!nome) {
                 showError('Digite seu nome');
+                return;
+            }
+
+            if (!email) {
+                showError('Digite seu email');
                 return;
             }
 
@@ -751,41 +763,61 @@
                 return;
             }
 
+            // Show loading
+            btnRegister.disabled = true;
+            btnRegister.innerHTML = '<span class="loading-spinner-small"></span> Criando conta...';
+
             try {
-                // Save user data
-                const authData = {
-                    email: email,
-                    password: password,
-                    nome: nome,
-                    sobrenome: sobrenome,
-                    telefone: telefone,
-                    plano: finalPlan || 'pro',
-                    createdAt: new Date().toISOString()
+                // Chamar API para completar cadastro
+                const response = await fetch(`${API_URL}/complete-registration`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password,
+                        nome: `${nome} ${sobrenome}`.trim(),
+                        telefone: telefone
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || result.error || 'Erro ao criar conta');
+                }
+
+                // Salvar dados de autenticação localmente
+                const localAuthData = {
+                    email: result.user.email,
+                    nome: result.user.nome,
+                    plano: result.user.plano,
+                    planoNome: planNames[result.user.plano] || result.user.plano,
+                    userId: result.user.id,
+                    subscription: result.subscription,
+                    createdAt: new Date().toISOString(),
+                    isFirstLogin: true
                 };
 
-                localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
+                localStorage.setItem('lucrocerto_auth', JSON.stringify(localAuthData));
                 localStorage.setItem('lucrocerto_logged', 'true');
-
-                // Update app state
-                const appState = JSON.parse(localStorage.getItem('lucrocerto_appState') || '{}');
-                appState.user = {
-                    name: `${nome} ${sobrenome}`.trim(),
-                    email: email,
-                    phone: telefone,
-                    plan: finalPlan || 'pro'
-                };
-                localStorage.setItem('lucrocerto_appState', JSON.stringify(appState));
+                localStorage.removeItem('lucrocerto_checkout_data'); // Limpar dados do checkout
+                localStorage.removeItem('lucrocerto_trial'); // Remover trial
 
                 // Show success and redirect
                 successMessage.classList.add('show');
                 errorMessage.classList.remove('show');
 
+                // Redirecionar para o admin com flag de primeiro acesso (para tour)
                 setTimeout(() => {
-                    window.location.href = '/app';
+                    window.location.href = '/admin.html?welcome=true';
                 }, 1500);
 
             } catch (error) {
-                showError('Erro ao criar conta. Tente novamente.');
+                console.error('Erro no cadastro:', error);
+                showError(error.message || 'Erro ao criar conta. Verifique se o email é o mesmo do pagamento.');
+                btnRegister.disabled = false;
+                btnRegister.innerHTML = '<i data-lucide="rocket"></i> Criar minha conta';
+                lucide.createIcons();
             }
         });
 
@@ -795,63 +827,9 @@
             successMessage.classList.remove('show');
         }
 
-        // Google signup
+        // Google signup - desabilitado por enquanto
         document.getElementById('google-signup').addEventListener('click', () => {
-            // Simular cadastro com Google
-            const googleModal = document.createElement('div');
-            googleModal.innerHTML = `
-                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
-                    <div style="background: white; padding: 30px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center;">
-                        <img src="https://www.google.com/images/branding/googleg/1x/googleg_standard_color_128dp.png" style="width: 60px; margin-bottom: 20px;">
-                        <h3 style="margin-bottom: 16px; color: #202124;">Criar conta com o Google</h3>
-                        <p style="color: #5f6368; font-size: 14px; margin-bottom: 20px;">Selecione sua conta Google</p>
-                        
-                        <div class="google-account-option" style="display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #dadce0; border-radius: 8px; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='white'">
-                            <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #E91E63, #F06292); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">${finalEmail ? finalEmail.charAt(0).toUpperCase() : 'U'}</div>
-                            <div style="text-align: left;">
-                                <div style="font-weight: 500; color: #202124;">${finalEmail || 'sua.conta@gmail.com'}</div>
-                                <div style="font-size: 12px; color: #5f6368;">Conta verificada</div>
-                            </div>
-                        </div>
-                        
-                        <button id="cancel-google" style="margin-top: 20px; background: none; border: none; color: #1a73e8; font-size: 14px; cursor: pointer; padding: 8px 16px;">Cancelar</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(googleModal);
-            
-            // Click account
-            googleModal.querySelector('.google-account-option').addEventListener('click', () => {
-                const googleAuthData = {
-                    email: finalEmail || 'usuario@gmail.com',
-                    password: 'google_oauth_' + Date.now(),
-                    nome: 'Usuário',
-                    sobrenome: 'Google',
-                    telefone: '',
-                    plano: finalPlan || 'pro',
-                    createdAt: new Date().toISOString(),
-                    loginMethod: 'google'
-                };
-                
-                localStorage.setItem('lucrocerto_auth', JSON.stringify(googleAuthData));
-                localStorage.setItem('lucrocerto_logged', 'true');
-                
-                const appState = JSON.parse(localStorage.getItem('lucrocerto_appState') || '{}');
-                appState.user = {
-                    name: 'Usuário Google',
-                    email: googleAuthData.email,
-                    phone: '',
-                    plan: finalPlan || 'pro'
-                };
-                localStorage.setItem('lucrocerto_appState', JSON.stringify(appState));
-                
-                window.location.href = '/app';
-            });
-            
-            // Cancel
-            googleModal.querySelector('#cancel-google').addEventListener('click', () => {
-                googleModal.remove();
-            });
+            alert('Login com Google em breve! Por enquanto, use email e senha.');
         });
     </script>
 </body>
