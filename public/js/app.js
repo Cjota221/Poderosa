@@ -4722,12 +4722,74 @@ const LucroCertoApp = (function() {
         bindEvents();
         AchievementSystem.checkAndAward('primeiro_acesso');
         
+        // Sincronizar plano com banco de dados
+        syncUserPlanFromDatabase();
+        
         // Inicializar Trial Banner se estiver em teste
         initTrialMode();
     }
 
     //==================================
-    // 7. TRIAL MODE FUNCTIONS
+    // 7. SYNC USER PLAN FROM DATABASE
+    //==================================
+    async function syncUserPlanFromDatabase() {
+        const userId = localStorage.getItem('lucrocerto_user_id');
+        const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+        const email = authData.email;
+
+        if (!userId && !email) return; // Sem dados para sincronizar
+
+        try {
+            const response = await fetch('/.netlify/functions/get-user-plan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, email })
+            });
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+            
+            if (data.success) {
+                // Atualizar localStorage com dados do banco
+                const updatedAuth = {
+                    ...authData,
+                    userId: data.user.id,
+                    plano: data.subscription.plano,
+                    planoNome: data.subscription.planoNome,
+                    status: data.subscription.status,
+                    isExpired: data.subscription.isExpired,
+                    daysLeft: data.subscription.daysLeft,
+                    limits: data.limits,
+                    features: data.features
+                };
+                
+                localStorage.setItem('lucrocerto_auth', JSON.stringify(updatedAuth));
+                localStorage.setItem('lucrocerto_user_id', data.user.id);
+                
+                // Atualizar flags de trial
+                if (data.subscription.isTrial) {
+                    localStorage.setItem('lucrocerto_trial', 'true');
+                } else {
+                    localStorage.removeItem('lucrocerto_trial');
+                }
+
+                // Se trial expirou, mostrar modal
+                if (data.subscription.isExpired && data.subscription.isTrial) {
+                    if (typeof PlanManager !== 'undefined') {
+                        PlanManager.showTrialExpiredModal();
+                    }
+                }
+
+                console.log('✅ Plano sincronizado:', data.subscription.plano);
+            }
+        } catch (error) {
+            console.log('Offline: usando dados locais');
+        }
+    }
+
+    //==================================
+    // 8. TRIAL MODE FUNCTIONS
     //==================================
     function initTrialMode() {
         const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';

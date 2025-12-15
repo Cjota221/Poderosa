@@ -1466,6 +1466,12 @@
                 display: none;
             }
         }
+
+        /* Loading spinner animation */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
     </style>
 
     <!-- Auto-redirect se já estiver logado -->
@@ -2329,43 +2335,101 @@
             }
         });
 
-        // Trial form submission
-        document.getElementById('trialForm').addEventListener('submit', (e) => {
+        // Trial form submission - INTEGRADO COM BANCO DE DADOS
+        document.getElementById('trialForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const nome = document.getElementById('trialNome').value.trim();
             const email = document.getElementById('trialEmail').value.trim();
             const negocio = document.getElementById('trialNegocio').value;
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
 
-            // Criar conta de teste
-            const trialData = {
-                email: email,
-                nome: nome,
-                negocio: negocio,
-                plano: 'trial',
-                trialStartDate: new Date().toISOString(),
-                trialEndDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-                trialProductLimit: 3,
-                createdAt: new Date().toISOString()
-            };
+            // Mostrar loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 8px;"><svg width="20" height="20" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 70"/></svg> Verificando...</span>';
 
-            // Salvar auth como trial
-            localStorage.setItem('lucrocerto_auth', JSON.stringify(trialData));
-            localStorage.setItem('lucrocerto_trial', 'true');
-            localStorage.setItem('lucrocerto_trial_start', new Date().toISOString());
-            localStorage.setItem('lucrocerto_logged', 'true');
+            try {
+                // 1. Verificar se email já existe no banco
+                const checkResponse = await fetch('/.netlify/functions/check-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const checkData = await checkResponse.json();
 
-            // Salvar estado do app
-            const appState = JSON.parse(localStorage.getItem('lucrocerto_appState') || '{}');
-            appState.user = {
-                name: nome,
-                email: email,
-                plan: 'trial'
-            };
-            localStorage.setItem('lucrocerto_appState', JSON.stringify(appState));
+                if (checkData.exists) {
+                    // Email já existe
+                    if (checkData.trialExpired) {
+                        alert('Este email já usou o período de teste e expirou. Por favor, escolha um plano pago para continuar.');
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                        closeTrialModal();
+                        document.querySelector('#planos').scrollIntoView({ behavior: 'smooth' });
+                        return;
+                    } else if (checkData.hasActiveSubscription) {
+                        alert('Este email já possui uma assinatura ativa. Faça login para acessar.');
+                        window.location.href = '/login?email=' + encodeURIComponent(email);
+                        return;
+                    } else {
+                        // Trial ainda válido - fazer login
+                        alert(`Você já tem uma conta! Restam ${checkData.daysLeft} dias de teste.`);
+                        window.location.href = '/login?email=' + encodeURIComponent(email);
+                        return;
+                    }
+                }
 
-            // Redirecionar para o app
-            window.location.href = '/app';
+                // 2. Criar trial no banco de dados
+                const trialResponse = await fetch('/.netlify/functions/start-trial', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, nome, negocio })
+                });
+                const trialData = await trialResponse.json();
+
+                if (!trialResponse.ok) {
+                    throw new Error(trialData.error || 'Erro ao criar conta');
+                }
+
+                // 3. Salvar dados localmente (sincronizado com banco)
+                const authData = {
+                    userId: trialData.userId,
+                    email: email,
+                    nome: nome,
+                    negocio: negocio,
+                    plano: 'trial',
+                    trialStartDate: trialData.trialStartDate,
+                    trialEndDate: trialData.trialEndDate,
+                    limits: trialData.limits,
+                    features: trialData.features,
+                    createdAt: new Date().toISOString()
+                };
+
+                localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
+                localStorage.setItem('lucrocerto_user_id', trialData.userId);
+                localStorage.setItem('lucrocerto_trial', 'true');
+                localStorage.setItem('lucrocerto_trial_start', trialData.trialStartDate);
+                localStorage.setItem('lucrocerto_logged', 'true');
+
+                // Salvar estado do app
+                const appState = JSON.parse(localStorage.getItem('lucrocerto_appState') || '{}');
+                appState.user = {
+                    id: trialData.userId,
+                    name: nome,
+                    email: email,
+                    plan: 'trial'
+                };
+                localStorage.setItem('lucrocerto_appState', JSON.stringify(appState));
+
+                // 4. Redirecionar para o app
+                window.location.href = '/app';
+
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao criar conta: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         });
 
         // ========== Lead Popup (Cupom) ==========
