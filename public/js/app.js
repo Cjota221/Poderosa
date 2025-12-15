@@ -4792,8 +4792,33 @@ const LucroCertoApp = (function() {
     // 8. TRIAL MODE FUNCTIONS
     //==================================
     function initTrialMode() {
+        // ✅ VERIFICAÇÃO RIGOROSA: Só inicializar trial se flag existir E não tiver plano pago
+        const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
         const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
-        if (!isTrial) return;
+        
+        // 🛑 SE USUÁRIO TEM PLANO PAGO, NÃO MOSTRAR NADA DE TRIAL
+        if (authData.plano && authData.plano !== 'trial') {
+            console.log('🚫 initTrialMode: Usuário tem plano PAGO (' + authData.plano + ') - Banner trial NÃO será criado');
+            // Limpar qualquer flag trial que esteja sobrando
+            localStorage.removeItem('lucrocerto_trial');
+            localStorage.removeItem('lucrocerto_trial_start');
+            // Remover banner se existir
+            const existingBanner = document.getElementById('trial-banner');
+            if (existingBanner) {
+                existingBanner.remove();
+                document.body.classList.remove('has-trial-banner');
+                document.body.classList.remove('has-trial-banner-compact');
+            }
+            return; // ⛔ PARAR AQUI
+        }
+        
+        // 🧪 Só continuar se for realmente trial
+        if (!isTrial) {
+            console.log('🚫 initTrialMode: Flag trial não está ativa - Banner NÃO será criado');
+            return;
+        }
+        
+        console.log('🧪 initTrialMode: Modo TRIAL ativo - Criando banner...');
         
         // Calcular dias restantes
         const trialStartDate = localStorage.getItem('lucrocerto_trial_start');
