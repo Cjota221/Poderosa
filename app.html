@@ -112,6 +112,236 @@
                 window.location.href = 'login';
             }
         })();
+        
+        // Welcome Tour
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const showWelcome = urlParams.get('welcome') === 'true';
+            
+            // Pegar dados do usuário do localStorage
+            const authDataStr = localStorage.getItem('lucrocerto_auth');
+            let authData = {};
+            if (authDataStr) {
+                try {
+                    authData = JSON.parse(authDataStr);
+                } catch (e) {
+                    authData = {};
+                }
+            }
+            
+            if (showWelcome || authData.isFirstLogin) {
+                setTimeout(() => showWelcomeTour(), 500);
+                // Limpar flag de primeiro login
+                if (authData.isFirstLogin) {
+                    authData.isFirstLogin = false;
+                    localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
+                }
+            }
+            
+            // Limpar parâmetro welcome da URL
+            if (showWelcome) {
+                window.history.replaceState({}, '', '/app.html');
+            }
+        });
+        
+        function showWelcomeTour() {
+            const authDataStr = localStorage.getItem('lucrocerto_auth');
+            let authData = {};
+            if (authDataStr) {
+                try {
+                    authData = JSON.parse(authDataStr);
+                } catch (e) {
+                    authData = {};
+                }
+            }
+            
+            const tourOverlay = document.createElement('div');
+            tourOverlay.id = 'welcome-tour';
+            tourOverlay.innerHTML = `
+                <div class="tour-backdrop"></div>
+                <div class="tour-modal">
+                    <div class="tour-step" data-step="1">
+                        <div class="tour-icon">🎉</div>
+                        <h2>Bem-vinda ao Lucro Certo!</h2>
+                        <p>Olá <strong>${authData.nome?.split(' ')[0] || 'empreendedora'}</strong>! Seu pagamento foi confirmado e sua conta está ativa.</p>
+                        <p class="tour-plan">Seu plano: <strong>${getPlanName(authData.plano)}</strong></p>
+                        <button class="tour-btn" onclick="nextTourStep(2)">Começar tour rápido →</button>
+                        <button class="tour-skip" onclick="closeTour()">Pular e começar a usar</button>
+                    </div>
+                    
+                    <div class="tour-step" data-step="2" style="display: none;">
+                        <div class="tour-icon">📊</div>
+                        <h2>Dashboard</h2>
+                        <p>Aqui você vê um resumo do seu negócio: vendas, produtos mais vendidos e métricas importantes.</p>
+                        <div class="tour-nav">
+                            <button class="tour-btn-secondary" onclick="nextTourStep(1)">← Voltar</button>
+                            <button class="tour-btn" onclick="nextTourStep(3)">Próximo →</button>
+                        </div>
+                    </div>
+                    
+                    <div class="tour-step" data-step="3" style="display: none;">
+                        <div class="tour-icon">📦</div>
+                        <h2>Produtos</h2>
+                        <p>Cadastre seus produtos com custo e preço de venda. O sistema calcula automaticamente sua margem de lucro!</p>
+                        <div class="tour-nav">
+                            <button class="tour-btn-secondary" onclick="nextTourStep(2)">← Voltar</button>
+                            <button class="tour-btn" onclick="nextTourStep(4)">Próximo →</button>
+                        </div>
+                    </div>
+                    
+                    <div class="tour-step" data-step="4" style="display: none;">
+                        <div class="tour-icon">💰</div>
+                        <h2>Vendas</h2>
+                        <p>Registre suas vendas de forma rápida e veja seus lucros crescerem. Tudo organizado em um só lugar!</p>
+                        <div class="tour-nav">
+                            <button class="tour-btn-secondary" onclick="nextTourStep(3)">← Voltar</button>
+                            <button class="tour-btn" onclick="nextTourStep(5)">Próximo →</button>
+                        </div>
+                    </div>
+                    
+                    <div class="tour-step" data-step="5" style="display: none;">
+                        <div class="tour-icon">🚀</div>
+                        <h2>Tudo pronto!</h2>
+                        <p>Agora é só começar a usar. Dica: comece cadastrando seus produtos!</p>
+                        <button class="tour-btn tour-btn-success" onclick="closeTour()">Começar a usar! ✨</button>
+                    </div>
+                </div>
+            `;
+            
+            // Adicionar estilos do tour
+            const tourStyles = document.createElement('style');
+            tourStyles.textContent = `
+                #welcome-tour {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    z-index: 99999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .tour-backdrop {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0,0,0,0.8);
+                }
+                .tour-modal {
+                    position: relative;
+                    background: white;
+                    border-radius: 24px;
+                    padding: 40px;
+                    max-width: 450px;
+                    width: 90%;
+                    text-align: center;
+                    animation: tourSlideUp 0.4s ease;
+                }
+                @keyframes tourSlideUp {
+                    from { opacity: 0; transform: translateY(30px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .tour-icon {
+                    font-size: 60px;
+                    margin-bottom: 20px;
+                }
+                .tour-modal h2 {
+                    color: #37474F;
+                    margin-bottom: 12px;
+                    font-size: 24px;
+                }
+                .tour-modal p {
+                    color: #607D8B;
+                    margin-bottom: 12px;
+                    line-height: 1.6;
+                }
+                .tour-plan {
+                    background: linear-gradient(135deg, #E91E63, #F06292);
+                    color: white !important;
+                    padding: 10px 20px;
+                    border-radius: 10px;
+                    display: inline-block;
+                    margin: 10px 0 20px !important;
+                }
+                .tour-btn {
+                    background: linear-gradient(135deg, #E91E63, #F06292);
+                    color: white;
+                    border: none;
+                    padding: 14px 28px;
+                    border-radius: 12px;
+                    font-size: 15px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: transform 0.2s, box-shadow 0.2s;
+                }
+                .tour-btn:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 15px rgba(233, 30, 99, 0.4);
+                }
+                .tour-btn-secondary {
+                    background: #f5f5f5;
+                    color: #37474F;
+                    border: none;
+                    padding: 14px 24px;
+                    border-radius: 12px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    cursor: pointer;
+                }
+                .tour-btn-success {
+                    background: linear-gradient(135deg, #4CAF50, #8BC34A);
+                }
+                .tour-skip {
+                    display: block;
+                    margin-top: 16px;
+                    background: none;
+                    border: none;
+                    color: #9E9E9E;
+                    font-size: 13px;
+                    cursor: pointer;
+                }
+                .tour-skip:hover {
+                    color: #607D8B;
+                }
+                .tour-nav {
+                    display: flex;
+                    gap: 12px;
+                    justify-content: center;
+                    margin-top: 20px;
+                }
+            `;
+            
+            document.head.appendChild(tourStyles);
+            document.body.appendChild(tourOverlay);
+        }
+        
+        function getPlanName(plano) {
+            const plans = {
+                'starter': 'Starter',
+                'pro': 'Pro',
+                'premium': 'Premium'
+            };
+            return plans[plano] || 'Starter';
+        }
+        
+        window.nextTourStep = function(step) {
+            const steps = document.querySelectorAll('.tour-step');
+            steps.forEach(s => s.style.display = 'none');
+            const targetStep = document.querySelector(`.tour-step[data-step="${step}"]`);
+            if (targetStep) {
+                targetStep.style.display = 'block';
+            }
+        };
+        
+        window.closeTour = function() {
+            const tour = document.getElementById('welcome-tour');
+            if (tour) {
+                tour.remove();
+            }
+        };
     </script>
 
     <!-- Supabase Integration -->

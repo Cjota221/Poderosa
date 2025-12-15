@@ -564,11 +564,11 @@
                     localStorage.removeItem('lucrocerto_remember');
                 }
 
-                // Redirecionar - se primeiro login, mostra tour
+                // Redirecionar para a área da empreendedora - se primeiro login, mostra tour
                 if (result.isFirstLogin) {
-                    window.location.href = '/admin.html?welcome=true';
+                    window.location.href = '/app.html?welcome=true';
                 } else {
-                    window.location.href = '/admin.html';
+                    window.location.href = '/app.html';
                 }
                 
             } catch (error) {
