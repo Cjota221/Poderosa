@@ -4731,25 +4731,26 @@ const LucroCertoApp = (function() {
         const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
         if (!isTrial) return;
         
-        // Adicionar banner de trial no topo
+        // Adicionar banner de trial abaixo do header
         const trialBanner = document.createElement('div');
         trialBanner.id = 'trial-banner';
         trialBanner.innerHTML = `
             <div class="trial-banner-content">
-                <span><i data-lucide="sparkles"></i> <strong>Modo Teste Grátis</strong> - Você pode cadastrar até 3 produtos</span>
-                <a href="planos" class="trial-upgrade-btn">Fazer Upgrade</a>
+                <span><i data-lucide="sparkles"></i> <strong>Modo Teste Grátis</strong> - 2/3 produtos cadastrados</span>
+                <a href="index.html" class="trial-upgrade-btn">Fazer Upgrade</a>
             </div>
         `;
         trialBanner.style.cssText = `
             position: fixed;
-            top: 0;
+            top: 60px;
             left: 0;
             right: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 10px 20px;
-            z-index: 9999;
+            padding: 12px 20px;
+            z-index: 999;
             font-size: 13px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         `;
         
         const bannerContent = trialBanner.querySelector('.trial-banner-content');
@@ -4759,7 +4760,7 @@ const LucroCertoApp = (function() {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 20px;
+            gap: 16px;
             flex-wrap: wrap;
         `;
         
@@ -4772,10 +4773,17 @@ const LucroCertoApp = (function() {
             text-decoration: none;
             font-weight: 600;
             font-size: 12px;
+            white-space: nowrap;
         `;
         
         document.body.prepend(trialBanner);
-        document.body.style.paddingTop = '50px';
+        
+        // Adicionar padding ao main-content para não ficar atrás do banner
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            mainContent.style.paddingTop = '50px';
+        }
+        
         document.body.classList.add('has-trial-banner');
         
         setTimeout(() => lucide.createIcons({ nodes: [trialBanner] }), 100);

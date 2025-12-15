@@ -189,18 +189,38 @@ body.has-plan-banner .side-menu {
     height: calc(100vh - 44px);
 }
 
+/* Trial Banner - sempre abaixo do header */
+#trial-banner {
+    position: fixed !important;
+    top: 60px !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 999 !important;
+}
+
 /* Ajustar header quando banner de TRIAL estiver visível */
 body.has-trial-banner .app-header {
-    top: 50px;
+    top: 0;
 }
 
 body.has-trial-banner #main-content {
-    padding-top: 50px;
+    padding-top: 110px !important;
 }
 
 body.has-trial-banner .side-menu {
-    top: 50px;
-    height: calc(100vh - 50px);
+    top: 60px;
+    height: calc(100vh - 60px);
+}
+
+@media (min-width: 769px) {
+    #trial-banner {
+        left: 240px !important;
+    }
+    
+    body.has-trial-banner #main-content {
+        padding-top: 50px !important;
+        margin-top: 56px;
+    }
 }
 
 @media (min-width: 1024px) {
@@ -217,20 +237,6 @@ body.has-trial-banner .side-menu {
     }
     
     body.has-plan-banner .side-menu {
-        top: 0;
-        height: 100vh;
-    }
-    
-    /* Trial banner em desktop */
-    body.has-trial-banner .app-header {
-        top: 50px;
-    }
-    
-    body.has-trial-banner #main-content {
-        margin-top: calc(56px + 50px);
-    }
-    
-    body.has-trial-banner .side-menu {
         top: 0;
         height: 100vh;
     }
