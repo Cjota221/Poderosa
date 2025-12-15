@@ -145,16 +145,12 @@ app.post('/api/create-preference', async (req, res) => {
                 name: payerName,
                 surname: payerSurname
             },
-            // back_urls só funciona com URLs públicas (não localhost)
-            // Em produção, descomente as back_urls
-            /*
             back_urls: {
-                success: `${siteUrl}/pagamento-sucesso.html?plano=${planoKey}&periodo=${periodoValue}`,
-                failure: `${siteUrl}/pagamento-erro.html`,
-                pending: `${siteUrl}/pagamento-pendente.html`
+                success: `${siteUrl}/pagamento-sucesso?plano=${planoKey}&periodo=${periodoValue}`,
+                failure: `${siteUrl}/pagamento-erro`,
+                pending: `${siteUrl}/pagamento-pendente`
             },
             auto_return: 'approved',
-            */
             external_reference: JSON.stringify({
                 plano: planoKey,
                 periodo: periodoValue,

@@ -242,7 +242,7 @@
         // Botão de criar conta leva para cadastro com email
         document.getElementById('btn-criar-conta').addEventListener('click', (e) => {
             e.preventDefault();
-            const cadastroUrl = email ? `cadastro?email=${encodeURIComponent(email)}&plano=${plano}` : 'cadastro';
+            const cadastroUrl = email ? `/cadastro?email=${encodeURIComponent(email)}&plano=${plano}` : '/cadastro';
             window.location.href = cadastroUrl;
         });
 

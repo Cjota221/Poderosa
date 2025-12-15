@@ -4760,7 +4760,7 @@ const LucroCertoApp = (function() {
             trialBanner.innerHTML = `
                 <div class="trial-banner-content">
                     <span><i data-lucide="sparkles"></i> <strong>Modo Teste Grátis</strong> - ${daysLeft} ${daysLeft === 1 ? 'dia restante' : 'dias restantes'}</span>
-                    <a href="index.html" class="trial-upgrade-btn">Fazer Upgrade</a>
+                    <a href="/" class="trial-upgrade-btn">Fazer Upgrade</a>
                 </div>
             `;
             trialBanner.style.cssText = `
@@ -4803,7 +4803,7 @@ const LucroCertoApp = (function() {
             trialBanner.innerHTML = `
                 <div class="trial-banner-compact">
                     <i data-lucide="clock"></i> Teste Grátis: ${daysLeft} ${daysLeft === 1 ? 'dia' : 'dias'} restantes
-                    <a href="index.html" style="color: white; text-decoration: underline; margin-left: 8px;">Fazer upgrade</a>
+                    <a href="/" style="color: white; text-decoration: underline; margin-left: 8px;">Fazer upgrade</a>
                 </div>
             `;
             trialBanner.style.cssText = `
