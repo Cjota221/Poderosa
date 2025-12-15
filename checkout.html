@@ -1461,24 +1461,11 @@
                     }
                 }
                 // ========================================
-                // PAGAMENTO COM PIX (Simulado)
+                // PAGAMENTO COM PIX (PRODUÇÃO)
                 // ========================================
                 else if (paymentMethod === 'pix') {
                     document.querySelector('.loading-text').textContent = 'Gerando PIX...';
                     
-                    await new Promise(resolve => setTimeout(resolve, 1500));
-                    
-                    // Simular geração de PIX
-                    const pixData = {
-                        qr_code: '00020126580014br.gov.bcb.pix0136a1b2c3d4-e5f6-7890-abcd-ef1234567890520400005303986540534.905802BR5925LUCRO CERTO PAGAMENTOS6009SAO PAULO62140510LUCRO' + Date.now(),
-                        qr_code_base64: null // Não temos imagem real
-                    };
-                    
-                    document.getElementById('loading-overlay').classList.remove('active');
-                    showPixModal(pixData);
-                    return;
-
-                    /* CÓDIGO PRODUÇÃO
                     const pixResponse = await fetch(`${API_URL}/pix-payment`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1507,7 +1494,6 @@
                     } else {
                         throw new Error(pixResult.error || 'Erro ao gerar PIX');
                     }
-                    */
                 }
 
             } catch (error) {
