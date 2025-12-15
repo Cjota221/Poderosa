@@ -8,6 +8,12 @@ const getClient = () => {
         ? process.env.MERCADO_PAGO_ACCESS_TOKEN_TEST 
         : process.env.MERCADO_PAGO_ACCESS_TOKEN;
     
+    // Log para debug (remover depois)
+    console.log('=== MERCADO PAGO CONFIG ===');
+    console.log('Mode:', process.env.MERCADO_PAGO_MODE);
+    console.log('Is Test Mode:', isTestMode);
+    console.log('Token starts with:', accessToken ? accessToken.substring(0, 20) + '...' : 'UNDEFINED');
+    
     return new MercadoPagoConfig({ 
         accessToken: accessToken,
         options: { timeout: 5000 }
