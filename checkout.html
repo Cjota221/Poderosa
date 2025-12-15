@@ -1325,7 +1325,8 @@
         // ==============================================
         // CONFIGURAÇÃO - CHECKOUT 
         // ==============================================
-        const API_URL = 'http://localhost:3001';
+        // Usa Netlify Functions (/.netlify/functions/)
+        const API_URL = '/.netlify/functions';
         const MP_PUBLIC_KEY = 'TEST-7c3fcc64-8693-4ec7-ae0e-8bfea931e586';
         
         // Inicializar Mercado Pago SDK
@@ -1446,7 +1447,7 @@
                         document.querySelector('.loading-text').textContent = 'Processando pagamento...';
 
                         // Enviar token para o backend processar
-                        const paymentResponse = await fetch(`${API_URL}/api/process-payment`, {
+                        const paymentResponse = await fetch(`${API_URL}/process-payment`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -1499,7 +1500,7 @@
                     return;
 
                     /* CÓDIGO PRODUÇÃO
-                    const pixResponse = await fetch(`${API_URL}/api/create-pix`, {
+                    const pixResponse = await fetch(`${API_URL}/pix-payment`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({

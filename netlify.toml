@@ -1,6 +1,7 @@
 [build]
   publish = "."
-  command = "echo 'No build required'"
+  command = "cd netlify/functions && npm install"
+  functions = "netlify/functions"
 
 # Habilita URLs limpas (sem .html)
 [build.processing]
@@ -13,5 +14,18 @@
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
 
+# CORS para as functions
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Headers = "Content-Type"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+
 [build.environment]
   NODE_VERSION = "18"
+
+# Configuração das Functions
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

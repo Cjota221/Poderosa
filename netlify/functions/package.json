@@ -1,0 +1,8 @@
+{
+  "name": "lucrocerto-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions para Lucro Certo - Integração Mercado Pago",
+  "dependencies": {
+    "mercadopago": "^2.0.6"
+  }
+}
