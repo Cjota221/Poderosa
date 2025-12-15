@@ -2352,6 +2352,7 @@
             // Salvar auth como trial
             localStorage.setItem('lucrocerto_auth', JSON.stringify(trialData));
             localStorage.setItem('lucrocerto_trial', 'true');
+            localStorage.setItem('lucrocerto_trial_start', new Date().toISOString());
             localStorage.setItem('lucrocerto_logged', 'true');
 
             // Salvar estado do app

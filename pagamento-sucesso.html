@@ -239,6 +239,21 @@
         };
         localStorage.setItem('lucrocerto_payment', JSON.stringify(paymentData));
 
+        // Atualizar auth com o plano correto (importante para PlanManager)
+        const existingAuth = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+        const updatedAuth = {
+            ...existingAuth,
+            email: email || existingAuth.email,
+            plano: plano || 'pro',
+            periodo: periodo || 'mensal',
+            dataAssinatura: new Date().toISOString()
+        };
+        localStorage.setItem('lucrocerto_auth', JSON.stringify(updatedAuth));
+
+        // Remover flag de trial - usuário agora é assinante
+        localStorage.removeItem('lucrocerto_trial');
+        localStorage.removeItem('lucrocerto_trial_start');
+
         // Botão de criar conta leva para cadastro com email
         document.getElementById('btn-criar-conta').addEventListener('click', (e) => {
             e.preventDefault();
