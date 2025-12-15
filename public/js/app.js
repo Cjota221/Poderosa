@@ -157,13 +157,12 @@ const LucroCertoApp = (function() {
             let authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
             
             // ============================================
-            // 🧪 MODO DEMONSTRAÇÃO - Simular plano vencendo
-            // Remover este bloco em produção!
+            // 🧪 MODO DEMONSTRAÇÃO - Desativado
             // ============================================
-            const DEMO_MODE = true; // Mude para false para desativar
-            const DEMO_DAYS_UNTIL_EXPIRY = 2; // Simular X dias até vencer (use -1 para simular vencido)
+            const DEMO_MODE = false; // Modo demo desativado
             
             if (DEMO_MODE) {
+                const DEMO_DAYS_UNTIL_EXPIRY = 2;
                 const fakeCreatedAt = new Date();
                 fakeCreatedAt.setDate(fakeCreatedAt.getDate() - (30 - DEMO_DAYS_UNTIL_EXPIRY));
                 authData = {
@@ -175,14 +174,17 @@ const LucroCertoApp = (function() {
             }
             // ============================================
             
-            // Se não tem dados de auth, não mostrar banner (usuário em trial ou não logado)
-            if (!authData.createdAt) {
+            // Verificar se é teste grátis
+            const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
+            
+            // Se for teste grátis ou não tem plano pago, não mostrar banner
+            if (!authData.createdAt || isTrial || authData.plano === 'trial') {
                 banner.style.display = 'none';
                 document.body.classList.remove('has-plan-banner');
                 return;
             }
             
-            // Calcular dias até o vencimento
+            // Calcular dias até o vencimento (apenas para planos pagos)
             const createdAt = new Date(authData.createdAt);
             const expiryDate = new Date(createdAt);
             expiryDate.setDate(expiryDate.getDate() + 30);
