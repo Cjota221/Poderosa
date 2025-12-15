@@ -138,8 +138,13 @@
         }
 
         @media (max-width: 768px) {
-            .header-actions a {
-                display: none;
+            .btn-login {
+                padding: 8px 20px;
+                font-size: 13px;
+            }
+
+            .logo-text {
+                font-size: 18px;
             }
         }
 
@@ -1462,6 +1467,18 @@
             }
         }
     </style>
+
+    <!-- Auto-redirect se já estiver logado -->
+    <script>
+        // Verificar se usuário já está logado
+        (function() {
+            const isLogged = localStorage.getItem('lucrocerto_logged');
+            if (isLogged === 'true') {
+                // Se já está logado, redireciona direto para o sistema
+                window.location.href = 'app.html';
+            }
+        })();
+    </script>
 </head>
 <body>
     <!-- Header -->
