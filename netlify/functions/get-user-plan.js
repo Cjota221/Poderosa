@@ -161,26 +161,57 @@ exports.handler = async (event, context) => {
         let daysLeft = null;
         let isExpired = false;
 
-        if (assinaturaAtiva && assinaturaAtiva.plano !== 'trial') {
-            // Tem assinatura paga ativa
+        console.log('🔍 DEBUG get-user-plan:');
+        console.log('   Usuario plano:', usuario.plano);
+        console.log('   Assinatura ativa:', assinaturaAtiva);
+
+        if (assinaturaAtiva) {
+            // ✅ TEM ASSINATURA ATIVA - USAR SEMPRE O PLANO DA ASSINATURA
             planoAtual = assinaturaAtiva.plano;
-            status = 'active';
+            console.log('   ✅ Usando plano da assinatura:', planoAtual);
             
-            if (assinaturaAtiva.data_expiracao) {
-                const expDate = new Date(assinaturaAtiva.data_expiracao);
-                if (expDate < now) {
-                    status = 'expired';
-                    isExpired = true;
+            // Verificar se é trial ou pago
+            if (assinaturaAtiva.plano !== 'trial') {
+                // Assinatura PAGA
+                status = 'active';
+                
+                if (assinaturaAtiva.data_expiracao) {
+                    const expDate = new Date(assinaturaAtiva.data_expiracao);
+                    if (expDate < now) {
+                        status = 'expired';
+                        isExpired = true;
+                        console.log('   ⚠️ Assinatura EXPIRADA');
+                    } else {
+                        daysLeft = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+                        console.log('   ✅ Assinatura válida, dias restantes:', daysLeft);
+                    }
                 } else {
-                    daysLeft = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+                    // Sem data de expiração = válida indefinidamente
+                    daysLeft = null;
+                    console.log('   ✅ Assinatura válida (sem expiração)');
                 }
+            } else {
+                // Assinatura TRIAL
+                status = 'trial';
+                daysLeft = Math.max(0, 7 - daysSinceCreation);
+                isExpired = daysLeft === 0;
+                console.log('   🧪 Assinatura trial, dias restantes:', daysLeft);
             }
-        } else if (usuario.plano === 'trial') {
+        } else if (usuario.plano && usuario.plano !== 'trial') {
+            // Não tem assinatura mas tem plano PAGO no usuário
+            planoAtual = usuario.plano;
+            status = 'active';
+            console.log('   ✅ Sem assinatura, mas plano do usuário:', planoAtual);
+        } else {
             // Está em trial
+            planoAtual = 'trial';
             daysLeft = Math.max(0, 7 - daysSinceCreation);
             isExpired = daysLeft === 0;
             status = isExpired ? 'expired' : 'trial';
+            console.log('   🧪 Modo trial, dias restantes:', daysLeft);
         }
+
+        console.log('   📊 RESULTADO FINAL - Plano:', planoAtual, 'Status:', status);
 
         // Obter configurações do plano
         const planConfig = PLAN_FEATURES[planoAtual] || PLAN_FEATURES.trial;
