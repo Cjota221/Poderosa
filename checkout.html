@@ -1402,29 +1402,8 @@
 
                     document.querySelector('.loading-text').textContent = 'Processando pagamento...';
 
-                    // *** MODO SIMULAÇÃO PARA DEMONSTRAÇÃO ***
-                    // Em produção, aqui seria a integração real com Mercado Pago
-                    // Por enquanto, simulamos o pagamento para demonstração
-                    
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    
-                    // Simular resultado baseado no nome do titular
-                    // APRO = aprovado, OTHE = rejeitado, CONT = pendente
-                    let simulatedResult = { status: 'approved', id: 'DEMO_' + Date.now() };
-                    
-                    if (cardHolder.includes('OTHE')) {
-                        simulatedResult = { status: 'rejected', status_detail: 'cc_rejected_other_reason' };
-                    } else if (cardHolder.includes('CONT')) {
-                        simulatedResult = { status: 'pending', status_detail: 'pending_contingency' };
-                    }
-                    
-                    handlePaymentResult(simulatedResult, email, nome, sobrenome);
-                    return;
-                    
-                    /* 
                     // ========================================
-                    // CÓDIGO PARA PRODUÇÃO COM MERCADO PAGO
-                    // Descomentar quando tiver credenciais de produção
+                    // CÓDIGO DE PRODUÇÃO COM MERCADO PAGO
                     // ========================================
                     // Criar token do cartão usando o SDK do Mercado Pago
                     const [expMonth, expYear] = cardExpiry.split('/');
@@ -1480,7 +1459,6 @@
                         alert('Erro ao processar cartão. Verifique os dados.');
                         return;
                     }
-                    */
                 }
                 // ========================================
                 // PAGAMENTO COM PIX (Simulado)
