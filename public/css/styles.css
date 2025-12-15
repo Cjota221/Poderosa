@@ -198,16 +198,26 @@ body.has-plan-banner .side-menu {
     z-index: 999 !important;
 }
 
-/* Ajustar header quando banner de TRIAL estiver visível */
-body.has-trial-banner .app-header {
+/* Banner completo na dashboard */
+body.has-trial-banner:not(.has-trial-banner-compact) .app-header {
     top: 0;
 }
 
-body.has-trial-banner #main-content {
+body.has-trial-banner:not(.has-trial-banner-compact) #main-content {
     padding-top: 110px !important;
 }
 
-body.has-trial-banner .side-menu {
+body.has-trial-banner:not(.has-trial-banner-compact) .side-menu {
+    top: 60px;
+    height: calc(100vh - 60px);
+}
+
+/* Banner compacto nas outras páginas */
+body.has-trial-banner-compact #main-content {
+    padding-top: 90px !important;
+}
+
+body.has-trial-banner-compact .side-menu {
     top: 60px;
     height: calc(100vh - 60px);
 }
@@ -217,9 +227,14 @@ body.has-trial-banner .side-menu {
         left: 240px !important;
     }
     
-    body.has-trial-banner #main-content {
+    body.has-trial-banner:not(.has-trial-banner-compact) #main-content {
         padding-top: 50px !important;
         margin-top: 56px;
+    }
+    
+    body.has-trial-banner-compact #main-content {
+        padding-top: 30px !important;
+        margin-top: 40px;
     }
 }
 

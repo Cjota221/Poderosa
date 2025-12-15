@@ -4731,60 +4731,114 @@ const LucroCertoApp = (function() {
         const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
         if (!isTrial) return;
         
-        // Adicionar banner de trial abaixo do header
+        // Calcular dias restantes
+        const trialStartDate = localStorage.getItem('lucrocerto_trial_start');
+        let daysLeft = 7;
+        
+        if (trialStartDate) {
+            const startDate = new Date(trialStartDate);
+            const today = new Date();
+            const diffTime = today - startDate;
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            daysLeft = Math.max(0, 7 - diffDays);
+        } else {
+            // Primeira vez - salvar data de início
+            localStorage.setItem('lucrocerto_trial_start', new Date().toISOString());
+        }
+        
+        const isDashboard = window.location.pathname.includes('app.html') || 
+                           window.location.pathname === '/app' ||
+                           window.location.pathname === '/app/';
+        
         const trialBanner = document.createElement('div');
         trialBanner.id = 'trial-banner';
-        trialBanner.innerHTML = `
-            <div class="trial-banner-content">
-                <span><i data-lucide="sparkles"></i> <strong>Modo Teste Grátis</strong> - 2/3 produtos cadastrados</span>
-                <a href="index.html" class="trial-upgrade-btn">Fazer Upgrade</a>
-            </div>
-        `;
-        trialBanner.style.cssText = `
-            position: fixed;
-            top: 60px;
-            left: 0;
-            right: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 12px 20px;
-            z-index: 999;
-            font-size: 13px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        `;
         
-        const bannerContent = trialBanner.querySelector('.trial-banner-content');
-        bannerContent.style.cssText = `
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-            flex-wrap: wrap;
-        `;
-        
-        const upgradeBtn = trialBanner.querySelector('.trial-upgrade-btn');
-        upgradeBtn.style.cssText = `
-            background: white;
-            color: #667eea;
-            padding: 6px 16px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 12px;
-            white-space: nowrap;
-        `;
+        if (isDashboard) {
+            // Banner completo na dashboard
+            trialBanner.innerHTML = `
+                <div class="trial-banner-content">
+                    <span><i data-lucide="sparkles"></i> <strong>Modo Teste Grátis</strong> - ${daysLeft} ${daysLeft === 1 ? 'dia restante' : 'dias restantes'}</span>
+                    <a href="index.html" class="trial-upgrade-btn">Fazer Upgrade</a>
+                </div>
+            `;
+            trialBanner.style.cssText = `
+                position: fixed;
+                top: 60px;
+                left: 0;
+                right: 0;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 12px 20px;
+                z-index: 999;
+                font-size: 13px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            `;
+            
+            const bannerContent = trialBanner.querySelector('.trial-banner-content');
+            bannerContent.style.cssText = `
+                max-width: 1200px;
+                margin: 0 auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                flex-wrap: wrap;
+            `;
+            
+            const upgradeBtn = trialBanner.querySelector('.trial-upgrade-btn');
+            upgradeBtn.style.cssText = `
+                background: white;
+                color: #667eea;
+                padding: 6px 16px;
+                border-radius: 20px;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 12px;
+                white-space: nowrap;
+            `;
+        } else {
+            // Banner compacto nas outras páginas
+            trialBanner.innerHTML = `
+                <div class="trial-banner-compact">
+                    <i data-lucide="clock"></i> Teste Grátis: ${daysLeft} ${daysLeft === 1 ? 'dia' : 'dias'} restantes
+                    <a href="index.html" style="color: white; text-decoration: underline; margin-left: 8px;">Fazer upgrade</a>
+                </div>
+            `;
+            trialBanner.style.cssText = `
+                position: fixed;
+                top: 60px;
+                left: 0;
+                right: 0;
+                background: rgba(102, 126, 234, 0.95);
+                color: white;
+                padding: 6px 20px;
+                z-index: 999;
+                font-size: 12px;
+                text-align: center;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            `;
+            
+            const compactContent = trialBanner.querySelector('.trial-banner-compact');
+            compactContent.style.cssText = `
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+            `;
+        }
         
         document.body.prepend(trialBanner);
         
-        // Adicionar padding ao main-content para não ficar atrás do banner
+        // Adicionar padding ao main-content
         const mainContent = document.getElementById('main-content');
         if (mainContent) {
-            mainContent.style.paddingTop = '50px';
+            mainContent.style.paddingTop = isDashboard ? '50px' : '30px';
         }
         
         document.body.classList.add('has-trial-banner');
+        if (!isDashboard) {
+            document.body.classList.add('has-trial-banner-compact');
+        }
         
         setTimeout(() => lucide.createIcons({ nodes: [trialBanner] }), 100);
         
