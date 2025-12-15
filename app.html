@@ -107,12 +107,26 @@
         // Verificar se o usuário está logado
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const isTrial = urlParams.get('trial') === 'true';
+            const isTrialUrl = urlParams.get('trial') === 'true';
             
-            // Se for trial, configurar localStorage
-            if (isTrial) {
+            // Pegar dados do usuário
+            const authDataStr = localStorage.getItem('lucrocerto_auth');
+            let authData = {};
+            if (authDataStr) {
+                try {
+                    authData = JSON.parse(authDataStr);
+                } catch (e) {}
+            }
+            
+            // Lógica do Trial
+            if (isTrialUrl) {
+                // URL tem ?trial=true → ativar modo trial
                 localStorage.setItem('lucrocerto_trial', 'true');
                 console.log('🧪 Modo TRIAL ativado via URL');
+            } else if (authData.plano && authData.plano !== 'trial') {
+                // Usuário tem plano PAGO → REMOVER flag trial
+                localStorage.removeItem('lucrocerto_trial');
+                console.log('✅ Flag trial REMOVIDA - Plano ativo:', authData.plano);
             }
             
             const isLogged = localStorage.getItem('lucrocerto_logged');
