@@ -104,7 +104,7 @@
 
     <!-- Auth Check Script -->
     <script>
-        // Verificar se o usuário está logado
+        // Verificar se o usuário está logado E limpar trial se tiver plano pago
         (function() {
             const urlParams = new URLSearchParams(window.location.search);
             const isTrialUrl = urlParams.get('trial') === 'true';
@@ -118,17 +118,30 @@
                 } catch (e) {}
             }
             
-            // Lógica do Trial
+            console.log('🔍 Verificando plano do usuário:', authData.plano);
+            console.log('🔍 URL tem ?trial=true:', isTrialUrl);
+            console.log('🔍 Flag trial no localStorage:', localStorage.getItem('lucrocerto_trial'));
+            
+            // Lógica do Trial - PRIORIDADE: Plano PAGO
             if (isTrialUrl) {
                 // URL tem ?trial=true → ativar modo trial
                 localStorage.setItem('lucrocerto_trial', 'true');
                 console.log('🧪 Modo TRIAL ativado via URL');
             } else if (authData.plano && authData.plano !== 'trial') {
-                // Usuário tem plano PAGO → REMOVER flag trial
+                // ✅ USUÁRIO TEM PLANO PAGO → FORÇAR REMOÇÃO DO TRIAL
                 localStorage.removeItem('lucrocerto_trial');
-                console.log('✅ Flag trial REMOVIDA - Plano ativo:', authData.plano);
+                localStorage.removeItem('lucrocerto_trial_start');
+                console.log('✅✅✅ FLAG TRIAL REMOVIDA - Plano ativo:', authData.plano);
+                console.log('✅ Banner de trial NÃO deve aparecer!');
+            } else if (!authData.plano || authData.plano === 'trial') {
+                // Usuário em trial ou sem plano
+                if (!isTrialUrl) {
+                    localStorage.setItem('lucrocerto_trial', 'true');
+                    console.log('🧪 Plano trial detectado');
+                }
             }
             
+            // Verificar login
             const isLogged = localStorage.getItem('lucrocerto_logged');
             if (!isLogged || isLogged !== 'true') {
                 // Redirecionar para login se não estiver logado
