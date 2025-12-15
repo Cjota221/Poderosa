@@ -558,6 +558,12 @@
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
                 localStorage.setItem('lucrocerto_logged', 'true');
                 
+                // IMPORTANTE: Limpar flag de trial se usuário tem plano pago
+                if (result.user.plano !== 'trial') {
+                    localStorage.removeItem('lucrocerto_trial');
+                    console.log('✅ Flag trial removida - Plano ativo:', result.user.plano);
+                }
+                
                 if (remember) {
                     localStorage.setItem('lucrocerto_remember', email);
                 } else {
