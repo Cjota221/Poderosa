@@ -51,69 +51,87 @@ exports.handler = async (event) => {
 
         console.log('📧 Verificando cadastro para:', emailLower);
 
-        // Verificar se usuário existe e tem assinatura ativa
+        // Verificar se usuário existe
         const { data: user, error: userError } = await supabase
             .from('usuarios')
             .select('id, email, nome, plano')
             .eq('email', emailLower)
             .single();
 
+        let userId;
+        let userPlan = 'starter';
+
         if (userError || !user) {
-            console.log('❌ Usuário não encontrado:', emailLower);
-            return {
-                statusCode: 404,
-                headers,
-                body: JSON.stringify({ 
-                    error: 'Nenhum pagamento encontrado para este email',
-                    message: 'Você precisa fazer o pagamento primeiro. Use o mesmo email do checkout.'
+            console.log('⚠️ Usuário não encontrado, criando novo:', emailLower);
+            // Criar usuário se não existir
+            const { data: newUser, error: createError } = await supabase
+                .from('usuarios')
+                .insert({
+                    email: emailLower,
+                    nome: nome || emailLower.split('@')[0],
+                    plano: 'starter',
+                    senha_hash: hashPassword(password),
+                    telefone: telefone || null,
+                    cadastro_completo: true
                 })
-            };
+                .select()
+                .single();
+
+            if (createError) {
+                console.error('❌ Erro ao criar usuário:', createError);
+                return {
+                    statusCode: 500,
+                    headers,
+                    body: JSON.stringify({ error: 'Erro ao criar usuário: ' + createError.message })
+                };
+            }
+
+            userId = newUser.id;
+            userPlan = newUser.plano;
+        } else {
+            userId = user.id;
+            userPlan = user.plano;
         }
 
-        // Verificar assinatura ativa
+        // Verificar assinatura ativa (opcional)
         const { data: subscription } = await supabase
             .from('assinaturas')
             .select('id, plano, status, data_expiracao')
-            .eq('usuario_id', user.id)
+            .eq('usuario_id', userId)
             .eq('status', 'active')
             .order('created_at', { ascending: false })
             .limit(1)
             .single();
 
-        if (!subscription) {
-            console.log('❌ Sem assinatura ativa para:', emailLower);
-            return {
-                statusCode: 403,
-                headers,
-                body: JSON.stringify({ 
-                    error: 'Nenhuma assinatura ativa encontrada',
-                    message: 'Seu pagamento ainda não foi confirmado ou a assinatura expirou.'
+        // Se tem assinatura, usar o plano dela
+        if (subscription) {
+            userPlan = subscription.plano;
+        }
+
+        // Atualizar usuário com senha e dados (se já existia)
+        if (user) {
+            const { error: updateError } = await supabase
+                .from('usuarios')
+                .update({
+                    senha_hash: hashPassword(password),
+                    nome: nome || user.nome,
+                    telefone: telefone || null,
+                    cadastro_completo: true,
+                    updated_at: new Date().toISOString()
                 })
-            };
+                .eq('id', userId);
+
+            if (updateError) {
+                console.error('❌ Erro ao atualizar usuário:', updateError);
+                return {
+                    statusCode: 500,
+                    headers,
+                    body: JSON.stringify({ error: 'Erro ao salvar cadastro' })
+                };
+            }
         }
 
-        // Atualizar usuário com senha e dados
-        const { error: updateError } = await supabase
-            .from('usuarios')
-            .update({
-                senha_hash: hashPassword(password),
-                nome: nome || user.nome,
-                telefone: telefone || null,
-                cadastro_completo: true,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id);
-
-        if (updateError) {
-            console.error('❌ Erro ao atualizar usuário:', updateError);
-            return {
-                statusCode: 500,
-                headers,
-                body: JSON.stringify({ error: 'Erro ao salvar cadastro' })
-            };
-        }
-
-        console.log('✅ Cadastro completo para:', emailLower, '- Plano:', subscription.plano);
+        console.log('✅ Cadastro completo para:', emailLower, '- Plano:', userPlan);
 
         return {
             statusCode: 200,
@@ -122,16 +140,12 @@ exports.handler = async (event) => {
                 success: true,
                 message: 'Cadastro realizado com sucesso!',
                 user: {
-                    id: user.id,
-                    email: user.email,
-                    nome: nome || user.nome,
-                    plano: subscription.plano
+                    id: userId,
+                    email: emailLower,
+                    nome: nome,
+                    plano: userPlan
                 },
-                subscription: {
-                    plano: subscription.plano,
-                    status: subscription.status,
-                    expira_em: subscription.data_expiracao
-                }
+                subscription: subscription || null
             })
         };
 
