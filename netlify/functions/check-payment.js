@@ -140,23 +140,55 @@ exports.handler = async (event) => {
                         console.log('📊 Assinatura existente:', existingSub);
                         
                         if (existingSub) {
-                            console.log('📝 Atualizando assinatura existente...');
+                            console.log('📝 Atualizando assinatura existente (renovação)...');
+                            
+                            // Calcular nova data de expiração
+                            const dataRenovacao = new Date();
+                            const novaExpiracao = new Date(dataRenovacao);
+                            
+                            if (periodo === 'annual') {
+                                novaExpiracao.setDate(novaExpiracao.getDate() + 365);
+                            } else {
+                                novaExpiracao.setDate(novaExpiracao.getDate() + 30);
+                            }
+                            
+                            console.log('📅 Renovação em:', dataRenovacao.toISOString());
+                            console.log('📅 Nova expiração:', novaExpiracao.toISOString());
+                            
                             // Atualizar assinatura existente
                             const { error: subUpdateError } = await supabase
                                 .from('assinaturas')
                                 .update({
                                     status: 'active',
-                                    data_pagamento: new Date().toISOString()
+                                    data_pagamento: dataRenovacao.toISOString(),
+                                    data_expiracao: novaExpiracao.toISOString()
                                 })
                                 .eq('id', existingSub.id);
                             
                             if (subUpdateError) {
                                 console.error('❌ Erro ao atualizar assinatura:', subUpdateError);
                             } else {
-                                console.log('✅ Assinatura atualizada para active');
+                                console.log('✅ Assinatura renovada até:', novaExpiracao.toLocaleDateString('pt-BR'));
                             }
                         } else {
                             console.log('📝 Criando NOVA assinatura...');
+                            
+                            // Calcular data de expiração
+                            const dataInicio = new Date();
+                            const dataExpiracao = new Date(dataInicio);
+                            
+                            if (periodo === 'annual') {
+                                // Plano anual: +365 dias
+                                dataExpiracao.setDate(dataExpiracao.getDate() + 365);
+                            } else {
+                                // Plano mensal: +30 dias
+                                dataExpiracao.setDate(dataExpiracao.getDate() + 30);
+                            }
+                            
+                            console.log('📅 Data início:', dataInicio.toISOString());
+                            console.log('📅 Data expiração:', dataExpiracao.toISOString());
+                            console.log('📅 Período:', periodo, '(', periodo === 'annual' ? '365' : '30', 'dias )');
+                            
                             // Criar nova assinatura
                             const { error: subError } = await supabase
                                 .from('assinaturas')
@@ -166,8 +198,9 @@ exports.handler = async (event) => {
                                     status: 'active',
                                     periodo: periodo,
                                     valor: valor,
-                                    data_inicio: new Date().toISOString(),
-                                    data_pagamento: new Date().toISOString(),
+                                    data_inicio: dataInicio.toISOString(),
+                                    data_pagamento: dataInicio.toISOString(),
+                                    data_expiracao: dataExpiracao.toISOString(),
                                     payment_id: payment_id.toString()
                                 });
                             
@@ -177,6 +210,7 @@ exports.handler = async (event) => {
                             } else {
                                 console.log('✅✅✅ Nova assinatura CRIADA com sucesso!');
                                 console.log('✅ Dados: userId=' + userId + ', plano=' + plano + ', status=active');
+                                console.log('✅ Válida até:', dataExpiracao.toLocaleDateString('pt-BR'));
                             }
                         }
                     } else {
