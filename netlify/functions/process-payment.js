@@ -1,5 +1,10 @@
 // Netlify Function - Processar Pagamento (Checkout Transparente)
 const { MercadoPagoConfig, Payment } = require('mercadopago');
+const { createClient } = require('@supabase/supabase-js');
+
+// Configuração do Supabase
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
 // Configuração do Mercado Pago
 const getClient = () => {
@@ -8,7 +13,7 @@ const getClient = () => {
         ? process.env.MERCADO_PAGO_ACCESS_TOKEN_TEST 
         : process.env.MERCADO_PAGO_ACCESS_TOKEN;
     
-    // Log para debug (remover depois)
+    // Log para debug
     console.log('=== MERCADO PAGO CONFIG ===');
     console.log('Mode:', process.env.MERCADO_PAGO_MODE);
     console.log('Is Test Mode:', isTestMode);
@@ -90,6 +95,93 @@ exports.handler = async (event, context) => {
         const result = await payment.create({ body: paymentData });
 
         console.log('✅ Pagamento processado:', result.id, result.status);
+
+        // Se pagamento aprovado, salvar no banco de dados
+        if (result.status === 'approved' && supabaseUrl && supabaseServiceKey) {
+            try {
+                const supabase = createClient(supabaseUrl, supabaseServiceKey);
+                
+                // Extrair dados do body original
+                const bodyData = JSON.parse(event.body);
+                const plano = bodyData.plan || 'starter';
+                const periodo = bodyData.billing || 'monthly';
+                const nome = bodyData.payer?.first_name || '';
+                const sobrenome = bodyData.payer?.last_name || '';
+                const nomeCompleto = `${nome} ${sobrenome}`.trim();
+
+                // Verificar se usuário já existe
+                const { data: existingUser } = await supabase
+                    .from('usuarios')
+                    .select('id')
+                    .eq('email', payer.email.toLowerCase())
+                    .single();
+
+                let userId;
+
+                if (existingUser) {
+                    userId = existingUser.id;
+                    console.log('👤 Usuário existente:', userId);
+                } else {
+                    // Criar novo usuário
+                    const { data: newUser, error: userError } = await supabase
+                        .from('usuarios')
+                        .insert({
+                            email: payer.email.toLowerCase(),
+                            nome: nomeCompleto || payer.email.split('@')[0],
+                            plano: plano
+                        })
+                        .select()
+                        .single();
+
+                    if (userError) {
+                        console.error('Erro ao criar usuário:', userError);
+                    } else {
+                        userId = newUser.id;
+                        console.log('👤 Novo usuário criado:', userId);
+                    }
+                }
+
+                if (userId) {
+                    // Calcular data de expiração
+                    const dataExpiracao = new Date();
+                    if (periodo === 'annual') {
+                        dataExpiracao.setFullYear(dataExpiracao.getFullYear() + 1);
+                    } else {
+                        dataExpiracao.setMonth(dataExpiracao.getMonth() + 1);
+                    }
+
+                    // Criar/atualizar assinatura
+                    const { error: subError } = await supabase
+                        .from('assinaturas')
+                        .insert({
+                            usuario_id: userId,
+                            plano: plano,
+                            status: 'active',
+                            periodo: periodo,
+                            valor: transaction_amount,
+                            data_inicio: new Date().toISOString(),
+                            data_expiracao: dataExpiracao.toISOString(),
+                            payment_id: result.id.toString()
+                        });
+
+                    if (subError) {
+                        console.error('Erro ao criar assinatura:', subError);
+                    } else {
+                        console.log('✅ Assinatura salva no banco!');
+                    }
+
+                    // Atualizar plano do usuário
+                    await supabase
+                        .from('usuarios')
+                        .update({ plano: plano })
+                        .eq('id', userId);
+                }
+
+            } catch (dbError) {
+                console.error('Erro ao salvar no banco:', dbError);
+                // Não falhar o pagamento por erro no banco
+            }
+        }
 
         return {
             statusCode: 200,

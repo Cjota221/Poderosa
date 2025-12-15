@@ -1,5 +1,10 @@
 // Netlify Function - Pagamento PIX
 const { MercadoPagoConfig, Payment } = require('mercadopago');
+const { createClient } = require('@supabase/supabase-js');
+
+// Configuração do Supabase
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
 // Configuração do Mercado Pago
 const getClient = () => {
@@ -81,6 +86,63 @@ exports.handler = async (event, context) => {
 
         // Extrair dados do PIX
         const pixData = result.point_of_interaction?.transaction_data;
+
+        // Salvar no banco (PIX fica pendente até pagamento)
+        if (supabaseUrl && supabaseServiceKey) {
+            try {
+                const supabase = createClient(supabaseUrl, supabaseServiceKey);
+                const plano = body.plan || 'starter';
+                const periodo = body.billing || 'monthly';
+                const nomeCompleto = `${payer.first_name || ''} ${payer.last_name || ''}`.trim();
+
+                // Verificar se usuário já existe
+                const { data: existingUser } = await supabase
+                    .from('usuarios')
+                    .select('id')
+                    .eq('email', payer.email.toLowerCase())
+                    .single();
+
+                let userId;
+
+                if (existingUser) {
+                    userId = existingUser.id;
+                } else {
+                    // Criar novo usuário
+                    const { data: newUser } = await supabase
+                        .from('usuarios')
+                        .insert({
+                            email: payer.email.toLowerCase(),
+                            nome: nomeCompleto || payer.email.split('@')[0],
+                            plano: 'trial' // Ainda trial até pagar
+                        })
+                        .select()
+                        .single();
+
+                    if (newUser) {
+                        userId = newUser.id;
+                    }
+                }
+
+                if (userId) {
+                    // Criar assinatura pendente
+                    await supabase
+                        .from('assinaturas')
+                        .insert({
+                            usuario_id: userId,
+                            plano: plano,
+                            status: 'pending', // Pendente até pagar PIX
+                            periodo: periodo,
+                            valor: transaction_amount,
+                            data_inicio: new Date().toISOString(),
+                            payment_id: result.id.toString()
+                        });
+
+                    console.log('✅ Assinatura PIX pendente criada');
+                }
+            } catch (dbError) {
+                console.error('Erro ao salvar PIX no banco:', dbError);
+            }
+        }
 
         return {
             statusCode: 200,
