@@ -44,10 +44,12 @@ exports.handler = async (event) => {
         const paymentData = await payment.get({ id: payment_id });
 
         console.log('📊 Status do pagamento:', payment_id, '->', paymentData.status);
+        console.log('🔍 DEBUG - Dados completos do pagamento:', JSON.stringify(paymentData, null, 2));
 
         // Se aprovado, salvar no Supabase
         if (paymentData.status === 'approved' && supabaseUrl && supabaseServiceKey) {
             try {
+                console.log('✅ Pagamento APROVADO! Iniciando salvamento...');
                 const supabase = createClient(supabaseUrl, supabaseServiceKey);
                 
                 const email = paymentData.payer?.email?.toLowerCase();
@@ -55,6 +57,10 @@ exports.handler = async (event) => {
                            || user_data?.nome 
                            || email?.split('@')[0];
                 const valor = paymentData.transaction_amount;
+                
+                console.log('📧 DEBUG - Email do pagador:', email);
+                console.log('👤 DEBUG - Nome do pagador:', nome);
+                console.log('💰 DEBUG - Valor:', valor);
                 
                 // Determinar plano pelo valor
                 let plano = 'starter';
@@ -65,30 +71,42 @@ exports.handler = async (event) => {
                 let periodo = 'monthly';
                 if (valor >= 150) periodo = 'annual'; // Valores anuais são maiores
                 
-                console.log('💾 Salvando no Supabase:', { email, nome, plano, valor });
+                console.log('� DEBUG - Plano determinado:', plano);
+                console.log('📅 DEBUG - Período:', periodo);
+                console.log('�💾 Salvando no Supabase:', { email, nome, plano, valor });
                 
                 if (email) {
+                    console.log('🔍 Buscando usuário existente...');
                     // Verificar se usuário já existe
-                    const { data: existingUser } = await supabase
+                    const { data: existingUser, error: searchError } = await supabase
                         .from('usuarios')
                         .select('id, plano')
                         .eq('email', email)
                         .single();
                     
+                    console.log('📊 Resultado da busca:', { existingUser, searchError });
+                    
                     let userId;
                     
                     if (existingUser) {
                         userId = existingUser.id;
+                        console.log('✅ Usuário JÁ EXISTE:', userId);
                         // Atualizar plano do usuário existente
-                        await supabase
+                        const { error: updateError } = await supabase
                             .from('usuarios')
                             .update({ 
                                 plano: plano,
                                 updated_at: new Date().toISOString()
                             })
                             .eq('id', userId);
-                        console.log('✅ Usuário atualizado:', userId);
+                        
+                        if (updateError) {
+                            console.error('❌ Erro ao atualizar usuário:', updateError);
+                        } else {
+                            console.log('✅ Usuário atualizado com plano:', plano);
+                        }
                     } else {
+                        console.log('📝 Usuário NÃO existe, criando novo...');
                         // Criar novo usuário
                         const { data: newUser, error: userError } = await supabase
                             .from('usuarios')
@@ -102,13 +120,16 @@ exports.handler = async (event) => {
                         
                         if (userError) {
                             console.error('❌ Erro ao criar usuário:', userError);
+                            console.error('❌ Detalhes:', JSON.stringify(userError, null, 2));
                         } else {
                             userId = newUser.id;
-                            console.log('✅ Novo usuário criado:', userId);
+                            console.log('✅ Novo usuário criado! ID:', userId);
+                            console.log('✅ Dados salvos:', { email, nome, plano });
                         }
                     }
                     
                     if (userId) {
+                        console.log('🔍 Verificando assinatura existente...');
                         // Verificar se já existe assinatura com este payment_id
                         const { data: existingSub } = await supabase
                             .from('assinaturas')
@@ -116,17 +137,26 @@ exports.handler = async (event) => {
                             .eq('payment_id', payment_id.toString())
                             .single();
                         
+                        console.log('📊 Assinatura existente:', existingSub);
+                        
                         if (existingSub) {
+                            console.log('📝 Atualizando assinatura existente...');
                             // Atualizar assinatura existente
-                            await supabase
+                            const { error: subUpdateError } = await supabase
                                 .from('assinaturas')
                                 .update({
                                     status: 'active',
                                     data_pagamento: new Date().toISOString()
                                 })
                                 .eq('id', existingSub.id);
-                            console.log('✅ Assinatura atualizada para active');
+                            
+                            if (subUpdateError) {
+                                console.error('❌ Erro ao atualizar assinatura:', subUpdateError);
+                            } else {
+                                console.log('✅ Assinatura atualizada para active');
+                            }
                         } else {
+                            console.log('📝 Criando NOVA assinatura...');
                             // Criar nova assinatura
                             const { error: subError } = await supabase
                                 .from('assinaturas')
@@ -143,15 +173,27 @@ exports.handler = async (event) => {
                             
                             if (subError) {
                                 console.error('❌ Erro ao criar assinatura:', subError);
+                                console.error('❌ Detalhes:', JSON.stringify(subError, null, 2));
                             } else {
-                                console.log('✅ Nova assinatura criada!');
+                                console.log('✅✅✅ Nova assinatura CRIADA com sucesso!');
+                                console.log('✅ Dados: userId=' + userId + ', plano=' + plano + ', status=active');
                             }
                         }
+                    } else {
+                        console.error('❌❌❌ ERRO CRÍTICO: userId não foi definido!');
                     }
+                } else {
+                    console.error('❌❌❌ ERRO CRÍTICO: Email do pagador não encontrado!');
                 }
             } catch (dbError) {
                 console.error('❌ Erro ao salvar no banco:', dbError);
+                console.error('❌ Stack:', dbError.stack);
             }
+        } else {
+            console.log('⚠️ Pagamento não aprovado ou Supabase não configurado');
+            console.log('⚠️ Status:', paymentData.status);
+            console.log('⚠️ Supabase URL:', supabaseUrl ? 'OK' : 'FALTANDO');
+            console.log('⚠️ Supabase Key:', supabaseServiceKey ? 'OK' : 'FALTANDO');
         }
 
         return {
