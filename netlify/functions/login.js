@@ -101,28 +101,50 @@ exports.handler = async (event) => {
             .limit(1)
             .single();
 
-        // Verificar se assinatura está ativa e não expirou
+        // Determinar plano ativo - PRIORIDADE: subscription > usuario.plano > trial
         let planoAtivo = 'trial';
         let assinaturaInfo = null;
         
         if (subscription) {
-            const expiracao = new Date(subscription.data_expiracao);
-            if (expiracao > new Date()) {
+            // Tem assinatura - verificar se está válida
+            if (subscription.data_expiracao) {
+                const expiracao = new Date(subscription.data_expiracao);
+                if (expiracao > new Date()) {
+                    planoAtivo = subscription.plano;
+                    assinaturaInfo = {
+                        plano: subscription.plano,
+                        status: subscription.status,
+                        periodo: subscription.periodo,
+                        data_inicio: subscription.data_inicio,
+                        data_expiracao: subscription.data_expiracao
+                    };
+                    console.log('✅ Assinatura válida encontrada:', planoAtivo);
+                } else {
+                    // Assinatura expirou
+                    console.log('⚠️ Assinatura expirada');
+                    await supabase
+                        .from('assinaturas')
+                        .update({ status: 'expired' })
+                        .eq('id', subscription.id);
+                }
+            } else {
+                // Assinatura sem data de expiração = válida indefinidamente
                 planoAtivo = subscription.plano;
                 assinaturaInfo = {
                     plano: subscription.plano,
                     status: subscription.status,
                     periodo: subscription.periodo,
                     data_inicio: subscription.data_inicio,
-                    data_expiracao: subscription.data_expiracao
+                    data_expiracao: null
                 };
-            } else {
-                // Assinatura expirou - atualizar status
-                await supabase
-                    .from('assinaturas')
-                    .update({ status: 'expired' })
-                    .eq('id', subscription.id);
+                console.log('✅ Assinatura válida (sem expiração):', planoAtivo);
             }
+        } else if (user.plano && user.plano !== 'trial') {
+            // Não tem assinatura mas tem plano salvo no usuário
+            planoAtivo = user.plano;
+            console.log('✅ Usando plano do usuário (sem assinatura):', planoAtivo);
+        } else {
+            console.log('⚠️ Nenhuma assinatura encontrada - modo trial');
         }
 
         // Atualizar último login
