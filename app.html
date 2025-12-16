@@ -493,15 +493,60 @@
                 /* Responsivo */
                 @media (max-width: 768px) {
                     .tour-tooltip {
-                        max-width: calc(100vw - 40px);
-                        left: 20px !important;
-                        right: 20px !important;
+                        max-width: calc(100vw - 32px);
+                        width: calc(100vw - 32px);
+                        left: 16px !important;
+                        right: 16px !important;
                         top: auto !important;
-                        bottom: 20px !important;
+                        bottom: 16px !important;
+                        transform: none !important;
                     }
                     
                     .tour-tooltip::before {
                         display: none;
+                    }
+                    
+                    .tour-tooltip-header {
+                        padding: 20px 16px 12px;
+                    }
+                    
+                    .tour-tooltip-header h3 {
+                        font-size: 18px;
+                    }
+                    
+                    .tour-tooltip-content {
+                        padding: 16px;
+                        font-size: 14px;
+                    }
+                    
+                    .tour-tooltip-footer {
+                        padding: 12px 16px 16px;
+                        flex-direction: column;
+                        gap: 12px;
+                        align-items: stretch;
+                    }
+                    
+                    .tour-progress {
+                        text-align: center;
+                        order: 2;
+                    }
+                    
+                    .tour-buttons {
+                        width: 100%;
+                        order: 1;
+                    }
+                    
+                    .tour-btn-skip {
+                        flex: 1;
+                    }
+                    
+                    .tour-btn-next {
+                        flex: 1;
+                        justify-content: center;
+                    }
+                    
+                    .tour-spotlight {
+                        display: none !important;
                     }
                 }
             `;
