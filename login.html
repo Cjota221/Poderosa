@@ -571,7 +571,8 @@
                 }
 
                 // Redirecionar para a área da empreendedora (URL limpa sem .html)
-                if (result.isFirstLogin) {
+                // Mostrar tour apenas se for primeiro login E ainda não completou o tour
+                if (result.isFirstLogin && !result.tourCompleted) {
                     window.location.href = '/app?welcome=true';
                 } else {
                     window.location.href = '/app';

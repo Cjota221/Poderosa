@@ -682,13 +682,28 @@
             }
         };
         
-        window.closeTour = function() {
+        window.closeTour = async function() {
             const tour = document.getElementById('interactive-tour');
             const styles = document.getElementById('tour-styles');
             
             // Fechar menu se aberto
             document.getElementById('side-menu')?.classList.remove('active');
             document.getElementById('menu-overlay')?.classList.remove('active');
+            
+            // Marcar tour como completado no servidor
+            const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+            if (authData.email) {
+                try {
+                    await fetch('/.netlify/functions/complete-tour', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: authData.email })
+                    });
+                    console.log('✅ Tour marcado como completado no servidor');
+                } catch (error) {
+                    console.error('Erro ao marcar tour:', error);
+                }
+            }
             
             if (tour) {
                 tour.style.animation = 'tourFadeOut 0.3s ease';

@@ -168,7 +168,8 @@ exports.handler = async (event) => {
                     plano: planoAtivo
                 },
                 subscription: assinaturaInfo,
-                isFirstLogin: !user.ultimo_login // Para mostrar tour de boas-vindas
+                isFirstLogin: !user.ultimo_login, // Para mostrar tour de boas-vindas
+                tourCompleted: user.tour_completed || false // Se já completou o tour
             })
         };
 
