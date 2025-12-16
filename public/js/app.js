@@ -4722,11 +4722,11 @@ const LucroCertoApp = (function() {
         bindEvents();
         AchievementSystem.checkAndAward('primeiro_acesso');
         
-        // Sincronizar plano com banco de dados
-        syncUserPlanFromDatabase();
-        
-        // Inicializar Trial Banner se estiver em teste
-        initTrialMode();
+        // Sincronizar plano com banco de dados ANTES de inicializar trial
+        syncUserPlanFromDatabase().then(() => {
+            // Só inicializar Trial Banner DEPOIS do sync terminar
+            initTrialMode();
+        });
     }
 
     //==================================
