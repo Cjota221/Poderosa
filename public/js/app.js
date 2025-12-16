@@ -2889,11 +2889,154 @@ const LucroCertoApp = (function() {
                         <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i> Renovar
                     </a>
                 </div>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                    <button class="btn" data-action="cancel-subscription" style="width: 100%; background: transparent; border: 1px solid #dc3545; color: #dc3545;">
+                        <i data-lucide="x-circle" style="width: 16px; height: 16px;"></i> Cancelar Assinatura
+                    </button>
+                    <p style="font-size: 12px; color: var(--elegant-gray); text-align: center; margin-top: 8px;">
+                        💡 Garantia de 7 dias: se cancelar em até 7 dias, devolvemos seu dinheiro!
+                    </p>
+                </div>
             `;
             
             setTimeout(() => {
                 lucide.createIcons({ nodes: [...planSection.querySelectorAll('[data-lucide]')] });
+                
+                // Event listener para cancelar assinatura
+                document.querySelector('[data-action="cancel-subscription"]')?.addEventListener('click', () => {
+                    this.handleCancelSubscription();
+                });
             }, 0);
+        },
+        
+        // Função para cancelar assinatura
+        async handleCancelSubscription() {
+            const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+            const userEmail = authData.email;
+            
+            if (!userEmail) {
+                alert('❌ Erro: usuário não identificado.');
+                return;
+            }
+            
+            // Modal de confirmação com textarea para motivo
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3 style="margin: 0; color: var(--dark-gray);">
+                            <i data-lucide="alert-circle" style="width: 20px; height: 20px; vertical-align: middle; color: #dc3545;"></i>
+                            Cancelar Assinatura
+                        </h3>
+                        <button class="btn-close-modal" data-action="close-cancel-modal">
+                            <i data-lucide="x"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="background: #FFF3CD; padding: 12px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #FFC107;">
+                            <p style="margin: 0; font-size: 14px; color: #856404;">
+                                <strong>⚠️ Atenção!</strong> Ao cancelar, você perderá acesso imediato ao sistema.
+                            </p>
+                        </div>
+                        
+                        <div style="background: #E8F5E9; padding: 12px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #4CAF50;">
+                            <p style="margin: 0; font-size: 14px; color: #2E7D32;">
+                                <strong>💰 Garantia de 7 dias:</strong> Se você está usando há menos de 7 dias, faremos o reembolso integral!
+                            </p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cancel-reason">Por que você está cancelando? (opcional)</label>
+                            <textarea id="cancel-reason" class="form-input" rows="4" placeholder="Ex: Não atendeu minhas necessidades, muito caro, difícil de usar..."></textarea>
+                            <small>Seu feedback nos ajuda a melhorar! 💕</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer" style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" data-action="close-cancel-modal" style="flex: 1;">
+                            <i data-lucide="arrow-left"></i> Voltar
+                        </button>
+                        <button class="btn" data-action="confirm-cancel" style="flex: 1; background: #dc3545; color: white;">
+                            <i data-lucide="check"></i> Sim, Cancelar
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            lucide.createIcons({ nodes: [modal] });
+            
+            // Fechar modal
+            modal.querySelectorAll('[data-action="close-cancel-modal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                });
+            });
+            
+            // Confirmar cancelamento
+            modal.querySelector('[data-action="confirm-cancel"]')?.addEventListener('click', async () => {
+                const reason = document.getElementById('cancel-reason').value.trim();
+                const confirmBtn = modal.querySelector('[data-action="confirm-cancel"]');
+                confirmBtn.disabled = true;
+                confirmBtn.innerHTML = '<i data-lucide="loader" class="spinning"></i> Cancelando...';
+                
+                try {
+                    // Chamar função Netlify para cancelar
+                    const response = await fetch('/.netlify/functions/cancel-subscription', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: userEmail,
+                            reason: reason || 'Não informado'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        document.body.removeChild(modal);
+                        
+                        // Modal de sucesso
+                        const successModal = document.createElement('div');
+                        successModal.className = 'modal';
+                        successModal.style.display = 'flex';
+                        successModal.innerHTML = `
+                            <div class="modal-content" style="max-width: 450px; text-align: center;">
+                                <div style="font-size: 64px; margin: 20px 0;">😢</div>
+                                <h3 style="color: var(--dark-gray); margin-bottom: 12px;">Assinatura Cancelada</h3>
+                                <p style="color: var(--elegant-gray); margin-bottom: 20px;">
+                                    ${data.withinGuarantee 
+                                        ? '✅ Você está dentro do período de garantia! Entraremos em contato em até 24h para processar seu reembolso de R$ 34,90.'
+                                        : '❌ Você usou o sistema por mais de 7 dias, então não há reembolso. Mas agradecemos por ter experimentado!'}
+                                </p>
+                                <p style="font-size: 14px; color: var(--elegant-gray); margin-bottom: 20px;">
+                                    Sentiremos sua falta! Se mudar de ideia, volte sempre. 💕
+                                </p>
+                                <button class="btn btn-primary" data-action="logout-after-cancel" style="width: 100%;">
+                                    <i data-lucide="log-out"></i> Sair do Sistema
+                                </button>
+                            </div>
+                        `;
+                        
+                        document.body.appendChild(successModal);
+                        lucide.createIcons({ nodes: [successModal] });
+                        
+                        successModal.querySelector('[data-action="logout-after-cancel"]')?.addEventListener('click', () => {
+                            localStorage.removeItem('lucrocerto_auth');
+                            window.location.href = './login';
+                        });
+                    } else {
+                        throw new Error(data.message || 'Erro ao cancelar');
+                    }
+                } catch (error) {
+                    alert('❌ Erro ao cancelar assinatura: ' + error.message);
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerHTML = '<i data-lucide="check"></i> Sim, Cancelar';
+                    lucide.createIcons({ nodes: [confirmBtn] });
+                }
+            });
         },
 
         // ========== PÁGINA DE CLIENTES (MINI CRM) ==========
