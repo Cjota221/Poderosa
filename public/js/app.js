@@ -1003,11 +1003,58 @@ const LucroCertoApp = (function() {
                         </div>
                         
                         <div class="form-group">
-                            <label for="profit-margin">📈 Qual lucro você quer ter? (Margem %)</label>
-                            <input type="range" id="profit-margin" min="0" max="300" value="100" step="10" class="slider">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                                <span style="font-size: 14px; color: var(--dark-gray);">Margem:</span>
-                                <span id="margin-display" style="font-size: 18px; font-weight: 600; color: var(--primary);">100%</span>
+                            <label>💵 Por quanto você quer vender?</label>
+                            <div id="price-suggestion" style="background: linear-gradient(135deg, #E8F5E9, #C8E6C9); padding: 16px; border-radius: 12px; margin-bottom: 16px; border-left: 4px solid #4CAF50;">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                    <span style="font-size: 28px;">✨</span>
+                                    <div style="flex: 1;">
+                                        <div style="font-size: 13px; color: #2E7D32; font-weight: 600; margin-bottom: 4px;">SUGESTÃO INTELIGENTE</div>
+                                        <div style="font-size: 24px; font-weight: 700; color: #1B5E20;" id="suggested-price">R$ --</div>
+                                    </div>
+                                </div>
+                                <div style="font-size: 12px; color: #2E7D32;" id="suggestion-reason">
+                                    Digite o custo acima para ver a sugestão
+                                </div>
+                            </div>
+                            
+                            <div style="margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <span style="font-size: 13px; color: var(--dark-gray); font-weight: 600;">Ajustar preço (opcional):</span>
+                                    <span id="current-price-display" style="font-size: 18px; font-weight: 700; color: var(--primary);">R$ --</span>
+                                </div>
+                                <input type="range" id="profit-margin" min="20" max="150" value="67" step="5" class="slider" style="width: 100%;">
+                                <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 24px;">💀</div>
+                                        <div style="font-size: 10px; color: #999;">Prejuízo</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 24px;">😐</div>
+                                        <div style="font-size: 10px; color: #999;">Baixo</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 24px;">😊</div>
+                                        <div style="font-size: 10px; color: #999;">Ideal</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 24px;">😍</div>
+                                        <div style="font-size: 10px; color: #999;">Alto</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 24px;">🤑</div>
+                                        <div style="font-size: 10px; color: #999;">Absurdo</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="price-feedback" style="padding: 12px; border-radius: 8px; margin-top: 12px; display: none;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span id="feedback-emoji" style="font-size: 32px;"></span>
+                                    <div style="flex: 1;">
+                                        <div id="feedback-title" style="font-weight: 600; margin-bottom: 4px;"></div>
+                                        <div id="feedback-message" style="font-size: 13px;"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1170,21 +1217,29 @@ const LucroCertoApp = (function() {
             // ===== PRECIFICAÇÃO COM SLIDER =====
             const updatePricingUI = () => {
                 const productCost = parseFloat(baseCostInput.value) || 0;
-                const margin = parseInt(profitMarginInput.value) || 100;
+                const margin = parseInt(profitMarginInput.value) || 67;
                 const container = document.getElementById('pricing-calculator-live');
-                const marginDisplay = document.getElementById('margin-display');
-                
-                if (marginDisplay) {
-                    marginDisplay.textContent = margin + '%';
-                }
+                const suggestedPriceEl = document.getElementById('suggested-price');
+                const suggestionReasonEl = document.getElementById('suggestion-reason');
+                const currentPriceDisplay = document.getElementById('current-price-display');
+                const feedbackBox = document.getElementById('price-feedback');
+                const feedbackEmoji = document.getElementById('feedback-emoji');
+                const feedbackTitle = document.getElementById('feedback-title');
+                const feedbackMessage = document.getElementById('feedback-message');
 
                 if (!container) return;
 
                 if (productCost === 0) {
+                    // Resetar sugestão
+                    if (suggestedPriceEl) suggestedPriceEl.textContent = 'R$ --';
+                    if (suggestionReasonEl) suggestionReasonEl.textContent = 'Digite o custo acima para ver a sugestão';
+                    if (currentPriceDisplay) currentPriceDisplay.textContent = 'R$ --';
+                    if (feedbackBox) feedbackBox.style.display = 'none';
+                    
                     container.innerHTML = `
                         <div style="background: var(--light-gray); padding: 16px; border-radius: 12px; text-align: center; margin-top: 16px;">
                             <i data-lucide="info" style="width: 24px; height: 24px; color: var(--elegant-gray);"></i>
-                            <p style="color: var(--elegant-gray); margin-top: 8px;">Digite o custo do produto acima para ver o cálculo</p>
+                            <p style="color: var(--elegant-gray); margin-top: 8px;">Digite o custo do produto acima para ver o cálculo completo</p>
                         </div>
                     `;
                     setTimeout(() => lucide.createIcons({ nodes: [container] }), 0);
@@ -1192,14 +1247,89 @@ const LucroCertoApp = (function() {
                 }
 
                 const unitCosts = SmartPricing.getTotalUnitCost(productCost);
-                const { price, profit } = SmartPricing.calculate(productCost, margin);
-                const profitPercentageOfPrice = ((profit / price) * 100).toFixed(1);
+                
+                // SUGESTÃO AUTOMÁTICA: 67% de margem (1.67x o custo total)
+                const suggestedMargin = 67;
+                const suggestedCalc = SmartPricing.calculate(productCost, suggestedMargin);
+                
+                // PREÇO ATUAL (do slider)
+                const currentCalc = SmartPricing.calculate(productCost, margin);
+                const profitPercentageOfPrice = ((currentCalc.profit / currentCalc.price) * 100).toFixed(1);
 
+                // Atualizar sugestão
+                if (suggestedPriceEl) {
+                    suggestedPriceEl.textContent = `R$ ${suggestedCalc.price.toFixed(2)}`;
+                }
+                if (suggestionReasonEl) {
+                    suggestionReasonEl.innerHTML = `
+                        Baseado no seu custo de <strong>R$ ${unitCosts.total.toFixed(2)}</strong> (produto + despesas), 
+                        este preço te dá um lucro de <strong>R$ ${suggestedCalc.profit.toFixed(2)}</strong> por venda.
+                    `;
+                }
+
+                // Atualizar preço atual do slider
+                if (currentPriceDisplay) {
+                    currentPriceDisplay.textContent = `R$ ${currentCalc.price.toFixed(2)}`;
+                }
+
+                // FEEDBACK VISUAL COM EMOJIS
+                let emoji, title, message, bgColor, textColor;
+                
+                if (currentCalc.profit < 0) {
+                    emoji = '💀';
+                    title = 'PREJUÍZO!';
+                    message = `Você vai <strong>perder R$ ${Math.abs(currentCalc.profit).toFixed(2)}</strong> a cada venda. Aumente o preço!`;
+                    bgColor = '#FFEBEE';
+                    textColor = '#C62828';
+                } else if (margin < 30) {
+                    emoji = '😐';
+                    title = 'Lucro Muito Baixo';
+                    message = `Você só vai ganhar R$ ${currentCalc.profit.toFixed(2)} por venda. Vale a pena?`;
+                    bgColor = '#FFF3E0';
+                    textColor = '#E65100';
+                } else if (margin >= 30 && margin < 50) {
+                    emoji = '😊';
+                    title = 'Lucro Razoável';
+                    message = `Lucro de R$ ${currentCalc.profit.toFixed(2)} por venda. Pode melhorar!`;
+                    bgColor = '#FFF9C4';
+                    textColor = '#F57F17';
+                } else if (margin >= 50 && margin <= 80) {
+                    emoji = '😍';
+                    title = 'Preço Ideal!';
+                    message = `Excelente! Lucro de R$ ${currentCalc.profit.toFixed(2)} por venda. Equilibra ganho e competitividade.`;
+                    bgColor = '#E8F5E9';
+                    textColor = '#2E7D32';
+                } else if (margin > 80 && margin <= 120) {
+                    emoji = '🤑';
+                    title = 'Lucro Alto';
+                    message = `Lucro de R$ ${currentCalc.profit.toFixed(2)}! Mas cuidado: pode ser difícil vender com preço alto.`;
+                    bgColor = '#E1F5FE';
+                    textColor = '#01579B';
+                } else {
+                    emoji = '🤯';
+                    title = 'Preço Muito Alto!';
+                    message = `R$ ${currentCalc.price.toFixed(2)} pode afugentar clientes. Considere baixar um pouco.`;
+                    bgColor = '#F3E5F5';
+                    textColor = '#6A1B9A';
+                }
+
+                if (feedbackBox) {
+                    feedbackBox.style.display = 'block';
+                    feedbackBox.style.background = bgColor;
+                    feedbackBox.style.color = textColor;
+                    feedbackEmoji.textContent = emoji;
+                    feedbackTitle.textContent = title;
+                    feedbackTitle.style.color = textColor;
+                    feedbackMessage.innerHTML = message;
+                    feedbackMessage.style.color = textColor;
+                }
+
+                // Detalhamento completo abaixo
                 container.innerHTML = `
                     <div class="pricing-result-card">
                         <div class="pricing-header">
-                            <i data-lucide="trending-up" style="width: 20px; height: 20px;"></i>
-                            <h4>Resultado da Precificação</h4>
+                            <i data-lucide="calculator" style="width: 20px; height: 20px;"></i>
+                            <h4>Detalhamento Completo</h4>
                         </div>
                         
                         <div class="pricing-breakdown">
@@ -1213,20 +1343,20 @@ const LucroCertoApp = (function() {
                             <div class="pricing-row">
                                 <span class="pricing-label">
                                     <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
-                                    Custos Fixos/Unidade
+                                    Despesas Fixas (por unidade)
                                 </span>
                                 <span class="pricing-value">R$ ${unitCosts.fixed.toFixed(2)}</span>
                             </div>
                             <div class="pricing-row">
                                 <span class="pricing-label">
                                     <i data-lucide="package" style="width: 16px; height: 16px;"></i>
-                                    Custos Variáveis
+                                    Despesas Variáveis
                                 </span>
                                 <span class="pricing-value">R$ ${unitCosts.variable.toFixed(2)}</span>
                             </div>
                             <div class="pricing-row total">
                                 <span class="pricing-label">
-                                    <strong>Custo Total/Unidade</strong>
+                                    <strong>Custo Total por Unidade</strong>
                                 </span>
                                 <span class="pricing-value"><strong style="color: var(--alert);">R$ ${unitCosts.total.toFixed(2)}</strong></span>
                             </div>
@@ -1237,24 +1367,17 @@ const LucroCertoApp = (function() {
                                 <i data-lucide="tag" style="width: 24px; height: 24px; color: white;"></i>
                                 <div>
                                     <small style="color: rgba(255,255,255,0.9); font-size: 12px;">Preço de Venda</small>
-                                    <strong style="color: white; font-size: 24px;">R$ ${price.toFixed(2)}</strong>
+                                    <strong style="color: white; font-size: 24px;">R$ ${currentCalc.price.toFixed(2)}</strong>
                                 </div>
                             </div>
-                            <div class="result-item" style="background: linear-gradient(135deg, var(--success-light), var(--success));">
+                            <div class="result-item" style="background: linear-gradient(135deg, ${currentCalc.profit < 0 ? '#EF5350' : 'var(--success-light)'}, ${currentCalc.profit < 0 ? '#C62828' : 'var(--success)'});">
                                 <i data-lucide="dollar-sign" style="width: 24px; height: 24px; color: white;"></i>
                                 <div>
-                                    <small style="color: rgba(255,255,255,0.9); font-size: 12px;">Lucro por Venda</small>
-                                    <strong style="color: white; font-size: 24px;">R$ ${profit.toFixed(2)}</strong>
-                                    <small style="color: rgba(255,255,255,0.9); font-size: 11px;">${profitPercentageOfPrice}% do preço</small>
+                                    <small style="color: rgba(255,255,255,0.9); font-size: 12px;">Seu Lucro</small>
+                                    <strong style="color: white; font-size: 24px;">R$ ${currentCalc.profit.toFixed(2)}</strong>
+                                    <small style="color: rgba(255,255,255,0.9); font-size: 11px;">${currentCalc.profit >= 0 ? profitPercentageOfPrice + '% do preço' : 'PREJUÍZO'}</small>
                                 </div>
                             </div>
-                        </div>
-
-                        <div style="background: var(--light-gray); padding: 12px; border-radius: 8px; margin-top: 12px;">
-                            <p style="font-size: 13px; color: var(--dark-gray); margin: 0;">
-                                <i data-lucide="lightbulb" style="width: 14px; height: 14px; color: var(--warning);"></i>
-                                <strong>Dica:</strong> Este é o preço sugerido. Você pode ajustar a margem acima conforme seu objetivo!
-                            </p>
                         </div>
                     </div>
                 `;
