@@ -1086,8 +1086,8 @@
         <div class="success-icon">
             <i data-lucide="check"></i>
         </div>
-        <h2>Pagamento Confirmado! 🎉</h2>
-        <p>Agora crie sua senha para acessar o sistema.</p>
+        <h2 id="success-title">Pagamento Confirmado! 🎉</h2>
+        <p id="success-subtitle">Agora crie sua senha para acessar o sistema.</p>
         <a href="cadastro.html" class="btn-success" id="btn-goto-cadastro">
             <i data-lucide="user-plus"></i>
             Criar Minha Conta
@@ -1097,6 +1097,10 @@
     <script>
         // Initialize Lucide icons
         lucide.createIcons();
+        
+        // Verificar se é renovação ou primeiro pagamento
+        const isRenewal = !!localStorage.getItem('lucrocerto_auth');
+        console.log('🔄 É renovação?', isRenewal);
 
         // Plan data
         const plans = {
@@ -1544,8 +1548,15 @@
                 localStorage.setItem('lucrocerto_logged', 'true');
                 localStorage.removeItem('lucrocerto_trial'); // Remove trial
                 
-                document.getElementById('success-overlay').classList.add('active');
-                lucide.createIcons();
+                // VERIFICAR SE É RENOVAÇÃO OU PRIMEIRO PAGAMENTO
+                if (isRenewal) {
+                    // É RENOVAÇÃO - redirecionar direto para página de sucesso
+                    window.location.href = `/renovacao-sucesso?payment_id=${result.id}&email=${encodeURIComponent(email)}`;
+                } else {
+                    // PRIMEIRO PAGAMENTO - mostrar overlay e ir para cadastro
+                    document.getElementById('success-overlay').classList.add('active');
+                    lucide.createIcons();
+                }
                 
             } else if (result.status === 'in_process' || result.status === 'pending') {
                 // Pagamento pendente
@@ -1692,11 +1703,18 @@
                         localStorage.setItem('lucrocerto_logged', 'true');
                         localStorage.removeItem('lucrocerto_trial');
                         
-                        // Fechar modal e mostrar sucesso após 1.5s
+                        // Fechar modal e redirecionar baseado se é renovação ou não
                         setTimeout(() => {
                             closePixModal();
-                            document.getElementById('success-overlay').classList.add('active');
-                            lucide.createIcons();
+                            
+                            if (isRenewal) {
+                                // É RENOVAÇÃO - redirecionar para página de sucesso da renovação
+                                window.location.href = `/renovacao-sucesso?payment_id=${paymentId}&email=${encodeURIComponent(authData.email)}`;
+                            } else {
+                                // PRIMEIRO PAGAMENTO - mostrar overlay de cadastro
+                                document.getElementById('success-overlay').classList.add('active');
+                                lucide.createIcons();
+                            }
                         }, 1500);
                     }
                 } catch (error) {

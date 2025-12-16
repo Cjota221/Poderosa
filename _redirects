@@ -21,6 +21,7 @@
 /pagamento-sucesso  /pagamento-sucesso.html 200
 /pagamento-erro     /pagamento-erro.html    200
 /pagamento-pendente /pagamento-pendente.html 200
+/renovacao-sucesso  /renovacao-sucesso.html 200
 /fix-assinatura     /fix-assinatura.html    200
 /index              /index.html             200
 

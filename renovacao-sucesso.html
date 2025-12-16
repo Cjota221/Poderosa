@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✅ Renovação Bem-Sucedida - Poderosa</title>
+    <link rel="stylesheet" href="./public/css/styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .success-container {
+            background: white;
+            max-width: 600px;
+            width: 100%;
+            border-radius: 24px;
+            padding: 48px 32px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .success-icon {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #4CAF50, #8BC34A);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            box-shadow: 0 8px 24px rgba(76, 175, 80, 0.3);
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .success-icon svg {
+            width: 64px;
+            height: 64px;
+            color: white;
+            stroke-width: 3;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: #2E7D32;
+            margin-bottom: 12px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 18px;
+            color: #607D8B;
+            margin-bottom: 32px;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(46, 125, 50, 0.1);
+        }
+
+        .info-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 14px;
+            color: #2E7D32;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 16px;
+            color: #1B5E20;
+            font-weight: 700;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #E91E63, #F06292);
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(233, 30, 99, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(233, 30, 99, 0.4);
+        }
+
+        .countdown {
+            font-size: 14px;
+            color: #999;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .success-container {
+                padding: 32px 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+            .success-icon {
+                width: 100px;
+                height: 100px;
+            }
+
+            .success-icon svg {
+                width: 56px;
+                height: 56px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">
+            <i data-lucide="check"></i>
+        </div>
+
+        <h1>🎉 Renovação Realizada!</h1>
+        <p class="subtitle">Seu plano foi renovado com sucesso. Continue arrasando!</p>
+
+        <div class="info-box">
+            <div class="info-item">
+                <span class="info-label">📦 Plano</span>
+                <span class="info-value" id="plan-name">Profissional</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">💰 Valor Pago</span>
+                <span class="info-value" id="payment-amount">R$ 34,90</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">📅 Válido até</span>
+                <span class="info-value" id="expiry-date">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">✨ Status</span>
+                <span class="info-value" style="color: #4CAF50;">ATIVO</span>
+            </div>
+        </div>
+
+        <a href="/app" class="btn">
+            <i data-lucide="arrow-right"></i>
+            Ir para o Sistema
+        </a>
+
+        <p class="countdown">Redirecionando automaticamente em <span id="countdown">5</span> segundos...</p>
+    </div>
+
+    <script>
+        // Inicializar ícones Lucide
+        lucide.createIcons();
+
+        // Confetti de comemoração! 🎊
+        confetti({
+            particleCount: 200,
+            spread: 90,
+            origin: { y: 0.6 }
+        });
+
+        setTimeout(() => {
+            confetti({
+                particleCount: 100,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 }
+            });
+        }, 200);
+
+        setTimeout(() => {
+            confetti({
+                particleCount: 100,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 }
+            });
+        }, 400);
+
+        // Pegar dados da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const paymentId = urlParams.get('payment_id');
+        const email = urlParams.get('email');
+
+        // Buscar dados do pagamento e atualizar assinatura
+        if (paymentId && email) {
+            updateSubscriptionAfterPayment(paymentId, email);
+        } else {
+            // Se não tem parâmetros, mostrar dados do localStorage
+            const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+            if (authData.subscription) {
+                const expiryDate = new Date(authData.subscription.data_expiracao);
+                document.getElementById('expiry-date').textContent = expiryDate.toLocaleDateString('pt-BR');
+            }
+        }
+
+        async function updateSubscriptionAfterPayment(paymentId, email) {
+            try {
+                // Chamar função que atualiza a assinatura no banco
+                const response = await fetch('/.netlify/functions/renew-subscription', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paymentId, email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Atualizar localStorage com novos dados
+                    const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+                    authData.subscription = data.subscription;
+                    authData.subscriptionStatus = 'active';
+                    authData.plano = data.subscription.plano;
+                    localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
+
+                    // Atualizar interface
+                    document.getElementById('plan-name').textContent = 
+                        data.subscription.plano === 'pro' ? 'Profissional' : 
+                        data.subscription.plano === 'premium' ? 'Premium' : 'Starter';
+                    
+                    document.getElementById('payment-amount').textContent = 
+                        `R$ ${data.subscription.valor.toFixed(2).replace('.', ',')}`;
+                    
+                    const expiryDate = new Date(data.subscription.data_expiracao);
+                    document.getElementById('expiry-date').textContent = expiryDate.toLocaleDateString('pt-BR');
+                }
+            } catch (error) {
+                console.error('Erro ao atualizar assinatura:', error);
+            }
+        }
+
+        // Countdown para redirecionamento
+        let seconds = 5;
+        const countdownEl = document.getElementById('countdown');
+        
+        const countdownInterval = setInterval(() => {
+            seconds--;
+            countdownEl.textContent = seconds;
+            
+            if (seconds <= 0) {
+                clearInterval(countdownInterval);
+                window.location.href = '/app';
+            }
+        }, 1000);
+
+        // Permitir ir antes do countdown
+        document.querySelector('.btn').addEventListener('click', () => {
+            clearInterval(countdownInterval);
+        });
+    </script>
+</body>
+</html>
