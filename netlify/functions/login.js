@@ -104,32 +104,92 @@ exports.handler = async (event) => {
         // Determinar plano ativo - PRIORIDADE: subscription > usuario.plano > trial
         let planoAtivo = 'trial';
         let assinaturaInfo = null;
+        let assinaturaStatus = 'none'; // none, active, expiring_soon, expired, grace_period
         
         if (subscription) {
             // Tem assinatura - verificar se está válida
             if (subscription.data_expiracao) {
                 const expiracao = new Date(subscription.data_expiracao);
-                if (expiracao > new Date()) {
+                const hoje = new Date();
+                const diasRestantes = Math.ceil((expiracao - hoje) / (1000 * 60 * 60 * 24));
+                
+                // PERÍODO DE CARÊNCIA: 2 dias após expirar
+                const gracePeriodDays = 2;
+                const diasAposExpiracao = Math.ceil((hoje - expiracao) / (1000 * 60 * 60 * 24));
+                
+                if (diasRestantes > 0) {
+                    // Ainda está ativo
                     planoAtivo = subscription.plano;
+                    
+                    // Avisar se está perto de expirar (3 dias ou menos)
+                    if (diasRestantes <= 3) {
+                        assinaturaStatus = 'expiring_soon';
+                    } else {
+                        assinaturaStatus = 'active';
+                    }
+                    
                     assinaturaInfo = {
                         plano: subscription.plano,
                         status: subscription.status,
                         periodo: subscription.periodo,
                         data_inicio: subscription.data_inicio,
-                        data_expiracao: subscription.data_expiracao
+                        data_expiracao: subscription.data_expiracao,
+                        dias_restantes: diasRestantes,
+                        aviso_expiracao: diasRestantes <= 3
                     };
-                    console.log('✅ Assinatura válida encontrada:', planoAtivo);
+                    console.log(`✅ Assinatura válida: ${planoAtivo} (${diasRestantes} dias restantes)`);
+                    
+                } else if (diasAposExpiracao <= gracePeriodDays) {
+                    // PERÍODO DE CARÊNCIA: Expirou mas ainda tem até 2 dias
+                    planoAtivo = subscription.plano; // Mantém acesso temporário
+                    assinaturaStatus = 'grace_period';
+                    
+                    assinaturaInfo = {
+                        plano: subscription.plano,
+                        status: 'expired_grace',
+                        periodo: subscription.periodo,
+                        data_inicio: subscription.data_inicio,
+                        data_expiracao: subscription.data_expiracao,
+                        dias_restantes: 0,
+                        dias_apos_expiracao: diasAposExpiracao,
+                        dias_carencia_restantes: gracePeriodDays - diasAposExpiracao,
+                        em_periodo_carencia: true
+                    };
+                    console.log(`⚠️ PERÍODO DE CARÊNCIA: ${diasAposExpiracao}/${gracePeriodDays} dias - ${gracePeriodDays - diasAposExpiracao} dias restantes`);
+                    
                 } else {
-                    // Assinatura expirou
-                    console.log('⚠️ Assinatura expirada');
+                    // EXPIROU E PASSOU DO PERÍODO DE CARÊNCIA
+                    assinaturaStatus = 'expired';
+                    planoAtivo = 'expired'; // Bloqueia acesso
+                    
+                    assinaturaInfo = {
+                        plano: subscription.plano,
+                        status: 'expired',
+                        periodo: subscription.periodo,
+                        data_inicio: subscription.data_inicio,
+                        data_expiracao: subscription.data_expiracao,
+                        dias_restantes: 0,
+                        dias_apos_expiracao: diasAposExpiracao,
+                        bloqueado: true
+                    };
+                    
+                    console.log(`❌ Assinatura EXPIRADA há ${diasAposExpiracao} dias - BLOQUEADO`);
+                    
+                    // Atualizar status no banco
                     await supabase
                         .from('assinaturas')
                         .update({ status: 'expired' })
                         .eq('id', subscription.id);
+                    
+                    await supabase
+                        .from('usuarios')
+                        .update({ plano: 'expired' })
+                        .eq('id', user.id);
                 }
             } else {
                 // Assinatura sem data de expiração = válida indefinidamente
                 planoAtivo = subscription.plano;
+                assinaturaStatus = 'active';
                 assinaturaInfo = {
                     plano: subscription.plano,
                     status: subscription.status,
@@ -142,9 +202,11 @@ exports.handler = async (event) => {
         } else if (user.plano && user.plano !== 'trial') {
             // Não tem assinatura mas tem plano salvo no usuário
             planoAtivo = user.plano;
+            assinaturaStatus = 'active';
             console.log('✅ Usando plano do usuário (sem assinatura):', planoAtivo);
         } else {
             console.log('⚠️ Nenhuma assinatura encontrada - modo trial');
+            assinaturaStatus = 'none';
         }
 
         // Atualizar último login
@@ -153,7 +215,7 @@ exports.handler = async (event) => {
             .update({ ultimo_login: new Date().toISOString() })
             .eq('id', user.id);
 
-        console.log('✅ Login bem-sucedido:', emailLower, '- Plano:', planoAtivo);
+        console.log('✅ Login bem-sucedido:', emailLower, '- Plano:', planoAtivo, '- Status:', assinaturaStatus);
 
         return {
             statusCode: 200,
@@ -168,6 +230,7 @@ exports.handler = async (event) => {
                     plano: planoAtivo
                 },
                 subscription: assinaturaInfo,
+                subscriptionStatus: assinaturaStatus, // Status da assinatura
                 isFirstLogin: !user.ultimo_login, // Para mostrar tour de boas-vindas
                 tourCompleted: user.tour_completed || false // Se já completou o tour
             })

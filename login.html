@@ -551,6 +551,7 @@
                     plano: result.user.plano,
                     userId: result.user.id,
                     subscription: result.subscription,
+                    subscriptionStatus: result.subscriptionStatus, // NOVO: Status da assinatura
                     isFirstLogin: result.isFirstLogin,
                     loggedAt: new Date().toISOString()
                 };
@@ -568,6 +569,23 @@
                     localStorage.setItem('lucrocerto_remember', email);
                 } else {
                     localStorage.removeItem('lucrocerto_remember');
+                }
+
+                // VERIFICAR STATUS DA ASSINATURA
+                if (result.subscriptionStatus === 'expired') {
+                    // BLOQUEADO: Assinatura expirou e passou do período de carência
+                    showError('❌ Seu plano expirou! Renove sua assinatura para continuar usando o sistema.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i data-lucide="log-in"></i> Entrar';
+                    lucide.createIcons();
+                    
+                    // Mostrar botão de renovação
+                    setTimeout(() => {
+                        if (confirm('Seu plano expirou! Deseja renovar agora?')) {
+                            window.location.href = '/precos';
+                        }
+                    }, 1000);
+                    return;
                 }
 
                 // Redirecionar para a área da empreendedora (URL limpa sem .html)

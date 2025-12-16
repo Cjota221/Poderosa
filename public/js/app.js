@@ -417,7 +417,58 @@ const LucroCertoApp = (function() {
                 ? `<img src="${profilePhoto}" alt="${user.name}" class="dashboard-profile-photo">`
                 : `<div class="dashboard-profile-placeholder"><i data-lucide="user" style="width: 32px; height: 32px;"></i></div>`;
 
+            // VERIFICAR STATUS DA ASSINATURA
+            const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+            const subscriptionStatus = authData.subscriptionStatus || 'none';
+            const subscription = authData.subscription || null;
+            
+            let subscriptionAlert = '';
+            
+            // AVISO: Assinatura expirando em breve (3 dias ou menos)
+            if (subscriptionStatus === 'expiring_soon' && subscription) {
+                const diasRestantes = subscription.dias_restantes || 0;
+                subscriptionAlert = `
+                    <div class="subscription-alert warning" style="background: linear-gradient(135deg, #FFF3CD, #FFE082); border-left: 4px solid #FFC107; padding: 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i data-lucide="alert-triangle" style="width: 24px; height: 24px; color: #F57C00;"></i>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 4px 0; font-size: 16px; color: #E65100;">⏰ Seu plano expira em ${diasRestantes} dia${diasRestantes > 1 ? 's' : ''}!</h3>
+                                <p style="margin: 0; font-size: 14px; color: #E65100;">Renove agora para não perder o acesso ao sistema.</p>
+                            </div>
+                            <a href="./precos" class="btn btn-primary" style="text-decoration: none; white-space: nowrap;">
+                                <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i> Renovar Agora
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // AVISO URGENTE: Período de carência (já expirou mas ainda tem acesso)
+            if (subscriptionStatus === 'grace_period' && subscription) {
+                const diasCarenciaRestantes = subscription.dias_carencia_restantes || 0;
+                subscriptionAlert = `
+                    <div class="subscription-alert danger" style="background: linear-gradient(135deg, #FFEBEE, #FFCDD2); border-left: 4px solid #F44336; padding: 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3); animation: pulse 2s infinite;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <i data-lucide="alert-octagon" style="width: 28px; height: 28px; color: #C62828;"></i>
+                            <div style="flex: 1;">
+                                <h3 style="margin: 0 0 4px 0; font-size: 18px; color: #B71C1C; font-weight: 700;">🚨 SEU PLANO EXPIROU!</h3>
+                                <p style="margin: 0; font-size: 14px; color: #C62828; font-weight: 600;">
+                                    Você tem apenas <strong>${diasCarenciaRestantes} dia${diasCarenciaRestantes > 1 ? 's' : ''}</strong> para renovar antes de perder o acesso!
+                                </p>
+                                <p style="margin: 4px 0 0 0; font-size: 12px; color: #D32F2F;">
+                                    Todos os seus dados serão mantidos. Renove agora para continuar usando.
+                                </p>
+                            </div>
+                            <a href="./precos" class="btn" style="background: #F44336; color: white; text-decoration: none; white-space: nowrap; font-weight: 600; box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);">
+                                <i data-lucide="zap" style="width: 16px; height: 16px;"></i> RENOVAR URGENTE
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+
             return `
+                ${subscriptionAlert}
                 <div class="dashboard-header">
                     <div class="dashboard-greeting">
                         ${profilePhotoHTML}
