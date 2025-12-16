@@ -1302,12 +1302,13 @@ const LucroCertoApp = (function() {
                                     Quais são as opções?
                                 </label>
                                 <div style="display: flex; gap: 8px;">
-                                    <input type="text" class="form-input" id="variation-options-input-1" placeholder="Ex: P, M, G" style="flex: 1;">
+                                    <input type="text" class="form-input" id="variation-options-input-1" placeholder="Ex: P, M, G ou Vermelho" style="flex: 1;">
+                                    <input type="color" class="form-input" id="variation-color-input-1" value="#E91E63" title="Cor (opcional)" style="width: 60px; padding: 4px;">
                                     <button type="button" class="btn btn-primary" id="add-variation-btn-1" style="white-space: nowrap;">
                                         <i data-lucide="plus" style="width: 16px; height: 16px;"></i> Adicionar
                                     </button>
                                 </div>
-                                <small>💡 Digite uma opção e clique em Adicionar, ou separe por vírgula (P, M, G)</small>
+                                <small>💡 Digite uma opção e escolha uma cor (opcional), ou separe por vírgula (P, M, G)</small>
                                 <div class="variation-options-container" id="variation-options-tags-1"></div>
                             </div>
                             
@@ -1322,6 +1323,7 @@ const LucroCertoApp = (function() {
                     }
 
                     const optionsInput = document.getElementById('variation-options-input-1');
+                    const colorInput = document.getElementById('variation-color-input-1');
                     const addBtn = document.getElementById('add-variation-btn-1');
                     
                     // Função para adicionar variação
@@ -1329,21 +1331,26 @@ const LucroCertoApp = (function() {
                         const value = optionsInput.value.trim();
                         if (!value) return;
                         
+                        const color = colorInput ? colorInput.value : null;
+                        
                         // Aceita valores separados por vírgula
                         if (value.includes(',')) {
                             const options = value.split(',').map(opt => opt.trim()).filter(opt => opt);
                             options.forEach(opt => {
-                                if (!variationOptions1.includes(opt)) {
-                                    variationOptions1.push(opt);
+                                if (!variationOptions1.find(v => typeof v === 'string' ? v === opt : v.value === opt)) {
+                                    variationOptions1.push({ value: opt, color: null });
                                 }
                             });
-                        } else if (!variationOptions1.includes(value)) {
-                            variationOptions1.push(value);
+                        } else {
+                            if (!variationOptions1.find(v => typeof v === 'string' ? v === value : v.value === value)) {
+                                variationOptions1.push({ value: value, color: color });
+                            }
                         }
                         
                         renderVariationTags();
                         renderStockTable();
                         optionsInput.value = '';
+                        if (colorInput) colorInput.value = '#E91E63';
                         optionsInput.focus();
                     };
                     
@@ -1526,14 +1533,20 @@ const LucroCertoApp = (function() {
 
                 const options = variationNumber === 1 ? variationOptions1 : variationOptions2;
 
-                tagsContainer.innerHTML = options.map((option, index) => `
-                    <div class="variation-tag">
-                        ${option}
+                tagsContainer.innerHTML = options.map((option, index) => {
+                    const optValue = typeof option === 'string' ? option : option.value;
+                    const optColor = typeof option === 'object' && option.color ? option.color : null;
+                    
+                    return `
+                    <div class="variation-tag" style="${optColor ? `border-left: 4px solid ${optColor};` : ''}">
+                        ${optColor ? `<span class="color-preview" style="background: ${optColor}; width: 20px; height: 20px; border-radius: 50%; display: inline-block; margin-right: 8px; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.1);"></span>` : ''}
+                        ${optValue}
+                        ${optColor ? `<small style="color: #999; font-size: 11px; margin-left: 6px;">${optColor}</small>` : ''}
                         <button type="button" data-remove-option="${variationNumber}-${index}">
                             <i data-lucide="x" style="width: 14px; height: 14px;"></i>
                         </button>
                     </div>
-                `).join('');
+                `}).join('');
 
                 tagsContainer.querySelectorAll('[data-remove-option]').forEach(btn => {
                     btn.addEventListener('click', () => {
@@ -1586,20 +1599,25 @@ const LucroCertoApp = (function() {
                         ` : ''}
                         <div class="stock-options-list">
                             ${variationOptions1.map(option => {
-                                const selectedPhotoIdx = variationImagesMap[option];
+                                const optValue = typeof option === 'string' ? option : option.value;
+                                const optColor = typeof option === 'object' && option.color ? option.color : null;
+                                const selectedPhotoIdx = variationImagesMap[optValue];
                                 const hasPhoto = selectedPhotoIdx !== undefined && productImages[selectedPhotoIdx];
                                 
                                 return `
-                                <div class="stock-option-row" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--white); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--light-gray);">
+                                <div class="stock-option-row" style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--white); border-radius: 8px; margin-bottom: 8px; border: 1px solid ${optColor ? optColor : 'var(--light-gray)'};">
                                     <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
-                                        ${isColorVariation && hasPhoto ? `
+                                        ${optColor ? `
+                                            <div style="width: 32px; height: 32px; background: ${optColor}; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.1);"></div>
+                                        ` : isColorVariation && hasPhoto ? `
                                             <img src="${productImages[selectedPhotoIdx]}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 2px solid var(--primary);">
                                         ` : isColorVariation ? `
                                             <div style="width: 40px; height: 40px; background: var(--light-gray); border-radius: 6px; display: flex; align-items: center; justify-content: center; border: 2px dashed var(--medium-gray);">
                                                 <i data-lucide="image" style="width: 18px; height: 18px; color: var(--elegant-gray);"></i>
                                             </div>
                                         ` : ''}
-                                        <strong style="font-size: 14px; color: var(--dark-gray);">${option}</strong>
+                                        <strong style="font-size: 14px; color: var(--dark-gray);">${optValue}</strong>
+                                        ${optColor ? `<small style="color: #999; font-size: 11px;">${optColor}</small>` : ''}
                                     </div>
                                     
                                     ${isColorVariation && productImages.length > 0 ? `
@@ -1608,14 +1626,14 @@ const LucroCertoApp = (function() {
                                             ${productImages.map((img, idx) => `
                                                 <button type="button" 
                                                     class="photo-select-btn ${selectedPhotoIdx === idx ? 'selected' : ''}" 
-                                                    data-variation-option="${option}" 
+                                                    data-variation-option="${optValue}" 
                                                     data-photo-idx="${idx}"
                                                     style="width: 36px; height: 36px; padding: 0; border: 2px solid ${selectedPhotoIdx === idx ? 'var(--primary)' : 'var(--light-gray)'}; border-radius: 6px; cursor: pointer; overflow: hidden; background: none; transition: all 0.2s;">
                                                     <img src="${img}" style="width: 100%; height: 100%; object-fit: cover;">
                                                 </button>
                                             `).join('')}
                                             ${hasPhoto ? `
-                                                <button type="button" class="photo-clear-btn" data-variation-option="${option}" 
+                                                <button type="button" class="photo-clear-btn" data-variation-option="${optValue}" 
                                                     style="width: 28px; height: 28px; padding: 0; border: none; background: #fee2e2; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Remover foto">
                                                     <i data-lucide="x" style="width: 14px; height: 14px; color: #ef4444;"></i>
                                                 </button>
@@ -1625,7 +1643,7 @@ const LucroCertoApp = (function() {
                                     
                                     <div style="display: flex; align-items: center; gap: 6px;">
                                         <span style="font-size: 11px; color: var(--elegant-gray);">Qtd:</span>
-                                        <input type="number" class="form-input" data-stock-option="${option}" value="${currentStock[option] || 0}" min="0" placeholder="0" style="width: 70px; text-align: center; padding: 8px;">
+                                        <input type="number" class="form-input" data-stock-option="${optValue}" value="${currentStock[optValue] || 0}" min="0" placeholder="0" style="width: 70px; text-align: center; padding: 8px;">
                                     </div>
                                 </div>
                             `}).join('')}
