@@ -4751,6 +4751,8 @@ const LucroCertoApp = (function() {
             const data = await response.json();
             
             if (data.success) {
+                console.log('📊 SYNC - Dados recebidos do servidor:', data.subscription);
+                
                 // Atualizar localStorage com dados do banco
                 const updatedAuth = {
                     ...authData,
@@ -4767,11 +4769,18 @@ const LucroCertoApp = (function() {
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(updatedAuth));
                 localStorage.setItem('lucrocerto_user_id', data.user.id);
                 
-                // Atualizar flags de trial
-                if (data.subscription.isTrial) {
+                console.log('📊 SYNC - Plano do usuário:', data.subscription.plano);
+                console.log('📊 SYNC - É trial?', data.subscription.isTrial);
+                
+                // ✅ CORREÇÃO: Atualizar flags de trial CORRETAMENTE
+                if (data.subscription.isTrial || data.subscription.plano === 'trial') {
                     localStorage.setItem('lucrocerto_trial', 'true');
+                    console.log('🧪 SYNC - Trial ATIVADO');
                 } else {
+                    // ✅ PLANO PAGO - REMOVER TRIAL FORÇADAMENTE
                     localStorage.removeItem('lucrocerto_trial');
+                    localStorage.removeItem('lucrocerto_trial_start');
+                    console.log('✅ SYNC - Trial REMOVIDO (plano pago:', data.subscription.plano + ')');
                 }
 
                 // Se trial expirou, mostrar modal
