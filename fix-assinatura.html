@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔧 Correção de Assinatura - LucroCerto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result.info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+
+        .result h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .result pre {
+            background: rgba(0,0,0,0.05);
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .info-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Correção de Assinatura</h1>
+        <p class="subtitle">Corrija automaticamente a data de expiração da sua assinatura</p>
+
+        <div class="info-box">
+            <strong>ℹ️ O que esta ferramenta faz:</strong><br>
+            Esta ferramenta corrige assinaturas que estão sem data de expiração no banco de dados, 
+            calculando automaticamente baseado na data de início e período (mensal ou anual).
+        </div>
+
+        <form id="fixForm">
+            <div class="form-group">
+                <label for="email">📧 Email da conta:</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    required
+                    placeholder="seu@email.com"
+                    value="cjotarasteirinhas@hotmail.com"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="paymentId">💳 ID do Pagamento (opcional):</label>
+                <input 
+                    type="text" 
+                    id="paymentId" 
+                    name="paymentId" 
+                    placeholder="Ex: 13741425299"
+                >
+                <small style="color: #666; font-size: 12px;">
+                    Deixe em branco para corrigir a assinatura ativa mais recente
+                </small>
+            </div>
+
+            <button type="submit" id="submitBtn">
+                🚀 Corrigir Assinatura
+            </button>
+        </form>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #667eea;">Processando...</p>
+        </div>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('fixForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const paymentId = document.getElementById('paymentId').value.trim();
+
+            if (!email) {
+                showResult('error', 'Email é obrigatório!');
+                return;
+            }
+
+            // Mostrar loading
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                console.log('🔧 Enviando requisição para corrigir assinatura...');
+                
+                const requestBody = { email };
+                if (paymentId) {
+                    requestBody.paymentId = paymentId;
+                }
+
+                const response = await fetch('/.netlify/functions/fix-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                console.log('📦 Resposta recebida:', data);
+
+                if (response.ok) {
+                    if (data.changed) {
+                        showResult('success', '✅ Assinatura corrigida com sucesso!', data);
+                    } else {
+                        showResult('info', 'ℹ️ Assinatura já estava correta', data);
+                    }
+                } else {
+                    showResult('error', '❌ Erro ao corrigir assinatura', data);
+                }
+
+            } catch (error) {
+                console.error('❌ Erro:', error);
+                showResult('error', 'Erro de conexão: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+
+        function showResult(type, message, data = null) {
+            result.className = 'result ' + type;
+            
+            let html = `<h3>${message}</h3>`;
+            
+            if (data) {
+                if (data.antes && data.depois) {
+                    html += `
+                        <div style="margin-top: 15px;">
+                            <strong>📅 Antes:</strong><br>
+                            Data de Expiração: ${data.antes.data_expiracao || 'NULL'}<br>
+                            Período: ${data.antes.periodo || 'NULL'}
+                            
+                            <br><br>
+                            
+                            <strong>📅 Depois:</strong><br>
+                            Data de Expiração: ${data.depois.data_expiracao}<br>
+                            Período: ${data.depois.periodo}
+                        </div>
+                    `;
+                }
+                
+                if (data.assinatura) {
+                    html += `
+                        <details style="margin-top: 15px;">
+                            <summary style="cursor: pointer; font-weight: 600;">
+                                Ver detalhes completos
+                            </summary>
+                            <pre>${JSON.stringify(data.assinatura, null, 2)}</pre>
+                        </details>
+                    `;
+                }
+
+                if (data.error) {
+                    html += `<p style="margin-top: 10px;"><strong>Erro:</strong> ${data.error}</p>`;
+                    if (data.details) {
+                        html += `<p><strong>Detalhes:</strong> ${data.details}</p>`;
+                    }
+                }
+            }
+
+            html += `
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(0,0,0,0.1);">
+                    <strong>📝 Próximos passos:</strong><br>
+                    1. Faça logout do sistema<br>
+                    2. Faça login novamente<br>
+                    3. O banner de trial deve desaparecer!
+                </div>
+            `;
+
+            result.innerHTML = html;
+            result.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
