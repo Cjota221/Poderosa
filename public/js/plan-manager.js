@@ -136,7 +136,8 @@ const PlanManager = {
 
     // Verificar se pode adicionar mais itens
     canAdd(type) {
-        const state = StateManager ? StateManager.getState() : {};
+        // Usar window.appState se disponível, senão usar localStorage
+        const state = window.appState || {};
         let currentCount = 0;
         
         switch (type) {
