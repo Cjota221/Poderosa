@@ -2133,35 +2133,17 @@ const LucroCertoApp = (function() {
                     AchievementSystem.checkAndAward('primeiro_produto');
                 }
 
-                // Salvar produto no banco de dados
-                (async () => {
-                    try {
-                        // 1. Atualizar estado local
-                        StateManager.setState({ 
-                            products: updatedProducts,
-                            currentPage: 'produtos',
-                            editingProductId: null
-                        });
-                        
-                        // 2. Salvar no banco de dados (Supabase)
-                        const dataService = new DataService();
-                        if (editingProductId) {
-                            await dataService.updateProduct(editingProductId, productData);
-                        } else {
-                            await dataService.saveProduct(productData);
-                        }
-                        
-                        // Sucesso!
-                        LoadingHelper.setButtonLoading(submitBtn, false, '✅ Produto salvo!');
-                        
-                        if (!editingProductId) {
-                            AchievementSystem.checkAndAward('primeiro_produto');
-                        }
-                    } catch (error) {
-                        console.error('Erro ao salvar produto:', error);
-                        LoadingHelper.setButtonError(submitBtn, '❌ Erro ao salvar');
-                    }
-                })();
+                // Salvar produto (RÁPIDO - só localStorage)
+                setTimeout(() => {
+                    StateManager.setState({ 
+                        products: updatedProducts,
+                        currentPage: 'produtos',
+                        editingProductId: null
+                    });
+                    
+                    // Sucesso!
+                    LoadingHelper.setButtonLoading(submitBtn, false, '✅ Produto salvo!');
+                }, 300);
             });
 
             // Event listeners
@@ -2934,7 +2916,7 @@ const LucroCertoApp = (function() {
             this.renderPlanInfo();
             
             // Salvar perfil
-            document.querySelector('[data-action="save-profile"]')?.addEventListener('click', async () => {
+            document.querySelector('[data-action="save-profile"]')?.addEventListener('click', () => {
                 const saveBtn = document.querySelector('[data-action="save-profile"]');
                 
                 // Mostrar loading
@@ -2953,28 +2935,11 @@ const LucroCertoApp = (function() {
                     profilePhoto: currentProfilePhoto
                 };
                 
-                try {
-                    // 1. Salvar no StateManager (memória + localStorage)
+                // Salvar RÁPIDO (só localStorage)
+                setTimeout(() => {
                     StateManager.setState({ user: updatedUser });
-                    
-                    // 2. SALVAR NO BANCO DE DADOS (Supabase)
-                    const dataService = new DataService();
-                    await dataService.updateUserProfile({
-                        nome: updatedUser.name,
-                        telefone: updatedUser.phone,
-                        nomeNegocio: updatedUser.businessName,
-                        fotoUrl: updatedUser.profilePhoto,
-                        rotina: updatedUser.routine,
-                        meta_mensal: updatedUser.monthlyGoal,
-                        meta_vendas: updatedUser.monthlySalesGoal
-                    });
-                    
-                    // Sucesso!
-                    LoadingHelper.setButtonLoading(saveBtn, false, '✅ Salvo com sucesso!');
-                } catch (error) {
-                    console.error('Erro ao salvar perfil:', error);
-                    LoadingHelper.setButtonError(saveBtn, '❌ Erro ao salvar');
-                }
+                    LoadingHelper.setButtonLoading(saveBtn, false, '✅ Salvo!');
+                }, 300);
             });
         },
         
@@ -3382,32 +3347,16 @@ const LucroCertoApp = (function() {
                     updatedClients = [...(clients || []), clientData];
                 }
                 
-                // Salvar cliente no banco de dados
-                (async () => {
-                    try {
-                        // 1. Atualizar estado local
-                        StateManager.setState({ clients: updatedClients });
-                        
-                        // 2. Salvar no banco de dados (Supabase)
-                        const dataService = new DataService();
-                        if (editingClientId) {
-                            await dataService.updateClient(editingClientId, clientData);
-                        } else {
-                            await dataService.saveClient(clientData);
-                        }
-                        
-                        // Sucesso!
-                        LoadingHelper.setButtonLoading(saveBtn, false, '✅ Cliente salvo!');
-                        
-                        setTimeout(() => {
-                            document.getElementById('client-modal').style.display = 'none';
-                            editingClientId = null;
-                        }, 1500);
-                    } catch (error) {
-                        console.error('Erro ao salvar cliente:', error);
-                        LoadingHelper.setButtonError(saveBtn, '❌ Erro ao salvar');
-                    }
-                })();
+                // Salvar RÁPIDO (só localStorage)
+                setTimeout(() => {
+                    StateManager.setState({ clients: updatedClients });
+                    LoadingHelper.setButtonLoading(saveBtn, false, '✅ Cliente salvo!');
+                    
+                    setTimeout(() => {
+                        document.getElementById('client-modal').style.display = 'none';
+                        editingClientId = null;
+                    }, 1500);
+                }, 300);
             });
             
             // Excluir cliente
@@ -3651,29 +3600,20 @@ const LucroCertoApp = (function() {
             });
             
             // Salvar alterações
-            modal.querySelector('[data-action="save-sale-edit"]').addEventListener('click', async () => {
-                try {
-                    const updatedSale = {
-                        ...sale,
-                        clientName: document.getElementById('edit-client-name').value,
-                        paymentMethod: document.getElementById('edit-payment-method').value,
-                        date: new Date(document.getElementById('edit-sale-date').value).toISOString()
-                    };
-                    
-                    // 1. Atualizar estado local
-                    const updatedSales = sales.map(s => s.id === saleId ? updatedSale : s);
-                    StateManager.setState({ sales: updatedSales });
-                    
-                    // 2. Salvar no banco de dados
-                    const dataService = new DataService();
-                    await dataService.updateSale(saleId, updatedSale);
-                    
-                    modal.remove();
-                    this.updateActiveContent();
-                } catch (error) {
-                    console.error('Erro ao salvar venda:', error);
-                    alert('❌ Erro ao salvar alterações');
-                }
+            modal.querySelector('[data-action="save-sale-edit"]').addEventListener('click', () => {
+                const updatedSale = {
+                    ...sale,
+                    clientName: document.getElementById('edit-client-name').value,
+                    paymentMethod: document.getElementById('edit-payment-method').value,
+                    date: new Date(document.getElementById('edit-sale-date').value).toISOString()
+                };
+                
+                // Salvar RÁPIDO (só localStorage)
+                const updatedSales = sales.map(s => s.id === saleId ? updatedSale : s);
+                StateManager.setState({ sales: updatedSales });
+                
+                modal.remove();
+                this.updateActiveContent();
             });
             
             // Excluir venda
