@@ -5470,34 +5470,43 @@ const LucroCertoApp = (function() {
     
     // 🔥 NOVO: Carregar dados do banco
     async function loadDataFromSupabase(userId) {
-        if (!userId || !window.supabase) {
-            console.log('⚠️ Sem userId ou Supabase - usando dados locais');
+        if (!userId) {
+            console.log('⚠️ Sem userId - pulando carregamento do Supabase');
+            return;
+        }
+        
+        if (!window.supabase) {
+            console.log('⚠️ Supabase client não disponível - usando dados locais');
             return;
         }
         
         try {
-            console.log('☁️ Carregando dados do Supabase...');
+            console.log('☁️ Carregando dados do Supabase para userId:', userId);
             
             // Buscar produtos
             const productsResult = await supabase.select('produtos', { 
                 filters: { usuario_id: userId, ativo: true }
             });
+            console.log('📦 Produtos do banco:', productsResult.data?.length || 0);
             
             // Buscar clientes
             const clientsResult = await supabase.select('clientes', { 
                 filters: { usuario_id: userId }
             });
+            console.log('👥 Clientes do banco:', clientsResult.data?.length || 0);
             
             // Buscar vendas
             const salesResult = await supabase.select('vendas', { 
                 filters: { usuario_id: userId }
             });
+            console.log('💰 Vendas do banco:', salesResult.data?.length || 0);
             
             // Buscar dados do usuário
             const userResult = await supabase.select('usuarios', { 
                 filters: { id: userId },
                 limit: 1
             });
+            console.log('👤 Dados do usuário:', userResult.data?.[0]?.nome || 'Não encontrado');
             
             // Converter dados do Supabase para formato do app
             const supabaseData = {
@@ -5549,24 +5558,19 @@ const LucroCertoApp = (function() {
             };
             
             // Salvar no localStorage para não perder
-            if (supabaseData.products.length > 0 || supabaseData.clients.length > 0) {
-                const currentState = DataManager.load('appState') || {};
-                const mergedState = {
-                    ...currentState,
-                    products: supabaseData.products,
-                    clients: supabaseData.clients,
-                    sales: supabaseData.sales,
-                    user: { ...currentState.user, ...supabaseData.user }
-                };
-                DataManager.save('appState', mergedState);
-                console.log('✅ Dados carregados do Supabase:', {
-                    produtos: supabaseData.products.length,
-                    clientes: supabaseData.clients.length,
-                    vendas: supabaseData.sales.length
-                });
-            }
+            const currentState = DataManager.load('appState') || {};
+            const mergedState = {
+                ...currentState,
+                products: supabaseData.products.length > 0 ? supabaseData.products : currentState.products || [],
+                clients: supabaseData.clients.length > 0 ? supabaseData.clients : currentState.clients || [],
+                sales: supabaseData.sales.length > 0 ? supabaseData.sales : currentState.sales || [],
+                user: { ...currentState.user, ...supabaseData.user }
+            };
+            DataManager.save('appState', mergedState);
+            console.log('✅ Dados carregados do Supabase e salvos localmente!');
         } catch (error) {
             console.error('❌ Erro ao carregar do Supabase:', error);
+            console.log('ℹ️ Continuando com dados locais...');
         }
     }
     
