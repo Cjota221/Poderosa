@@ -3383,16 +3383,32 @@ const LucroCertoApp = (function() {
                     updatedClients = [...(clients || []), clientData];
                 }
                 
-                // Delay para mostrar feedback visual
-                setTimeout(() => {
-                    StateManager.setState({ clients: updatedClients });
-                    LoadingHelper.setButtonLoading(saveBtn, false, 'Cliente salvo!');
-                    
-                    setTimeout(() => {
-                        document.getElementById('client-modal').style.display = 'none';
-                        editingClientId = null;
-                    }, 1500);
-                }, 300);
+                // Salvar cliente no banco de dados
+                (async () => {
+                    try {
+                        // 1. Atualizar estado local
+                        StateManager.setState({ clients: updatedClients });
+                        
+                        // 2. Salvar no banco de dados (Supabase)
+                        const dataService = new DataService();
+                        if (editingClientId) {
+                            await dataService.updateClient(editingClientId, clientData);
+                        } else {
+                            await dataService.saveClient(clientData);
+                        }
+                        
+                        // Sucesso!
+                        LoadingHelper.setButtonLoading(saveBtn, false, '✅ Cliente salvo!');
+                        
+                        setTimeout(() => {
+                            document.getElementById('client-modal').style.display = 'none';
+                            editingClientId = null;
+                        }, 1500);
+                    } catch (error) {
+                        console.error('Erro ao salvar cliente:', error);
+                        LoadingHelper.setButtonError(saveBtn, '❌ Erro ao salvar');
+                    }
+                })();
             });
             
             // Excluir cliente
@@ -3636,20 +3652,29 @@ const LucroCertoApp = (function() {
             });
             
             // Salvar alterações
-            modal.querySelector('[data-action="save-sale-edit"]').addEventListener('click', () => {
-                const updatedSale = {
-                    ...sale,
-                    clientName: document.getElementById('edit-client-name').value,
-                    paymentMethod: document.getElementById('edit-payment-method').value,
-                    date: new Date(document.getElementById('edit-sale-date').value).toISOString()
-                };
-                
-                const updatedSales = sales.map(s => s.id === saleId ? updatedSale : s);
-                StateManager.setState({ sales: updatedSales });
-                DataManager.save('appState', StateManager.getState());
-                
-                modal.remove();
-                this.updateActiveContent();
+            modal.querySelector('[data-action="save-sale-edit"]').addEventListener('click', async () => {
+                try {
+                    const updatedSale = {
+                        ...sale,
+                        clientName: document.getElementById('edit-client-name').value,
+                        paymentMethod: document.getElementById('edit-payment-method').value,
+                        date: new Date(document.getElementById('edit-sale-date').value).toISOString()
+                    };
+                    
+                    // 1. Atualizar estado local
+                    const updatedSales = sales.map(s => s.id === saleId ? updatedSale : s);
+                    StateManager.setState({ sales: updatedSales });
+                    
+                    // 2. Salvar no banco de dados
+                    const dataService = new DataService();
+                    await dataService.updateSale(saleId, updatedSale);
+                    
+                    modal.remove();
+                    this.updateActiveContent();
+                } catch (error) {
+                    console.error('Erro ao salvar venda:', error);
+                    alert('❌ Erro ao salvar alterações');
+                }
             });
             
             // Excluir venda
