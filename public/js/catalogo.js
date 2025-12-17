@@ -46,23 +46,57 @@
     // ==================================
     function loadStoreData() {
         try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                const data = parsed.data || parsed;
+            // Pegar ID da loja da URL (ex: ?loja=abc123)
+            const urlParams = new URLSearchParams(window.location.search);
+            const storeId = urlParams.get('loja');
+            
+            if (storeId) {
+                // Buscar dados da loja específica usando o ID
+                const storeKey = `lucrocerto_loja_${storeId}`;
+                const stored = localStorage.getItem(storeKey);
                 
-                // Dados da loja
-                if (data.user) {
-                    storeData.businessName = data.user.businessName || 'Minha Loja';
-                    storeData.phone = data.user.phone || '';
-                    storeData.profilePhoto = data.user.profilePhoto || '';
-                    storeData.catalogLogo = data.user.catalogLogo || '';
-                    storeData.catalogColor = data.user.catalogColor || 'pink';
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    const data = parsed.data || parsed;
+                    
+                    // Dados da loja
+                    if (data.user) {
+                        storeData.businessName = data.user.businessName || 'Minha Loja';
+                        storeData.phone = data.user.phone || '';
+                        storeData.profilePhoto = data.user.profilePhoto || '';
+                        storeData.catalogLogo = data.user.catalogLogo || '';
+                        storeData.catalogColor = data.user.catalogColor || 'pink';
+                    }
+                    
+                    // Produtos
+                    if (data.products && Array.isArray(data.products)) {
+                        products = data.products.filter(p => p && p.name);
+                    }
+                } else {
+                    // Se não encontrou dados dessa loja
+                    storeData.businessName = 'Loja não encontrada';
+                    products = [];
                 }
-                
-                // Produtos
-                if (data.products && Array.isArray(data.products)) {
-                    products = data.products.filter(p => p && p.name);
+            } else {
+                // Fallback: buscar do localStorage padrão (modo compatibilidade)
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    const data = parsed.data || parsed;
+                    
+                    // Dados da loja
+                    if (data.user) {
+                        storeData.businessName = data.user.businessName || 'Minha Loja';
+                        storeData.phone = data.user.phone || '';
+                        storeData.profilePhoto = data.user.profilePhoto || '';
+                        storeData.catalogLogo = data.user.catalogLogo || '';
+                        storeData.catalogColor = data.user.catalogColor || 'pink';
+                    }
+                    
+                    // Produtos
+                    if (data.products && Array.isArray(data.products)) {
+                        products = data.products.filter(p => p && p.name);
+                    }
                 }
             }
         } catch (error) {

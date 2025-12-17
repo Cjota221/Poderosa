@@ -38,8 +38,15 @@ const LucroCertoApp = (function() {
     //==================================
     const DataManager = {
         save(key, data) {
-            // Storage já tem try/catch embutido
+            // Salva no localStorage padrão
             Storage.set(key, { data: data, version: '1.4' });
+            
+            // TAMBÉM salva com ID da loja (para o catálogo encontrar)
+            const userId = Storage.get('user_id');
+            if (userId) {
+                const storeKey = `lucrocerto_loja_${userId}`;
+                Storage.set(storeKey, { data: data, version: '1.4' });
+            }
         },
         load(key) {
             const parsed = Storage.get(key, null);
@@ -2596,7 +2603,17 @@ const LucroCertoApp = (function() {
         // ========== PÁGINA MEU CATÁLOGO ==========
         getMeuCatalogoHTML() {
             const { user } = StateManager.getState();
-            const catalogUrl = `${window.location.origin}/catalogo`;
+            
+            // Pegar ID do usuário (do Supabase ou gerar um único)
+            let userId = Storage.get('user_id');
+            if (!userId) {
+                // Se não tem ID, gera um único baseado no email
+                userId = user.email ? btoa(user.email).substring(0, 12) : 'demo-' + Date.now().toString(36);
+                Storage.set('user_id', userId);
+            }
+            
+            // Link do catálogo com ID único da loja
+            const catalogUrl = `https://sistemalucrocerto.com/catalogo?loja=${userId}`;
             const catalogLogo = user.catalogLogo || '';
             const catalogColor = user.catalogColor || 'pink';
             
@@ -2763,7 +2780,15 @@ const LucroCertoApp = (function() {
             // Compartilhar WhatsApp
             document.querySelector('[data-action="share-catalog-whatsapp-page"]')?.addEventListener('click', () => {
                 const { user } = StateManager.getState();
-                const catalogUrl = `${window.location.origin}/catalogo`;
+                
+                // Pegar ID único da loja
+                let userId = Storage.get('user_id');
+                if (!userId) {
+                    userId = user.email ? btoa(user.email).substring(0, 12) : 'demo-' + Date.now().toString(36);
+                    Storage.set('user_id', userId);
+                }
+                
+                const catalogUrl = `https://sistemalucrocerto.com/catalogo?loja=${userId}`;
                 const msg = `Olá! 💖 Confira o catálogo da ${user.businessName || 'minha loja'}: ${catalogUrl}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
             });
