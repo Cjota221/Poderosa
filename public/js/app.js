@@ -72,16 +72,214 @@ const LucroCertoApp = (function() {
             editingClientId: null
         },
         subscribers: [],
+        syncQueue: [],
+        isSyncing: false,
 
         getState() { return this.state; },
+        
         setState(newState) {
             this.state = { ...this.state, ...newState };
             console.log('State Updated:', this.state);
             this.notifySubscribers();
             DataManager.save('appState', this.state);
+            
+            // 🔥 NOVO: Sincronizar com Supabase automaticamente
+            this.syncToSupabase(newState);
         },
+        
         subscribe(callback) { this.subscribers.push(callback); },
-        notifySubscribers() { this.subscribers.forEach(callback => callback()); }
+        notifySubscribers() { this.subscribers.forEach(callback => callback()); },
+        
+        // 🔥 NOVO: Sincronização com Supabase
+        async syncToSupabase(changedData) {
+            // Não sincronizar mudanças de navegação
+            if (changedData.currentPage || changedData.editingProductId || changedData.editingClientId) {
+                return;
+            }
+            
+            const userId = Storage.get('user_id');
+            if (!userId || !window.supabase) {
+                console.log('⚠️ Sem userId ou Supabase disponível');
+                return;
+            }
+            
+            // Adicionar à fila de sincronização
+            this.syncQueue.push({ timestamp: Date.now(), data: changedData });
+            
+            // Processar fila
+            if (!this.isSyncing) {
+                this.processSyncQueue(userId);
+            }
+        },
+        
+        async processSyncQueue(userId) {
+            if (this.syncQueue.length === 0) {
+                this.isSyncing = false;
+                return;
+            }
+            
+            this.isSyncing = true;
+            const item = this.syncQueue.shift();
+            const data = item.data;
+            
+            console.log('☁️ Sincronizando com Supabase...', Object.keys(data));
+            
+            try {
+                // Sincronizar produtos
+                if (data.products) {
+                    await this.syncProducts(userId, data.products);
+                }
+                
+                // Sincronizar clientes
+                if (data.clients) {
+                    await this.syncClients(userId, data.clients);
+                }
+                
+                // Sincronizar vendas
+                if (data.sales) {
+                    await this.syncSales(userId, data.sales);
+                }
+                
+                // Sincronizar user (foto, nome, etc)
+                if (data.user) {
+                    await this.syncUser(userId, data.user);
+                }
+                
+                console.log('✅ Sincronização completa!');
+            } catch (error) {
+                console.error('❌ Erro na sincronização:', error);
+            }
+            
+            // Processar próximo item da fila
+            setTimeout(() => this.processSyncQueue(userId), 500);
+        },
+        
+        async syncProducts(userId, products) {
+            for (const product of products) {
+                try {
+                    // Verificar se já existe
+                    const existing = await supabase.select('produtos', { 
+                        filters: { usuario_id: userId, id: product.id },
+                        limit: 1
+                    });
+                    
+                    const productData = {
+                        usuario_id: userId,
+                        nome: product.name,
+                        descricao: product.description || '',
+                        categoria: product.category || 'Geral',
+                        custo_base: product.baseCost,
+                        preco_venda: product.finalPrice,
+                        margem_lucro: product.profitMargin,
+                        tipo_variacao: product.variationType,
+                        variacoes: product.variations || [],
+                        estoque: product.stock || {},
+                        imagens: product.images || [],
+                        imagem_url: product.imageUrl || product.images?.[0] || '',
+                        imagens_variacoes: product.variationImages || {},
+                        ativo: true,
+                        visivel_catalogo: true
+                    };
+                    
+                    if (existing.data && existing.data.length > 0) {
+                        // Atualizar
+                        await supabase.update('produtos', existing.data[0].id, productData);
+                        console.log('✅ Produto atualizado:', product.name);
+                    } else {
+                        // Inserir
+                        productData.id = product.id;
+                        await supabase.insert('produtos', productData);
+                        console.log('✅ Produto criado:', product.name);
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao sincronizar produto:', product.name, error);
+                }
+            }
+        },
+        
+        async syncClients(userId, clients) {
+            for (const client of clients) {
+                try {
+                    const existing = await supabase.select('clientes', { 
+                        filters: { usuario_id: userId, id: client.id },
+                        limit: 1
+                    });
+                    
+                    const clientData = {
+                        usuario_id: userId,
+                        nome: client.name,
+                        telefone: client.phone || '',
+                        email: client.email || '',
+                        endereco: client.address || '',
+                        cidade: client.city || '',
+                        estado: client.state || '',
+                        notas: client.notes || '',
+                        tags: client.tags || []
+                    };
+                    
+                    if (existing.data && existing.data.length > 0) {
+                        await supabase.update('clientes', existing.data[0].id, clientData);
+                        console.log('✅ Cliente atualizado:', client.name);
+                    } else {
+                        clientData.id = client.id;
+                        await supabase.insert('clientes', clientData);
+                        console.log('✅ Cliente criado:', client.name);
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao sincronizar cliente:', client.name, error);
+                }
+            }
+        },
+        
+        async syncSales(userId, sales) {
+            for (const sale of sales) {
+                try {
+                    const existing = await supabase.select('vendas', { 
+                        filters: { usuario_id: userId, id: sale.id },
+                        limit: 1
+                    });
+                    
+                    const saleData = {
+                        usuario_id: userId,
+                        cliente_id: sale.clientId || null,
+                        produtos: sale.products || [],
+                        valor_total: sale.total,
+                        status: sale.status || 'concluida',
+                        metodo_pagamento: sale.paymentMethod || 'dinheiro',
+                        data_venda: sale.date,
+                        notas: sale.notes || ''
+                    };
+                    
+                    if (existing.data && existing.data.length > 0) {
+                        await supabase.update('vendas', existing.data[0].id, saleData);
+                        console.log('✅ Venda atualizada');
+                    } else {
+                        saleData.id = sale.id;
+                        await supabase.insert('vendas', saleData);
+                        console.log('✅ Venda criada');
+                    }
+                } catch (error) {
+                    console.error('❌ Erro ao sincronizar venda:', error);
+                }
+            }
+        },
+        
+        async syncUser(userId, user) {
+            try {
+                const userData = {
+                    nome: user.businessName || user.name || '',
+                    telefone: user.phone || '',
+                    foto_perfil: user.profilePhoto || '',
+                    logo_catalogo: user.catalogLogo || '',
+                    plano_atual: user.plan || 'trial'
+                };
+                
+                await supabase.update('usuarios', userId, userData);
+                console.log('✅ Dados do usuário atualizados');
+            } catch (error) {
+                console.error('❌ Erro ao sincronizar usuário:', error);
+            }
+        }
     };
 
     //==================================
@@ -5253,6 +5451,115 @@ const LucroCertoApp = (function() {
             console.log('🔑 user_id gerado:', userId);
         }
         
+        // 🔥 NOVO: Carregar dados do Supabase primeiro
+        loadDataFromSupabase(userId).then(() => {
+            continueInit(userId, authData);
+        });
+    }
+    
+    // 🔥 NOVO: Carregar dados do banco
+    async function loadDataFromSupabase(userId) {
+        if (!userId || !window.supabase) {
+            console.log('⚠️ Sem userId ou Supabase - usando dados locais');
+            return;
+        }
+        
+        try {
+            console.log('☁️ Carregando dados do Supabase...');
+            
+            // Buscar produtos
+            const productsResult = await supabase.select('produtos', { 
+                filters: { usuario_id: userId, ativo: true }
+            });
+            
+            // Buscar clientes
+            const clientsResult = await supabase.select('clientes', { 
+                filters: { usuario_id: userId }
+            });
+            
+            // Buscar vendas
+            const salesResult = await supabase.select('vendas', { 
+                filters: { usuario_id: userId }
+            });
+            
+            // Buscar dados do usuário
+            const userResult = await supabase.select('usuarios', { 
+                filters: { id: userId },
+                limit: 1
+            });
+            
+            // Converter dados do Supabase para formato do app
+            const supabaseData = {
+                products: (productsResult.data || []).map(p => ({
+                    id: p.id,
+                    name: p.nome,
+                    description: p.descricao,
+                    category: p.categoria,
+                    baseCost: parseFloat(p.custo_base),
+                    finalPrice: parseFloat(p.preco_venda),
+                    profitMargin: p.margem_lucro,
+                    variationType: p.tipo_variacao,
+                    variations: p.variacoes || [],
+                    stock: p.estoque || {},
+                    images: p.imagens || [],
+                    imageUrl: p.imagem_url,
+                    variationImages: p.imagens_variacoes || {}
+                })),
+                clients: (clientsResult.data || []).map(c => ({
+                    id: c.id,
+                    name: c.nome,
+                    phone: c.telefone,
+                    email: c.email,
+                    address: c.endereco,
+                    city: c.cidade,
+                    state: c.estado,
+                    notes: c.notas,
+                    tags: c.tags || []
+                })),
+                sales: (salesResult.data || []).map(s => ({
+                    id: s.id,
+                    clientId: s.cliente_id,
+                    products: s.produtos || [],
+                    total: parseFloat(s.valor_total),
+                    status: s.status,
+                    paymentMethod: s.metodo_pagamento,
+                    date: s.data_venda,
+                    notes: s.notas
+                })),
+                user: userResult.data?.[0] ? {
+                    name: userResult.data[0].nome,
+                    businessName: userResult.data[0].nome,
+                    email: userResult.data[0].email,
+                    phone: userResult.data[0].telefone,
+                    profilePhoto: userResult.data[0].foto_perfil,
+                    catalogLogo: userResult.data[0].logo_catalogo,
+                    plan: userResult.data[0].plano_atual
+                } : {}
+            };
+            
+            // Salvar no localStorage para não perder
+            if (supabaseData.products.length > 0 || supabaseData.clients.length > 0) {
+                const currentState = DataManager.load('appState') || {};
+                const mergedState = {
+                    ...currentState,
+                    products: supabaseData.products,
+                    clients: supabaseData.clients,
+                    sales: supabaseData.sales,
+                    user: { ...currentState.user, ...supabaseData.user }
+                };
+                DataManager.save('appState', mergedState);
+                console.log('✅ Dados carregados do Supabase:', {
+                    produtos: supabaseData.products.length,
+                    clientes: supabaseData.clients.length,
+                    vendas: supabaseData.sales.length
+                });
+            }
+        } catch (error) {
+            console.error('❌ Erro ao carregar do Supabase:', error);
+        }
+    }
+    
+    function continueInit(userId, authData) {
         let savedState = DataManager.load('appState');
         if (!savedState || !savedState.costs || !savedState.user || !savedState.products) {
             const DemoData = {
