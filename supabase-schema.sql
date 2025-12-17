@@ -378,33 +378,34 @@ ALTER TABLE metas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conquistas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_state ENABLE ROW LEVEL SECURITY;
 
--- Políticas: Usuário só acessa seus próprios dados
-CREATE POLICY "Usuários veem apenas próprios dados" ON usuarios
-    FOR ALL USING (auth.uid() = id);
+-- Políticas: Permitir acesso total via Service Role Key (para Netlify Functions)
+-- As functions usam SUPABASE_SERVICE_KEY que bypassa RLS
+CREATE POLICY "Service role tem acesso total a usuarios" ON usuarios
+    FOR ALL USING (true);
 
-CREATE POLICY "Produtos veem apenas próprios dados" ON produtos
-    FOR ALL USING (auth.uid() = usuario_id);
+CREATE POLICY "Service role tem acesso total a produtos" ON produtos
+    FOR ALL USING (true);
 
-CREATE POLICY "Clientes veem apenas próprios dados" ON clientes
-    FOR ALL USING (auth.uid() = usuario_id);
+CREATE POLICY "Service role tem acesso total a clientes" ON clientes
+    FOR ALL USING (true);
 
-CREATE POLICY "Vendas veem apenas próprios dados" ON vendas
-    FOR ALL USING (auth.uid() = usuario_id);
+CREATE POLICY "Service role tem acesso total a vendas" ON vendas
+    FOR ALL USING (true);
 
-CREATE POLICY "Despesas veem apenas próprios dados" ON despesas
-    FOR ALL USING (auth.uid() = usuario_id);
+CREATE POLICY "Service role tem acesso total a despesas" ON despesas
+    FOR ALL USING (true);
 
-CREATE POLICY "Transações veem apenas próprios dados" ON transacoes
-    FOR ALL USING (auth.uid() = usuario_id);
+CREATE POLICY "Service role tem acesso total a transacoes" ON transacoes
+    FOR ALL USING (true);
 
-CREATE POLICY "Metas veem apenas próprios dados" ON metas
-    FOR ALL USING (auth.uid() = usuario_id);
+CREATE POLICY "Service role tem acesso total a metas" ON metas
+    FOR ALL USING (true);
 
-CREATE POLICY "Conquistas veem apenas próprios dados" ON conquistas
-    FOR ALL USING (auth.uid() = usuario_id);
+CREATE POLICY "Service role tem acesso total a conquistas" ON conquistas
+    FOR ALL USING (true);
 
-CREATE POLICY "App State vê apenas próprios dados" ON app_state
-    FOR ALL USING (auth.uid() = usuario_id);
+CREATE POLICY "Service role tem acesso total a app_state" ON app_state
+    FOR ALL USING (true);
 
 
 -- ============================================
