@@ -3,10 +3,9 @@
  * Integração com banco de dados
  */
 
-// ⚠️ IMPORTANTE: Estas chaves devem estar COMPLETAS e CORRETAS
-// Obtenha do Netlify: Settings → Environment Variables → SUPABASE_ANON_KEY
+// ⚠️ IMPORTANTE: Chave atualizada em 17/12/2025
 const SUPABASE_URL = 'https://ldfahdueqzgemplxrffm.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZmFoZHVlcXpnZW1wbHhyZmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQyOTM1NzcsImV4cCI6MjA0OTg2OTU3N30.XsYhbBOUHov0xc0Z5WtgDg_w0jFV3_wW-FJhNQEAYRk';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZmFoZHVlcXpnZW1wbHhyZmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NzU3ODgsImV4cCI6MjA4MTE1MTc4OH0.m3AN6YuOJtKX1HMJM_npN6ol52ahdkONANDCtKzhwDM';
 
 // Classe principal do Supabase Client
 class SupabaseClient {
