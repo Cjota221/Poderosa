@@ -3,6 +3,57 @@ const LucroCertoApp = (function() {
     'use strict';
 
     //==================================
+    // 0. STORAGE WRAPPER SEGURO
+    //==================================
+    const Storage = {
+        set(key, value) {
+            try {
+                const fullKey = `lucrocerto_${key}`;
+                localStorage.setItem(fullKey, JSON.stringify(value));
+                return true;
+            } catch (error) {
+                console.error('❌ Erro ao salvar no localStorage:', error);
+                return false;
+            }
+        },
+        
+        get(key, defaultValue = null) {
+            try {
+                const fullKey = `lucrocerto_${key}`;
+                const item = localStorage.getItem(fullKey);
+                return item ? JSON.parse(item) : defaultValue;
+            } catch (error) {
+                console.error('❌ Erro ao ler do localStorage:', error);
+                return defaultValue;
+            }
+        },
+        
+        remove(key) {
+            try {
+                const fullKey = `lucrocerto_${key}`;
+                localStorage.removeItem(fullKey);
+                return true;
+            } catch (error) {
+                console.error('❌ Erro ao remover do localStorage:', error);
+                return false;
+            }
+        },
+        
+        clear() {
+            try {
+                // Remove apenas chaves do lucrocerto
+                Object.keys(localStorage)
+                    .filter(key => key.startsWith('lucrocerto_'))
+                    .forEach(key => localStorage.removeItem(key));
+                return true;
+            } catch (error) {
+                console.error('❌ Erro ao limpar localStorage:', error);
+                return false;
+            }
+        }
+    };
+
+    //==================================
     // 1. STATE MANAGER
     //==================================
     const StateManager = {
@@ -292,10 +343,22 @@ const LucroCertoApp = (function() {
         
         // Mostrar mensagem de boas-vindas
         showWelcomeMessage() {
-            // Verificar se já mostrou alguma vez
+            // Verificar se já mostrou alguma vez (flag permanente)
             const hasSeenWelcome = Storage.get('has_seen_welcome');
             
-            if (hasSeenWelcome === true) return; // Já mostrou antes, não mostrar mais
+            // 🔒 BLOQUEIO DEFINITIVO: Se já viu, NUNCA mais mostrar
+            if (hasSeenWelcome === true || hasSeenWelcome === 'true') {
+                console.log('✅ Bem-vinda já mostrada anteriormente - Pulando');
+                return;
+            }
+            
+            // Verificar se tem dados salvos (não é primeira vez)
+            const savedState = DataManager.load('appState');
+            if (savedState && savedState.products && savedState.products.length > 0) {
+                console.log('✅ Usuário já tem dados - Pulando bem-vinda');
+                Storage.set('has_seen_welcome', true);
+                return;
+            }
             
             // Pegar nome do usuário
             const { user } = StateManager.getState();
@@ -5159,10 +5222,27 @@ const LucroCertoApp = (function() {
     // 6. INITIALIZATION
     //==================================
     function init() {
+        // 🔑 CRÍTICO: Garantir que user_id sempre existe ANTES de tudo
+        let userId = Storage.get('user_id');
+        const authData = Storage.get('auth', {});
+        
+        if (!userId && authData.email) {
+            // Gerar ID único baseado no email
+            userId = btoa(authData.email).substring(0, 12);
+            Storage.set('user_id', userId);
+            console.log('🔑 user_id gerado:', userId);
+        }
+        
         let savedState = DataManager.load('appState');
         if (!savedState || !savedState.costs || !savedState.user || !savedState.products) {
             const DemoData = {
-                user: { name: 'Maria Empreendedora', monthlyGoal: 8000, currentRevenue: 5200, monthlySalesGoal: 100 },
+                user: { 
+                    name: authData.nome || authData.name || 'Empreendedora', 
+                    email: authData.email || '',
+                    monthlyGoal: 8000, 
+                    currentRevenue: 5200, 
+                    monthlySalesGoal: 100 
+                },
                 products: [
                     { id: `prod_1`, name: 'Rasteirinha Comfort', baseCost: 15.00, finalPrice: 39.90, variationType: 'simple', variations: [{ name: 'Tamanho', options: ['35', '36', '37'] }], stock: { '35': 10, '36': 15, '37': 5 }, imageUrl: 'https://placehold.co/100x100/f06292/ffffff?text=RC' },
                     { id: `prod_2`, name: 'Bolsa Essencial', baseCost: 45.00, finalPrice: 99.00, variationType: 'none', variations: [], stock: { 'total': 20 }, imageUrl: 'https://placehold.co/100x100/BA68C8/ffffff?text=BE' }
@@ -5179,6 +5259,12 @@ const LucroCertoApp = (function() {
         } else {
             // Garantir que sempre inicie no dashboard
             savedState.currentPage = 'dashboard';
+            
+            // 🔑 SINCRONIZAR nome e email do authData com o state
+            if (!savedState.user) savedState.user = {};
+            if (authData.nome && !savedState.user.name) savedState.user.name = authData.nome;
+            if (authData.email && !savedState.user.email) savedState.user.email = authData.email;
+            
             StateManager.setState(savedState);
         }
         

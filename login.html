@@ -20,7 +20,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>`n    `n    <!-- Meta Pixel & Analytics - TRACKING COMPLETO -->`n    <script src="./public/js/tracking.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Meta Pixel & Analytics - TRACKING COMPLETO -->
+    <script src="./public/js/tracking.js"></script>
     
     <style>
         :root {
@@ -558,6 +561,15 @@
 
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
                 localStorage.setItem('lucrocerto_logged', 'true');
+                
+                // 🔑 CRUCIAL: Salvar user_id separado para identificação persistente
+                if (result.user.id) {
+                    localStorage.setItem('lucrocerto_user_id', result.user.id);
+                } else if (result.user.email) {
+                    // Gerar ID único baseado no email
+                    const userId = btoa(result.user.email).substring(0, 12);
+                    localStorage.setItem('lucrocerto_user_id', userId);
+                }
                 
                 // 🎯 TRACKING: Login realizado com sucesso
                 if (window.Tracker) {
