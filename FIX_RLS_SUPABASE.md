@@ -10,34 +10,24 @@ O **Row Level Security (RLS)** do Supabase está **BLOQUEANDO** todas as tentati
 
 ### **OPÇÃO 1: Desabilitar RLS (Recomendado para MVP)** ⚡
 
-1. **Acesse o Supabase:**
-   - https://supabase.com/dashboard/project/ldfahdueqzgemplxrffm
+**Execute este SQL no Supabase SQL Editor:**
 
-2. **Vá em "Table Editor" (menu lateral)**
+👉 https://supabase.com/dashboard/project/ldfahdueqzgemplxrffm/sql/new
 
-3. **Para CADA tabela** (produtos, clientes, vendas, usuarios):
-   
-   a. Clique na tabela
-   
-   b. Clique no ícone **⚙️ (Settings)** no canto superior direito
-   
-   c. **DESMARQUE** a opção:
-      ```
-      ☐ Enable Row Level Security (RLS)
-      ```
-   
-   d. Clique em **"Save"**
+```sql
+-- Desabilitar RLS em TODAS as tabelas existentes
+ALTER TABLE usuarios DISABLE ROW LEVEL SECURITY;
+ALTER TABLE produtos DISABLE ROW LEVEL SECURITY;
+ALTER TABLE clientes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE vendas DISABLE ROW LEVEL SECURITY;
+ALTER TABLE despesas DISABLE ROW LEVEL SECURITY;
+ALTER TABLE transacoes DISABLE ROW LEVEL SECURITY;
+ALTER TABLE metas DISABLE ROW LEVEL SECURITY;
+ALTER TABLE conquistas DISABLE ROW LEVEL SECURITY;
+ALTER TABLE app_state DISABLE ROW LEVEL SECURITY;
+```
 
-4. **Repita para todas as 9 tabelas:**
-   - ☐ usuarios
-   - ☐ produtos
-   - ☐ clientes
-   - ☐ vendas
-   - ☐ despesas
-   - ☐ transacoes
-   - ☐ metas
-   - ☐ conquistas
-   - ☐ app_state
+**Clique em RUN** (ou Ctrl+Enter) e pronto! ✅
 
 ---
 
