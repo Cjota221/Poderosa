@@ -285,11 +285,10 @@ const LucroCertoApp = (function() {
         
         // Mostrar mensagem de boas-vindas
         showWelcomeMessage() {
-            // Verificar se já mostrou hoje
-            const lastWelcome = Storage.get('last_welcome');
-            const today = new Date().toDateString();
+            // Verificar se já mostrou alguma vez
+            const hasSeenWelcome = Storage.get('has_seen_welcome');
             
-            if (lastWelcome === today) return; // Já mostrou hoje
+            if (hasSeenWelcome === true) return; // Já mostrou antes, não mostrar mais
             
             // Pegar nome do usuário
             const { user } = StateManager.getState();
@@ -297,13 +296,13 @@ const LucroCertoApp = (function() {
             
             // Frases motivacionais aleatórias
             const messages = [
-                `Olá, ${userName}! Bem-vinda de volta! ✨`,
-                `Que bom te ver, ${userName}! Pronta para lucrar hoje? 💰`,
-                `Bem-vinda de volta, ${userName}! Vamos arrasar nas vendas? 🚀`,
-                `Oi, ${userName}! Mais um dia de sucesso te espera! 💪`,
-                `Olá, ${userName}! Seu negócio está crescendo! 📈`,
-                `Bem-vinda, ${userName}! Hora de fazer o que você faz de melhor! 💖`,
-                `Oi, ${userName}! Que tal bater aquela meta hoje? 🎯`
+                `Olá, ${userName}! Bem-vinda ao Lucro Certo! ✨`,
+                `Que bom te ter aqui, ${userName}! Vamos lucrar juntas? 💰`,
+                `Bem-vinda, ${userName}! Seu sucesso começa agora! 🚀`,
+                `Oi, ${userName}! Pronta para transformar seu negócio? 💪`,
+                `Olá, ${userName}! Seja bem-vinda ao seu app de gestão! 📈`,
+                `Bem-vinda, ${userName}! Hora de organizar e lucrar! 💖`,
+                `Oi, ${userName}! Vamos juntas nessa jornada! 🎯`
             ];
             
             const randomMessage = messages[Math.floor(Math.random() * messages.length)];
@@ -331,8 +330,8 @@ const LucroCertoApp = (function() {
                 setTimeout(() => toast.remove(), 300);
             }, 4000);
             
-            // Salvar que já mostrou hoje
-            Storage.set('last_welcome', today);
+            // Marcar que já viu a mensagem (NUNCA mais aparece)
+            Storage.set('has_seen_welcome', true);
         },
         
         // Fechar banner de aviso do plano
