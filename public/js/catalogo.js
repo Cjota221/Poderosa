@@ -31,8 +31,8 @@
     // ==================================
     // INICIALIZAÇÃO
     // ==================================
-    function init() {
-        loadStoreData();
+    async function init() {
+        await loadStoreData();
         loadCart();
         renderHeader();
         renderProducts();
@@ -44,38 +44,73 @@
     // ==================================
     // CARREGAMENTO DE DADOS
     // ==================================
-    function loadStoreData() {
+    async function loadStoreData() {
         try {
             // Pegar ID da loja da URL (ex: ?loja=abc123)
             const urlParams = new URLSearchParams(window.location.search);
             const storeId = urlParams.get('loja');
             
             if (storeId) {
-                // Buscar dados da loja específica usando o ID
-                const storeKey = `lucrocerto_loja_${storeId}`;
-                const stored = localStorage.getItem(storeKey);
+                // 🔥 BUSCAR DADOS DO SUPABASE pela API
+                console.log('📦 Carregando loja:', storeId);
                 
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    const data = parsed.data || parsed;
+                try {
+                    const response = await fetch(`/.netlify/functions/get-catalog?loja=${storeId}`);
                     
-                    // Dados da loja
-                    if (data.user) {
-                        storeData.businessName = data.user.businessName || 'Minha Loja';
-                        storeData.phone = data.user.phone || '';
-                        storeData.profilePhoto = data.user.profilePhoto || '';
-                        storeData.catalogLogo = data.user.catalogLogo || '';
-                        storeData.catalogColor = data.user.catalogColor || 'pink';
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        if (data.success && data.store) {
+                            // Dados da loja
+                            storeData.businessName = data.store.businessName || data.store.nome || 'Minha Loja';
+                            storeData.phone = data.store.phone || data.store.telefone || '';
+                            storeData.profilePhoto = data.store.profilePhoto || data.store.foto_perfil || '';
+                            storeData.catalogLogo = data.store.catalogLogo || data.store.logo_catalogo || '';
+                            storeData.catalogColor = data.store.catalogColor || 'pink';
+                            
+                            // Produtos
+                            if (data.products && Array.isArray(data.products)) {
+                                products = data.products.filter(p => p && p.name);
+                                console.log('✅ Produtos carregados:', products.length);
+                            }
+                        } else {
+                            // Loja não encontrada no banco
+                            storeData.businessName = 'Loja não encontrada';
+                            products = [];
+                            console.warn('⚠️ Loja não encontrada no banco');
+                        }
+                    } else {
+                        throw new Error('Erro ao buscar dados da loja');
                     }
+                } catch (apiError) {
+                    console.error('❌ Erro ao buscar do Supabase:', apiError);
                     
-                    // Produtos
-                    if (data.products && Array.isArray(data.products)) {
-                        products = data.products.filter(p => p && p.name);
+                    // FALLBACK: Tentar localStorage como backup
+                    const storeKey = `lucrocerto_loja_${storeId}`;
+                    const stored = localStorage.getItem(storeKey);
+                    
+                    if (stored) {
+                        const parsed = JSON.parse(stored);
+                        const data = parsed.data || parsed;
+                        
+                        // Dados da loja
+                        if (data.user) {
+                            storeData.businessName = data.user.businessName || 'Minha Loja';
+                            storeData.phone = data.user.phone || '';
+                            storeData.profilePhoto = data.user.profilePhoto || '';
+                            storeData.catalogLogo = data.user.catalogLogo || '';
+                            storeData.catalogColor = data.user.catalogColor || 'pink';
+                        }
+                        
+                        // Produtos
+                        if (data.products && Array.isArray(data.products)) {
+                            products = data.products.filter(p => p && p.name);
+                        }
+                        console.log('✅ Dados carregados do localStorage (fallback)');
+                    } else {
+                        storeData.businessName = 'Loja não encontrada';
+                        products = [];
                     }
-                } else {
-                    // Se não encontrou dados dessa loja
-                    storeData.businessName = 'Loja não encontrada';
-                    products = [];
                 }
             } else {
                 // Fallback: buscar do localStorage padrão (modo compatibilidade)
