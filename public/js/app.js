@@ -2180,6 +2180,9 @@ const LucroCertoApp = (function() {
                     // Usa o mapa de fotos vinculadas que foi construído durante a edição
                     productData.variationImages = { ...variationImagesMap };
                 } else if (variationType === 'combined') {
+                    // Obter nomes das variações combinadas
+                    const variationName1 = document.getElementById('variation-name-1')?.value.trim();
+                    const variationName2 = document.getElementById('variation-name-2')?.value.trim();
                     
                     if (!variationName1 || !variationName2) {
                         LoadingHelper.setButtonError(submitBtn, 'Nomes obrigatórios');
@@ -5726,7 +5729,8 @@ document.addEventListener('click', (e) => {
     if (navItem) {
         const route = navItem.dataset.route;
         if (route) {
-            StateManager.setState({ currentPage: route });
+            State.currentPage = route;
+            UIManager.updateActiveContent();
             // Fechar menu lateral no mobile
             document.body.classList.remove('menu-open');
         }
