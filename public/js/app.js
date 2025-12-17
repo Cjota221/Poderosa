@@ -301,6 +301,11 @@ const LucroCertoApp = (function() {
             const { user } = StateManager.getState();
             const userName = user.name ? user.name.split(' ')[0] : 'Empreendedora';
             
+            // 🎯 TRACKING: Usuário completou o cadastro
+            if (window.Tracker) {
+                window.Tracker.trackSignUp(user.email, 'Email');
+            }
+            
             // Frases motivacionais aleatórias
             const messages = [
                 `Olá, ${userName}! Bem-vinda ao Lucro Certo! ✨`,
@@ -415,7 +420,29 @@ const LucroCertoApp = (function() {
                 if (pageElement) {
                     const isActive = pageId === currentPage;
                     pageElement.classList.toggle('active', isActive);
-                    if (isActive) this.renderPage(currentPage);
+                    if (isActive) {
+                        this.renderPage(currentPage);
+                        
+                        // 🎯 TRACKING: Navegação entre páginas
+                        if (window.Tracker) {
+                            const pageNames = {
+                                'dashboard': 'Dashboard',
+                                'produtos': 'Produtos',
+                                'add-edit-product': 'Adicionar/Editar Produto',
+                                'despesas': 'Despesas',
+                                'precificar': 'Precificar',
+                                'metas': 'Metas',
+                                'relatorios': 'Relatórios',
+                                'configuracoes': 'Configurações',
+                                'vendas': 'Vendas',
+                                'clientes': 'Clientes',
+                                'financeiro': 'Financeiro',
+                                'plano': 'Meu Plano'
+                            };
+                            const pageName = pageNames[currentPage] || currentPage;
+                            window.Tracker.trackPageView(`App - ${pageName}`);
+                        }
+                    }
                 }
             });
         },

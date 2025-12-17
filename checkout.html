@@ -20,7 +20,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>`n    `n    <!-- Meta Pixel & Analytics - TRACKING COMPLETO -->`n    <script src="./public/js/tracking.js"></script>
     
     <!-- Mercado Pago SDK -->
     <script src="https://sdk.mercadopago.com/js/v2"></script>
@@ -1547,6 +1547,15 @@
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
                 localStorage.setItem('lucrocerto_logged', 'true');
                 localStorage.removeItem('lucrocerto_trial'); // Remove trial
+                
+                // 🎯 TRACKING: Checkout iniciado
+                if (window.Tracker) {
+                    window.Tracker.trackInitiateCheckout(29.90, 'BRL', [{
+                        name: 'Assinatura Mensal Lucro Certo',
+                        price: 29.90,
+                        quantity: 1
+                    }]);
+                }
                 
                 // VERIFICAR SE É RENOVAÇÃO OU PRIMEIRO PAGAMENTO
                 if (isRenewal) {

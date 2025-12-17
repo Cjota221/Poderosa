@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>`n    `n    <!-- Meta Pixel & Analytics - TRACKING COMPLETO -->`n    <script src="./public/js/tracking.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         
@@ -238,6 +238,25 @@
             status: 'aprovado'
         };
         localStorage.setItem('lucrocerto_payment', JSON.stringify(paymentData));
+        
+        // 🎯 TRACKING: Pagamento aprovado com sucesso
+        if (window.Tracker && plano && planos[plano]) {
+            const valorPlano = periodo === 'anual' ? planos[plano].anual : planos[plano].mensal;
+            window.Tracker.trackPurchase({
+                transactionId: params.get('payment_id') || `TXN-${Date.now()}`,
+                value: valorPlano,
+                currency: 'BRL',
+                items: [{
+                    name: planos[plano].nome,
+                    price: valorPlano,
+                    quantity: 1,
+                    category: 'subscription'
+                }]
+            });
+            
+            // SUPER IMPORTANTE: Evento de assinatura (Subscribe)
+            window.Tracker.trackSubscribe(valorPlano, 'BRL', periodo === 'anual' ? 'yearly' : 'monthly');
+        }
 
         // Atualizar auth com o plano correto (importante para PlanManager)
         const existingAuth = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');

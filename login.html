@@ -20,7 +20,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>`n    `n    <!-- Meta Pixel & Analytics - TRACKING COMPLETO -->`n    <script src="./public/js/tracking.js"></script>
     
     <style>
         :root {
@@ -558,6 +558,11 @@
 
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
                 localStorage.setItem('lucrocerto_logged', 'true');
+                
+                // 🎯 TRACKING: Login realizado com sucesso
+                if (window.Tracker) {
+                    window.Tracker.trackLogin(result.user.email, 'Email');
+                }
                 
                 // IMPORTANTE: Limpar flag de trial se usuário tem plano pago
                 if (result.user.plano !== 'trial') {
