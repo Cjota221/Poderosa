@@ -11,7 +11,7 @@
     // CONFIGURAÇÃO
     // ==================================
     const PIXEL_ID = '1973607160089954';
-    const GA_ID = 'G-XXXXXXXXXX'; // Você vai criar e me passar depois
+    const GA_ID = 'G-E3W506DTB2'; // Google Analytics 4 - Sistema Lucro Certo
 
     // ==================================
     // META PIXEL (FACEBOOK)
