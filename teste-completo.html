@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Teste Completo Supabase</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        h1 { 
+            color: #667eea; 
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #764ba2;
+            margin-top: 30px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .test-result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        .info {
+            background: #e7f3ff;
+            color: #004085;
+            border: 2px solid #b8daff;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🧪 Teste Completo do Supabase</h1>
+        <p style="color: #666;">Aguarde 2-3 minutos após desabilitar RLS para testar</p>
+        
+        <div style="margin-top: 20px;">
+            <button class="btn" onclick="testarTudo()">🚀 EXECUTAR TODOS OS TESTES</button>
+            <button class="btn" onclick="limparResultados()">🧹 Limpar Resultados</button>
+        </div>
+
+        <div id="resultados"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ldfahdueqzgemplxrffm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZmFoZHVlcXpnZW1wbHhyZmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NzU3ODgsImV4cCI6MjA4MTE1MTc4OH0.m3AN6YuOJtKX1HMJM_npN6ol52ahdkONANDCtKzhwDM';
+
+        function addResult(html) {
+            document.getElementById('resultados').innerHTML += html;
+        }
+
+        function limparResultados() {
+            document.getElementById('resultados').innerHTML = '';
+        }
+
+        async function testarTudo() {
+            limparResultados();
+            addResult('<h2>📋 Iniciando Testes...</h2>');
+            
+            await testeSelect();
+            await testeInsert();
+            await testeUpdate();
+            await testeDelete();
+            
+            addResult('<h2>✅ Testes Concluídos!</h2>');
+        }
+
+        async function testeSelect() {
+            addResult('<div class="test-result loading">⏳ Teste 1: SELECT em produtos...</div>');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/produtos?select=*&limit=5`, {
+                    method: 'GET',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`<div class="test-result success">
+                        ✅ SELECT funcionou!<br>
+                        📊 Produtos encontrados: ${data.length}<br>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>`);
+                } else {
+                    const error = await response.json();
+                    addResult(`<div class="test-result error">
+                        ❌ SELECT falhou (${response.status})<br>
+                        Erro: ${JSON.stringify(error, null, 2)}
+                    </div>`);
+                }
+            } catch (error) {
+                addResult(`<div class="test-result error">❌ Erro: ${error.message}</div>`);
+            }
+        }
+
+        async function testeInsert() {
+            addResult('<div class="test-result loading">⏳ Teste 2: INSERT em produtos...</div>');
+            
+            const timestamp = Date.now();
+            const testProduct = {
+                id: `test_${timestamp}`,
+                usuario_id: 'teste_automatizado',
+                nome: `Produto Teste ${timestamp}`,
+                custo_base: 10,
+                margem_lucro: 50,
+                preco_final: 15,
+                tipo: 'simples',
+                ativo: true,
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/produtos`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(testProduct)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    window.testProductId = data[0]?.id;
+                    addResult(`<div class="test-result success">
+                        ✅ INSERT funcionou!<br>
+                        🆔 ID criado: ${data[0]?.id}<br>
+                        📦 Produto: ${data[0]?.nome}<br>
+                        <pre>${JSON.stringify(data[0], null, 2)}</pre>
+                    </div>`);
+                } else {
+                    const error = await response.json();
+                    addResult(`<div class="test-result error">
+                        ❌ INSERT falhou (${response.status})<br>
+                        🚨 Se erro 400/403: RLS ainda pode estar ativo<br>
+                        Erro: ${JSON.stringify(error, null, 2)}
+                    </div>`);
+                }
+            } catch (error) {
+                addResult(`<div class="test-result error">❌ Erro: ${error.message}</div>`);
+            }
+        }
+
+        async function testeUpdate() {
+            if (!window.testProductId) {
+                addResult('<div class="test-result info">⏭️ Teste 3: UPDATE pulado (nenhum produto foi criado)</div>');
+                return;
+            }
+
+            addResult('<div class="test-result loading">⏳ Teste 3: UPDATE em produtos...</div>');
+            
+            const updateData = {
+                nome: `Produto ATUALIZADO ${Date.now()}`,
+                preco_final: 25.00
+            };
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/produtos?id=eq.${window.testProductId}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult(`<div class="test-result success">
+                        ✅ UPDATE funcionou!<br>
+                        📝 Nome atualizado: ${data[0]?.nome}<br>
+                        💰 Novo preço: R$ ${data[0]?.preco_final}<br>
+                        <pre>${JSON.stringify(data[0], null, 2)}</pre>
+                    </div>`);
+                } else {
+                    const error = await response.json();
+                    addResult(`<div class="test-result error">
+                        ❌ UPDATE falhou (${response.status})<br>
+                        Erro: ${JSON.stringify(error, null, 2)}
+                    </div>`);
+                }
+            } catch (error) {
+                addResult(`<div class="test-result error">❌ Erro: ${error.message}</div>`);
+            }
+        }
+
+        async function testeDelete() {
+            if (!window.testProductId) {
+                addResult('<div class="test-result info">⏭️ Teste 4: DELETE pulado (nenhum produto foi criado)</div>');
+                return;
+            }
+
+            addResult('<div class="test-result loading">⏳ Teste 4: DELETE em produtos...</div>');
+            
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/produtos?id=eq.${window.testProductId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (response.ok) {
+                    addResult(`<div class="test-result success">
+                        ✅ DELETE funcionou!<br>
+                        🗑️ Produto de teste removido com sucesso<br>
+                        🧹 Banco de dados limpo
+                    </div>`);
+                } else {
+                    const error = await response.json();
+                    addResult(`<div class="test-result error">
+                        ❌ DELETE falhou (${response.status})<br>
+                        Erro: ${JSON.stringify(error, null, 2)}
+                    </div>`);
+                }
+            } catch (error) {
+                addResult(`<div class="test-result error">❌ Erro: ${error.message}</div>`);
+            }
+        }
+    </script>
+</body>
+</html>
