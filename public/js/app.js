@@ -6052,59 +6052,59 @@ const LucroCertoApp = (function() {
         }, 10000);
     }
 
+    // ============================================
+    // 🚀 EVENT DELEGATION GLOBAL (Memory Leak Prevention)
+    // ============================================
+    // Um único event listener para todo o app (em vez de 30+)
+    document.addEventListener('click', (e) => {
+        // Navegação (menu lateral e bottom nav)
+        const navItem = e.target.closest('[data-action="navigate"]');
+        if (navItem) {
+            const route = navItem.dataset.route;
+            if (route) {
+                StateManager.setState({ currentPage: route });
+                // Fechar menu lateral no mobile
+                document.body.classList.remove('menu-open');
+            }
+            return;
+        }
+        
+        // Logout
+        if (e.target.closest('[data-action="logout"]')) {
+            if (confirm('❓ Tem certeza que deseja sair?')) {
+                Storage.clear();
+                window.location.href = './login';
+            }
+            return;
+        }
+        
+        // Toggle menu (hamburger)
+        if (e.target.closest('[data-action="toggle-menu"]')) {
+            document.body.classList.toggle('menu-open');
+            return;
+        }
+        
+        // Fechar menu ao clicar fora (mobile)
+        if (e.target.closest('.menu-overlay')) {
+            document.body.classList.remove('menu-open');
+            return;
+        }
+        
+        // Fechar modal ao clicar no X ou fora
+        const modalClose = e.target.closest('[data-action="close-modal"]');
+        if (modalClose) {
+            const modal = modalClose.closest('.modal');
+            if (modal) {
+                modal.remove();
+            }
+            return;
+        }
+    });
+
     return { 
         init,
         closePlanBanner: UIManager.closePlanBanner.bind(UIManager)
     };
 })();
-
-// ============================================
-// 🚀 EVENT DELEGATION GLOBAL (Memory Leak Prevention)
-// ============================================
-// Um único event listener para todo o app (em vez de 30+)
-document.addEventListener('click', (e) => {
-    // Navegação (menu lateral e bottom nav)
-    const navItem = e.target.closest('[data-action="navigate"]');
-    if (navItem) {
-        const route = navItem.dataset.route;
-        if (route) {
-            StateManager.setState({ currentPage: route });
-            // Fechar menu lateral no mobile
-            document.body.classList.remove('menu-open');
-        }
-        return;
-    }
-    
-    // Logout
-    if (e.target.closest('[data-action="logout"]')) {
-        if (confirm('❓ Tem certeza que deseja sair?')) {
-            Storage.clear();
-            window.location.href = './login';
-        }
-        return;
-    }
-    
-    // Toggle menu (hamburger)
-    if (e.target.closest('[data-action="toggle-menu"]')) {
-        document.body.classList.toggle('menu-open');
-        return;
-    }
-    
-    // Fechar menu ao clicar fora (mobile)
-    if (e.target.closest('.menu-overlay')) {
-        document.body.classList.remove('menu-open');
-        return;
-    }
-    
-    // Fechar modal ao clicar no X ou fora
-    const modalClose = e.target.closest('[data-action="close-modal"]');
-    if (modalClose) {
-        const modal = modalClose.closest('.modal');
-        if (modal) {
-            modal.remove();
-        }
-        return;
-    }
-});
 
 document.addEventListener('DOMContentLoaded', LucroCertoApp.init);
