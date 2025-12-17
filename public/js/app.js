@@ -2134,17 +2134,35 @@ const LucroCertoApp = (function() {
                     AchievementSystem.checkAndAward('primeiro_produto');
                 }
 
-                // Simular delay de salvamento (remover em produção se usar banco real)
-                setTimeout(() => {
-                    StateManager.setState({ 
-                        products: updatedProducts,
-                        currentPage: 'produtos',
-                        editingProductId: null
-                    });
-                    
-                    // Esconder loading e mostrar sucesso
-                    LoadingHelper.setButtonLoading(submitBtn, false, 'Produto salvo!');
-                }, 300);
+                // Salvar produto no banco de dados
+                (async () => {
+                    try {
+                        // 1. Atualizar estado local
+                        StateManager.setState({ 
+                            products: updatedProducts,
+                            currentPage: 'produtos',
+                            editingProductId: null
+                        });
+                        
+                        // 2. Salvar no banco de dados (Supabase)
+                        const dataService = new DataService();
+                        if (editingProductId) {
+                            await dataService.updateProduct(editingProductId, productData);
+                        } else {
+                            await dataService.saveProduct(productData);
+                        }
+                        
+                        // Sucesso!
+                        LoadingHelper.setButtonLoading(submitBtn, false, '✅ Produto salvo!');
+                        
+                        if (!editingProductId) {
+                            AchievementSystem.checkAndAward('primeiro_produto');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao salvar produto:', error);
+                        LoadingHelper.setButtonError(submitBtn, '❌ Erro ao salvar');
+                    }
+                })();
             });
 
             // Event listeners
@@ -2917,7 +2935,7 @@ const LucroCertoApp = (function() {
             this.renderPlanInfo();
             
             // Salvar perfil
-            document.querySelector('[data-action="save-profile"]')?.addEventListener('click', () => {
+            document.querySelector('[data-action="save-profile"]')?.addEventListener('click', async () => {
                 const saveBtn = document.querySelector('[data-action="save-profile"]');
                 
                 // Mostrar loading
@@ -2936,11 +2954,28 @@ const LucroCertoApp = (function() {
                     profilePhoto: currentProfilePhoto
                 };
                 
-                // Delay para mostrar feedback visual
-                setTimeout(() => {
+                try {
+                    // 1. Salvar no StateManager (memória + localStorage)
                     StateManager.setState({ user: updatedUser });
-                    LoadingHelper.setButtonLoading(saveBtn, false, 'Configurações salvas!');
-                }, 300);
+                    
+                    // 2. SALVAR NO BANCO DE DADOS (Supabase)
+                    const dataService = new DataService();
+                    await dataService.updateUserProfile({
+                        nome: updatedUser.name,
+                        telefone: updatedUser.phone,
+                        nomeNegocio: updatedUser.businessName,
+                        fotoUrl: updatedUser.profilePhoto,
+                        rotina: updatedUser.routine,
+                        meta_mensal: updatedUser.monthlyGoal,
+                        meta_vendas: updatedUser.monthlySalesGoal
+                    });
+                    
+                    // Sucesso!
+                    LoadingHelper.setButtonLoading(saveBtn, false, '✅ Salvo com sucesso!');
+                } catch (error) {
+                    console.error('Erro ao salvar perfil:', error);
+                    LoadingHelper.setButtonError(saveBtn, '❌ Erro ao salvar');
+                }
             });
         },
         

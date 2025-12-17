@@ -321,7 +321,10 @@ class DataService {
                 nome: profile.nome,
                 telefone: profile.telefone,
                 nome_negocio: profile.nomeNegocio,
-                foto_url: profile.fotoUrl
+                foto_url: profile.fotoUrl,
+                rotina: profile.rotina,
+                meta_mensal: profile.meta_mensal,
+                meta_vendas: profile.meta_vendas
             });
         }
         
