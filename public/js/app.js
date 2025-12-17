@@ -2446,11 +2446,17 @@ const LucroCertoApp = (function() {
 
                 console.log('✅ Produto pronto para salvar:', productData);
 
-                // Salvar produto (RÁPIDO - só localStorage)
+                // Salvar produto NO BANCO DE DADOS primeiro
+                console.log('💾 Salvando no StateManager (vai pro Supabase)...');
+                
+                // PRIMEIRO: Salvar apenas os produtos (sincroniza com Supabase)
+                StateManager.setState({ 
+                    products: updatedProducts
+                });
+                
+                // DEPOIS: Navegar de volta (não sincroniza, é só navegação)
                 setTimeout(() => {
-                    console.log('💾 Salvando no StateManager...');
                     StateManager.setState({ 
-                        products: updatedProducts,
                         currentPage: 'produtos',
                         editingProductId: null
                     });
@@ -2458,7 +2464,7 @@ const LucroCertoApp = (function() {
                     console.log('✅ Produto salvo com sucesso!');
                     // Sucesso!
                     LoadingHelper.setButtonLoading(submitBtn, false, '✅ Produto salvo!');
-                }, 300);
+                }, 500);
             });
 
             // Event listeners
@@ -4663,13 +4669,18 @@ const LucroCertoApp = (function() {
                     currentRevenue: (user.currentRevenue || 0) + total
                 };
                 
+                // PRIMEIRO: Salvar dados (sincroniza com Supabase)
                 StateManager.setState({
                     sales: [...(currentSales || []), sale],
                     products: updatedProducts,
                     clients: updatedClients,
-                    user: updatedUser,
-                    currentPage: 'vendas'
+                    user: updatedUser
                 });
+                
+                // DEPOIS: Navegar (não sincroniza)
+                setTimeout(() => {
+                    StateManager.setState({ currentPage: 'vendas' });
+                }, 300);
                 
                 // Enviar para WhatsApp se marcado
                 if (sendWhatsApp && clientPhone) {
