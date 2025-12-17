@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧹 Limpar Dados Corrompidos</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .card {
+            background: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #667eea; 
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            display: none;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #004085;
+            border-left: 4px solid #667eea;
+        }
+        .warning {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🧹 Limpar Dados Corrompidos</h1>
+        
+        <div class="warning">
+            ⚠️ <strong>Atenção:</strong> Isso vai limpar TODOS os dados do localStorage. Use apenas se estiver com problemas de JSON inválido.
+        </div>
+
+        <div class="info">
+            <strong>O que este botão faz:</strong><br>
+            ✅ Remove dados corrompidos do localStorage<br>
+            ✅ Limpa cache do navegador<br>
+            ✅ Força recarregamento limpo<br>
+            ✅ Dados do Supabase NÃO são afetados
+        </div>
+
+        <button class="btn btn-danger" onclick="limparTudo()">
+            🗑️ Limpar localStorage e cache
+        </button>
+
+        <button class="btn btn-success" onclick="voltarApp()">
+            ↩️ Voltar para o App
+        </button>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        function limparTudo() {
+            const status = document.getElementById('status');
+            
+            try {
+                // Limpar TODOS os dados do localStorage
+                localStorage.clear();
+                
+                // Limpar sessionStorage também
+                sessionStorage.clear();
+                
+                status.className = 'status success';
+                status.style.display = 'block';
+                status.innerHTML = `
+                    ✅ <strong>Sucesso!</strong><br><br>
+                    <strong>Dados removidos:</strong><br>
+                    • localStorage limpo<br>
+                    • sessionStorage limpo<br>
+                    • Cache será limpo no próximo reload<br><br>
+                    <strong>Próximo passo:</strong><br>
+                    1. Clique em "Voltar para o App"<br>
+                    2. Faça login novamente<br>
+                    3. Os dados virão do Supabase (se o RLS estiver desabilitado)
+                `;
+                
+                console.log('✅ localStorage limpo com sucesso!');
+            } catch (error) {
+                status.className = 'status error';
+                status.style.display = 'block';
+                status.innerHTML = `
+                    ❌ <strong>Erro ao limpar:</strong><br>
+                    ${error.message}<br><br>
+                    Tente limpar manualmente:
+                    <ol>
+                        <li>Abra o DevTools (F12)</li>
+                        <li>Vá em "Application" → "Local Storage"</li>
+                        <li>Clique com botão direito → "Clear"</li>
+                    </ol>
+                `;
+                console.error('❌ Erro:', error);
+            }
+        }
+
+        function voltarApp() {
+            // Forçar reload sem cache
+            window.location.href = './index.html?v=' + Date.now();
+        }
+    </script>
+</body>
+</html>
