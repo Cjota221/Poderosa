@@ -2224,6 +2224,8 @@ const LucroCertoApp = (function() {
                 // Salva ou atualiza produto
                 console.log('💾 Preparando para salvar produto...');
                 const state = StateManager.getState();
+                const isTrial = Storage.get('trial') === 'true';
+                const TRIAL_PRODUCT_LIMIT = 3;
                 let updatedProducts;
 
                 if (editingProductId) {
@@ -5744,8 +5746,7 @@ document.addEventListener('click', (e) => {
     if (navItem) {
         const route = navItem.dataset.route;
         if (route) {
-            State.currentPage = route;
-            UIManager.updateActiveContent();
+            StateManager.setState({ currentPage: route });
             // Fechar menu lateral no mobile
             document.body.classList.remove('menu-open');
         }
