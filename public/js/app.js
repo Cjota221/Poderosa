@@ -2104,6 +2104,7 @@ const LucroCertoApp = (function() {
             // ===== SUBMIT DO FORMULÁRIO =====
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
+                console.log('🔄 Iniciando salvamento do produto...');
                 
                 // Pegar botão de submit
                 const submitBtn = form.querySelector('button[type="submit"]');
@@ -2115,6 +2116,8 @@ const LucroCertoApp = (function() {
                 const productCost = parseFloat(baseCostInput.value) || 0;
                 const profitMargin = parseInt(profitMarginInput.value) || 100;
                 const variationType = form.querySelector('input[name="variation-type"]:checked').value;
+
+                console.log('📦 Dados básicos:', { productName, productCost, profitMargin, variationType });
 
                 // Validações
                 if (!productName) {
@@ -2151,11 +2154,15 @@ const LucroCertoApp = (function() {
                 };
 
                 // Processa estoque baseado no tipo de variação
+                console.log('📊 Processando estoque para tipo:', variationType);
+                
                 if (variationType === 'none') {
                     const stockTotal = parseInt(document.getElementById('stock-total')?.value) || 0;
                     productData.stock = { total: stockTotal };
+                    console.log('✅ Estoque sem variação:', stockTotal);
                 } else if (variationType === 'simple') {
                     const variationName = document.getElementById('variation-name-1')?.value.trim();
+                    console.log('🔤 Nome da variação simples:', variationName);
                     
                     if (!variationName) {
                         LoadingHelper.setButtonError(submitBtn, 'Variação obrigatória');
@@ -2215,15 +2222,19 @@ const LucroCertoApp = (function() {
                 }
 
                 // Salva ou atualiza produto
+                console.log('💾 Preparando para salvar produto...');
                 const state = StateManager.getState();
                 let updatedProducts;
 
                 if (editingProductId) {
                     // Atualiza produto existente
+                    console.log('✏️ Atualizando produto existente:', editingProductId);
                     updatedProducts = state.products.map(p => p.id === editingProductId ? productData : p);
                 } else {
                     // Novo produto - verifica limite trial
+                    console.log('🆕 Criando novo produto');
                     if (isTrial && state.products.length >= TRIAL_PRODUCT_LIMIT) {
+                        console.log('⚠️ Limite trial atingido');
                         LoadingHelper.setButtonError(submitBtn, 'Limite atingido');
                         showTrialLimitModal();
                         return;
@@ -2233,14 +2244,18 @@ const LucroCertoApp = (function() {
                     AchievementSystem.checkAndAward('primeiro_produto');
                 }
 
+                console.log('✅ Produto pronto para salvar:', productData);
+
                 // Salvar produto (RÁPIDO - só localStorage)
                 setTimeout(() => {
+                    console.log('💾 Salvando no StateManager...');
                     StateManager.setState({ 
                         products: updatedProducts,
                         currentPage: 'produtos',
                         editingProductId: null
                     });
                     
+                    console.log('✅ Produto salvo com sucesso!');
                     // Sucesso!
                     LoadingHelper.setButtonLoading(submitBtn, false, '✅ Produto salvo!');
                 }, 300);
