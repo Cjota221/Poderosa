@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Teste RLS Desabilitado</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #667eea; 
+            margin-bottom: 30px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            margin: 20px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        #resultado {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 2px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 2px solid #f5c6cb;
+        }
+        .loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 2px solid #ffc107;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #004085;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>🧪 Teste: RLS Desabilitado?</h1>
+        
+        <div class="info">
+            <strong>O que este teste faz:</strong><br>
+            1️⃣ Tenta fazer INSERT em produtos<br>
+            2️⃣ Se funcionar = RLS desabilitado ✅<br>
+            3️⃣ Se falhar = RLS ainda ativo ❌
+        </div>
+
+        <button class="btn" onclick="testarRLS()" id="btnTestar">
+            🚀 TESTAR AGORA
+        </button>
+
+        <div id="resultado"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://ldfahdueqzgemplxrffm.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxkZmFoZHVlcXpnZW1wbHhyZmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1NzU3ODgsImV4cCI6MjA4MTE1MTc4OH0.m3AN6YuOJtKX1HMJM_npN6ol52ahdkONANDCtKzhwDM';
+
+        async function testarRLS() {
+            const btn = document.getElementById('btnTestar');
+            const resultado = document.getElementById('resultado');
+            
+            btn.disabled = true;
+            resultado.className = 'loading';
+            resultado.innerHTML = '⏳ Testando...';
+
+            try {
+                // Tentar fazer INSERT
+                const testProduct = {
+                    usuario_id: 'test_' + Date.now(),
+                    nome: 'Teste RLS',
+                    custo_base: 10,
+                    margem_lucro: 50,
+                    preco_final: 15,
+                    tipo: 'simples',
+                    ativo: true
+                };
+
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/produtos`, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(testProduct)
+                });
+
+                console.log('Status:', response.status);
+                const data = await response.json();
+                console.log('Resposta:', data);
+
+                if (response.ok) {
+                    // SUCESSO! RLS está desabilitado!
+                    resultado.className = 'success';
+                    resultado.innerHTML = `
+                        <h2>✅✅✅ SUCESSO!</h2>
+                        <p><strong>RLS FOI DESABILITADO COM SUCESSO!</strong></p>
+                        <p>🎉 Agora os dados VÃO SALVAR no banco de dados!</p>
+                        <p>📊 Produto de teste criado com ID: <code>${data[0]?.id || 'N/A'}</code></p>
+                        <hr>
+                        <p><strong>Próximos passos:</strong></p>
+                        <ol style="text-align: left;">
+                            <li>Acesse: <a href="./limpar-dados.html">limpar-dados.html</a></li>
+                            <li>Limpe o localStorage</li>
+                            <li>Volte pro app e adicione um produto</li>
+                            <li>Faça logout e login</li>
+                            <li>✅ O produto VAI ESTAR LÁ!</li>
+                        </ol>
+                    `;
+
+                    // Tentar limpar o teste
+                    if (data[0]?.id) {
+                        setTimeout(async () => {
+                            await fetch(`${SUPABASE_URL}/rest/v1/produtos?id=eq.${data[0].id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'apikey': SUPABASE_ANON_KEY,
+                                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                                }
+                            });
+                            console.log('🧹 Produto de teste removido');
+                        }, 2000);
+                    }
+                } else {
+                    // FALHOU - RLS ainda está ativo ou outro erro
+                    resultado.className = 'error';
+                    
+                    if (response.status === 400 || response.status === 401 || response.status === 403) {
+                        resultado.innerHTML = `
+                            <h2>❌ RLS AINDA ESTÁ ATIVO!</h2>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Erro:</strong> ${data.message || data.error || 'Permissão negada'}</p>
+                            <hr>
+                            <p><strong>O que fazer:</strong></p>
+                            <ol style="text-align: left;">
+                                <li>Volte no Supabase SQL Editor</li>
+                                <li>Execute o comando NOVAMENTE:</li>
+                                <li><code style="display: block; background: #f5f5f5; padding: 10px; margin: 10px 0;">ALTER TABLE produtos DISABLE ROW LEVEL SECURITY;</code></li>
+                                <li>Aguarde 10 segundos</li>
+                                <li>Teste novamente aqui</li>
+                            </ol>
+                        `;
+                    } else {
+                        resultado.innerHTML = `
+                            <h2>❌ Erro Inesperado</h2>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Erro:</strong> ${JSON.stringify(data, null, 2)}</p>
+                            <p>Entre em contato com suporte.</p>
+                        `;
+                    }
+                }
+            } catch (error) {
+                resultado.className = 'error';
+                resultado.innerHTML = `
+                    <h2>❌ Erro de Conexão</h2>
+                    <p><strong>Erro:</strong> ${error.message}</p>
+                    <p>Verifique sua conexão com a internet.</p>
+                `;
+                console.error('Erro:', error);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
