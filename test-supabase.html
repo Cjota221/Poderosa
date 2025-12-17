@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>🔍 Teste de Conexão Supabase</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test {
+            background: #16213e;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #666;
+        }
+        .test.success {
+            border-left-color: #4caf50;
+        }
+        .test.error {
+            border-left-color: #f44336;
+        }
+        .test.warning {
+            border-left-color: #ff9800;
+        }
+        pre {
+            background: #0f3460;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #E91E63;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #C2185B;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Diagnóstico de Conexão com Supabase</h1>
+    <p>Este teste vai verificar se o sistema consegue realmente conectar e salvar no banco de dados.</p>
+    
+    <button onclick="runTests()">▶️ Executar Testes</button>
+    
+    <div id="results"></div>
+
+    <script src="./public/js/supabase-client.js"></script>
+    <script>
+        const resultsDiv = document.getElementById('results');
+
+        function addTest(title, status, message, data) {
+            const div = document.createElement('div');
+            div.className = `test ${status}`;
+            div.innerHTML = `
+                <h3>${status === 'success' ? '✅' : status === 'error' ? '❌' : '⚠️'} ${title}</h3>
+                <p>${message}</p>
+                ${data ? `<pre>${JSON.stringify(data, null, 2)}</pre>` : ''}
+            `;
+            resultsDiv.appendChild(div);
+        }
+
+        async function runTests() {
+            resultsDiv.innerHTML = '<h2>🔄 Executando testes...</h2>';
+
+            // TESTE 1: Verificar se o cliente Supabase existe
+            if (!window.supabase) {
+                addTest('Cliente Supabase', 'error', 'Objeto window.supabase não encontrado!');
+                return;
+            }
+            addTest('Cliente Supabase', 'success', 'Cliente Supabase carregado com sucesso');
+
+            // TESTE 2: Verificar URL e KEY
+            const url = window.supabase.url;
+            const key = window.supabase.key;
+            
+            if (!url || !url.includes('supabase.co')) {
+                addTest('URL do Supabase', 'error', `URL inválida: ${url}`);
+            } else {
+                addTest('URL do Supabase', 'success', `URL configurada: ${url}`);
+            }
+
+            if (!key || key.length < 100) {
+                addTest('Chave Anon', 'error', `Chave muito curta ou inválida! Tamanho: ${key ? key.length : 0} caracteres (deveria ter ~200+)`, { key_preview: key ? key.substring(0, 50) + '...' : 'NULA' });
+            } else {
+                addTest('Chave Anon', 'success', `Chave configurada (${key.length} caracteres)`);
+            }
+
+            // TESTE 3: Testar SELECT (leitura)
+            try {
+                addTest('Teste de Leitura', 'warning', 'Tentando buscar usuários...');
+                const result = await supabase.select('usuarios', { limit: 1 });
+                
+                if (result.success) {
+                    addTest('Teste de Leitura', 'success', `SELECT funcionou! Encontrados ${result.data?.length || 0} registros`, result.data);
+                } else {
+                    addTest('Teste de Leitura', 'error', `SELECT falhou: ${result.error}`, result);
+                }
+            } catch (error) {
+                addTest('Teste de Leitura', 'error', `Exceção ao fazer SELECT: ${error.message}`, { error: error.stack });
+            }
+
+            // TESTE 4: Verificar RLS (Row Level Security)
+            try {
+                addTest('Teste de RLS', 'warning', 'Verificando políticas de segurança...');
+                
+                const testProduct = {
+                    id: 'test_' + Date.now(),
+                    usuario_id: 'test_user',
+                    nome: 'Produto de Teste',
+                    custo_base: 10.00,
+                    preco_venda: 20.00,
+                    margem_lucro: 100,
+                    tipo_variacao: 'none',
+                    variacoes: [],
+                    estoque: {},
+                    imagens: [],
+                    imagem_url: '',
+                    ativo: true,
+                    visivel_catalogo: false // Não mostrar no catálogo
+                };
+
+                const insertResult = await supabase.insert('produtos', testProduct);
+                
+                if (insertResult.success) {
+                    addTest('Teste de INSERT', 'success', '✅ INSERT FUNCIONOU! O banco está aceitando escritas!', insertResult.data);
+                    
+                    // Limpar teste
+                    await supabase.delete('produtos', testProduct.id);
+                } else {
+                    addTest('Teste de INSERT', 'error', `❌ INSERT FALHOU! Possível problema de RLS ou permissões: ${insertResult.error}`, insertResult);
+                }
+            } catch (error) {
+                addTest('Teste de INSERT', 'error', `Exceção ao fazer INSERT: ${error.message}`, { error: error.stack });
+            }
+
+            // TESTE 5: Verificar se há dados antigos
+            try {
+                const userId = localStorage.getItem('lucrocerto_user_id');
+                if (userId) {
+                    addTest('User ID', 'success', `User ID encontrado no localStorage: ${userId}`);
+                    
+                    const produtos = await supabase.select('produtos', { filters: { usuario_id: userId } });
+                    addTest('Produtos do Usuário', produtos.data?.length > 0 ? 'success' : 'warning', 
+                        `Encontrados ${produtos.data?.length || 0} produtos no banco`, produtos.data);
+                } else {
+                    addTest('User ID', 'warning', 'Nenhum user_id encontrado. Faça login primeiro.');
+                }
+            } catch (error) {
+                addTest('Produtos do Usuário', 'error', `Erro ao buscar: ${error.message}`);
+            }
+
+            addTest('Diagnóstico Completo', 'success', 'Todos os testes foram executados. Verifique os resultados acima.');
+        }
+    </script>
+</body>
+</html>
