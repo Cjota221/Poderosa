@@ -1,0 +1,34 @@
+name: 🚀 Deploy para Produção
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # Primeiro: Rodar testes
+  tests:
+    name: 🧪 Testes Pré-Deploy
+    uses: ./.github/workflows/playwright.yml
+    secrets: inherit
+
+  # Segundo: Deploy (só se testes passarem)
+  deploy:
+    name: 🚀 Deploy Netlify
+    needs: tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🎉 Deploy para Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          npm install -g netlify-cli
+          netlify deploy --prod --dir=. --message="Deploy automático após testes E2E"
+
+      - name: ✅ Deploy concluído
+        run: echo "🎊 Deploy realizado com sucesso!"

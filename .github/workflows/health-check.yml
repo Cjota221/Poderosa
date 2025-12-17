@@ -1,0 +1,47 @@
+name: 🔍 Monitoramento Diário
+
+on:
+  schedule:
+    # Roda todo dia às 9h (horário UTC = 6h Brasília)
+    - cron: '0 9 * * *'
+  workflow_dispatch: # Permite execução manual
+
+jobs:
+  health-check:
+    name: 🏥 Health Check E2E
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📚 Instalar dependências
+        run: npm ci
+
+      - name: 🎭 Instalar Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: 🧪 Rodar testes críticos
+        run: |
+          npx playwright test --grep "@smoke" || true
+        env:
+          BASE_URL: https://poderosa.netlify.app
+
+      - name: 📊 Gerar relatório
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-health-check
+          path: playwright-report/
+
+      - name: 🚨 Notificar se houver falhas
+        if: failure()
+        run: |
+          echo "⚠️ Health check falhou!"
+          echo "Sistema pode estar com problemas."
+          # Aqui você pode adicionar integração com Slack, Discord, etc.

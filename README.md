@@ -2,6 +2,10 @@
 
 O primeiro app de gestão financeira criado especialmente para mulheres empreendedoras. Intuitivo, inteligente e empoderador.
 
+[![Testes E2E](https://github.com/Cjota221/Poderosa/actions/workflows/playwright.yml/badge.svg)](https://github.com/Cjota221/Poderosa/actions/workflows/playwright.yml)
+[![Deploy](https://github.com/Cjota221/Poderosa/actions/workflows/deploy.yml/badge.svg)](https://github.com/Cjota221/Poderosa/actions/workflows/deploy.yml)
+[![Health Check](https://github.com/Cjota221/Poderosa/actions/workflows/health-check.yml/badge.svg)](https://github.com/Cjota221/Poderosa/actions/workflows/health-check.yml)
+
 ## 📁 Estrutura do Projeto
 
 ```

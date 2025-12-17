@@ -1,0 +1,34 @@
+{
+  "name": "poderosa",
+  "version": "1.0.0",
+  "description": "O primeiro app de gestão financeira criado especialmente para mulheres empreendedoras. Intuitivo, inteligente e empoderador.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "codegen": "playwright codegen http://127.0.0.1:8080",
+    "codegen:login": "playwright codegen http://127.0.0.1:8080/login.html",
+    "codegen:cadastro": "playwright codegen http://127.0.0.1:8080/cadastro.html",
+    "codegen:app": "playwright codegen http://127.0.0.1:8080/app.html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Cjota221/Poderosa.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Cjota221/Poderosa/issues"
+  },
+  "homepage": "https://github.com/Cjota221/Poderosa#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.57.0"
+  }
+}

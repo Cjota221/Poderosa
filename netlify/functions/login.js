@@ -1,14 +1,27 @@
 // Netlify Function - Login de usuário
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 
 // Configuração do Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
-// Hash simples para senha
-function hashPassword(password) {
+// Hash SHA-256 (LEGADO - apenas para compatibilidade com senhas antigas)
+function hashPasswordLegacy(password) {
     return crypto.createHash('sha256').update(password).digest('hex');
+}
+
+// Verificar senha (suporta bcrypt E SHA-256 legado)
+async function verifyPassword(password, storedHash) {
+    // Se o hash começa com $2b$ ou $2a$, é bcrypt
+    if (storedHash.startsWith('$2b$') || storedHash.startsWith('$2a$')) {
+        return await bcrypt.compare(password, storedHash);
+    }
+    
+    // Caso contrário, é SHA-256 legado
+    const sha256Hash = hashPasswordLegacy(password);
+    return sha256Hash === storedHash;
 }
 
 exports.handler = async (event) => {
@@ -48,7 +61,6 @@ exports.handler = async (event) => {
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
         const emailLower = email.toLowerCase().trim();
-        const senhaHash = hashPassword(password);
 
         console.log('🔐 Tentativa de login:', emailLower);
 
@@ -81,8 +93,10 @@ exports.handler = async (event) => {
             };
         }
 
-        // Verificar senha
-        if (user.senha_hash !== senhaHash) {
+        // Verificar senha (suporta bcrypt E SHA-256 legado)
+        const senhaValida = await verifyPassword(password, user.senha_hash);
+        
+        if (!senhaValida) {
             console.log('❌ Senha incorreta para:', emailLower);
             return {
                 statusCode: 401,

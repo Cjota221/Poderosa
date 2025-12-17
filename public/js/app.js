@@ -34,28 +34,77 @@ const LucroCertoApp = (function() {
     };
 
     //==================================
-    // 2. DATA MANAGER
+    // 2. DATA MANAGER (usando Storage seguro)
     //==================================
     const DataManager = {
         save(key, data) {
-            try {
-                localStorage.setItem(`lucrocerto_${key}`, JSON.stringify({ data: data, version: '1.4' }));
-            } catch (error) { console.error('Erro ao salvar dados:', error); }
+            // Storage já tem try/catch embutido
+            Storage.set(key, { data: data, version: '1.4' });
         },
         load(key) {
-            try {
-                const item = localStorage.getItem(`lucrocerto_${key}`);
-                if (item) {
-                    const parsed = JSON.parse(item);
-                    if (parsed.version && parsed.version.startsWith('1.')) return parsed.data;
-                }
-            } catch (error) { console.error('Erro ao carregar dados:', error); }
+            const parsed = Storage.get(key, null);
+            if (parsed && parsed.version && parsed.version.startsWith('1.')) {
+                return parsed.data;
+            }
             return null;
         }
     };
 
     //==================================
-    // 3. UI RENDERER & ROUTER
+    // 3. LOADING STATE HELPER
+    //==================================
+    const LoadingHelper = {
+        setButtonLoading(button, isLoading, successText = '✅ Salvo!') {
+            if (!button) return;
+            
+            if (isLoading) {
+                // Salvar estado original
+                button.dataset.originalHtml = button.innerHTML;
+                button.dataset.originalDisabled = button.disabled;
+                
+                // Mostrar loading
+                button.disabled = true;
+                button.innerHTML = '<i data-lucide="loader" class="spinning"></i> Salvando...';
+                lucide.createIcons({ nodes: [button] });
+            } else {
+                // Restaurar estado original
+                const originalHtml = button.dataset.originalHtml;
+                const originalDisabled = button.dataset.originalDisabled === 'true';
+                
+                // Mostrar sucesso temporariamente
+                button.innerHTML = `<i data-lucide="check"></i> ${successText}`;
+                lucide.createIcons({ nodes: [button] });
+                
+                setTimeout(() => {
+                    button.innerHTML = originalHtml;
+                    button.disabled = originalDisabled;
+                    lucide.createIcons({ nodes: [button] });
+                }, 2000);
+            }
+        },
+        
+        setButtonError(button, errorText = 'Erro') {
+            if (!button) return;
+            
+            const originalHtml = button.dataset.originalHtml;
+            const originalDisabled = button.dataset.originalDisabled === 'true';
+            
+            // Mostrar erro temporariamente
+            button.innerHTML = `<i data-lucide="x"></i> ${errorText}`;
+            button.classList.add('btn-error');
+            lucide.createIcons({ nodes: [button] });
+            
+            setTimeout(() => {
+                button.innerHTML = originalHtml;
+                button.disabled = originalDisabled;
+                button.classList.remove('btn-error');
+                lucide.createIcons({ nodes: [button] });
+            }, 2000);
+        }
+    };
+
+    //==================================
+    // 4. UI RENDERER & ROUTER
     //==================================
     const UIManager = {
         pages: ['dashboard', 'despesas', 'produtos', 'add-edit-product', 'precificar', 'clientes', 'vendas', 'nova-venda', 'financeiro', 'metas', 'relatorios', 'configuracoes', 'meu-catalogo'],
@@ -155,7 +204,7 @@ const LucroCertoApp = (function() {
             if (!banner) return;
             
             // Pegar dados do plano do localStorage
-            let authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+            let authData = Storage.get('auth', {});
             
             // ============================================
             // 🧪 MODO DEMONSTRAÇÃO - Desativado
@@ -176,7 +225,7 @@ const LucroCertoApp = (function() {
             // ============================================
             
             // Verificar se é teste grátis
-            const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
+            const isTrial = Storage.get('trial', 'false') === 'true';
             
             // Se for teste grátis ou não tem plano pago, não mostrar banner
             if (!authData.createdAt || isTrial || authData.plano === 'trial') {
@@ -194,7 +243,7 @@ const LucroCertoApp = (function() {
             const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
             
             // Verificar se o banner foi fechado hoje
-            const bannerClosedDate = localStorage.getItem('lucrocerto_banner_closed');
+            const bannerClosedDate = Storage.get('banner_closed');
             const todayStr = today.toDateString();
             
             if (bannerClosedDate === todayStr && daysUntilExpiry > 0) {
@@ -237,7 +286,7 @@ const LucroCertoApp = (function() {
         // Mostrar mensagem de boas-vindas
         showWelcomeMessage() {
             // Verificar se já mostrou hoje
-            const lastWelcome = localStorage.getItem('lucrocerto_last_welcome');
+            const lastWelcome = Storage.get('last_welcome');
             const today = new Date().toDateString();
             
             if (lastWelcome === today) return; // Já mostrou hoje
@@ -283,7 +332,7 @@ const LucroCertoApp = (function() {
             }, 4000);
             
             // Salvar que já mostrou hoje
-            localStorage.setItem('lucrocerto_last_welcome', today);
+            Storage.set('last_welcome', today);
         },
         
         // Fechar banner de aviso do plano
@@ -293,7 +342,7 @@ const LucroCertoApp = (function() {
                 banner.style.display = 'none';
                 document.body.classList.remove('has-plan-banner');
                 // Salvar que o banner foi fechado hoje
-                localStorage.setItem('lucrocerto_banner_closed', new Date().toDateString());
+                Storage.set('banner_closed', new Date().toDateString());
             }
         },
         
@@ -418,7 +467,7 @@ const LucroCertoApp = (function() {
                 : `<div class="dashboard-profile-placeholder"><i data-lucide="user" style="width: 32px; height: 32px;"></i></div>`;
 
             // VERIFICAR STATUS DA ASSINATURA
-            const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+            const authData = Storage.get('auth', {});
             const subscriptionStatus = authData.subscriptionStatus || 'none';
             const subscription = authData.subscription || null;
             
@@ -1959,6 +2008,12 @@ const LucroCertoApp = (function() {
             // ===== SUBMIT DO FORMULÁRIO =====
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
+                
+                // Pegar botão de submit
+                const submitBtn = form.querySelector('button[type="submit"]');
+                
+                // Mostrar loading
+                LoadingHelper.setButtonLoading(submitBtn, true);
 
                 const productName = document.getElementById('product-name').value.trim();
                 const productCost = parseFloat(baseCostInput.value) || 0;
@@ -1967,11 +2022,13 @@ const LucroCertoApp = (function() {
 
                 // Validações
                 if (!productName) {
+                    LoadingHelper.setButtonError(submitBtn, 'Nome obrigatório');
                     alert('❌ Por favor, digite o nome do produto.');
                     return;
                 }
 
                 if (productCost <= 0) {
+                    LoadingHelper.setButtonError(submitBtn, 'Custo obrigatório');
                     alert('❌ Por favor, digite o custo do produto.');
                     return;
                 }
@@ -2005,11 +2062,13 @@ const LucroCertoApp = (function() {
                     const variationName = document.getElementById('variation-name-1')?.value.trim();
                     
                     if (!variationName) {
+                        LoadingHelper.setButtonError(submitBtn, 'Variação obrigatória');
                         alert('❌ Por favor, digite o nome da variação (ex: Tamanho, Cor).');
                         return;
                     }
 
                     if (variationOptions1.length === 0) {
+                        LoadingHelper.setButtonError(submitBtn, 'Opções obrigatórias');
                         alert('❌ Por favor, adicione pelo menos uma opção de variação.');
                         return;
                     }
@@ -2025,15 +2084,15 @@ const LucroCertoApp = (function() {
                     // Usa o mapa de fotos vinculadas que foi construído durante a edição
                     productData.variationImages = { ...variationImagesMap };
                 } else if (variationType === 'combined') {
-                    const variationName1 = document.getElementById('variation-name-1')?.value.trim();
-                    const variationName2 = document.getElementById('variation-name-2')?.value.trim();
                     
                     if (!variationName1 || !variationName2) {
+                        LoadingHelper.setButtonError(submitBtn, 'Nomes obrigatórios');
                         alert('❌ Por favor, preencha os nomes das duas variações.');
                         return;
                     }
 
                     if (variationOptions1.length === 0 || variationOptions2.length === 0) {
+                        LoadingHelper.setButtonError(submitBtn, 'Opções obrigatórias');
                         alert('❌ Por favor, adicione opções para ambas as variações.');
                         return;
                     }
@@ -2061,31 +2120,31 @@ const LucroCertoApp = (function() {
                 let updatedProducts;
 
                 if (editingProductId) {
+                    // Atualiza produto existente
                     updatedProducts = state.products.map(p => p.id === editingProductId ? productData : p);
                 } else {
-                    // Verificar limite de teste grátis
-                    const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
-                    const TRIAL_PRODUCT_LIMIT = 3;
-                    
+                    // Novo produto - verifica limite trial
                     if (isTrial && state.products.length >= TRIAL_PRODUCT_LIMIT) {
+                        LoadingHelper.setButtonError(submitBtn, 'Limite atingido');
                         showTrialLimitModal();
                         return;
                     }
                     
                     updatedProducts = [...state.products, productData];
                     AchievementSystem.checkAndAward('primeiro_produto');
-                    
-                    // Se for trial e chegou no limite, mostrar aviso
-                    if (isTrial && updatedProducts.length >= TRIAL_PRODUCT_LIMIT) {
-                        setTimeout(() => showTrialLimitReachedBanner(), 500);
-                    }
                 }
 
-                StateManager.setState({ 
-                    products: updatedProducts,
-                    currentPage: 'produtos',
-                    editingProductId: null
-                });
+                // Simular delay de salvamento (remover em produção se usar banco real)
+                setTimeout(() => {
+                    StateManager.setState({ 
+                        products: updatedProducts,
+                        currentPage: 'produtos',
+                        editingProductId: null
+                    });
+                    
+                    // Esconder loading e mostrar sucesso
+                    LoadingHelper.setButtonLoading(submitBtn, false, 'Produto salvo!');
+                }, 300);
             });
 
             // Event listeners
@@ -2859,6 +2918,11 @@ const LucroCertoApp = (function() {
             
             // Salvar perfil
             document.querySelector('[data-action="save-profile"]')?.addEventListener('click', () => {
+                const saveBtn = document.querySelector('[data-action="save-profile"]');
+                
+                // Mostrar loading
+                LoadingHelper.setButtonLoading(saveBtn, true);
+                
                 const updatedUser = {
                     ...user,
                     name: document.getElementById('profile-name').value.trim(),
@@ -2872,8 +2936,11 @@ const LucroCertoApp = (function() {
                     profilePhoto: currentProfilePhoto
                 };
                 
-                StateManager.setState({ user: updatedUser });
-                alert('✅ Configurações salvas com sucesso!');
+                // Delay para mostrar feedback visual
+                setTimeout(() => {
+                    StateManager.setState({ user: updatedUser });
+                    LoadingHelper.setButtonLoading(saveBtn, false, 'Configurações salvas!');
+                }, 300);
             });
         },
         
@@ -2883,7 +2950,7 @@ const LucroCertoApp = (function() {
             if (!planSection) return;
             
             // Pegar dados do plano do localStorage
-            const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+            const authData = Storage.get('auth', {});
             const planNames = {
                 starter: 'Starter',
                 pro: 'Profissional',
@@ -2963,7 +3030,7 @@ const LucroCertoApp = (function() {
         
         // Função para cancelar assinatura
         async handleCancelSubscription() {
-            const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+            const authData = Storage.get('auth', {});
             const userEmail = authData.email;
             
             if (!userEmail) {
@@ -3075,7 +3142,7 @@ const LucroCertoApp = (function() {
                         lucide.createIcons({ nodes: [successModal] });
                         
                         successModal.querySelector('[data-action="logout-after-cancel"]')?.addEventListener('click', () => {
-                            localStorage.removeItem('lucrocerto_auth');
+                            Storage.remove('auth');
                             window.location.href = './login';
                         });
                     } else {
@@ -3245,11 +3312,17 @@ const LucroCertoApp = (function() {
             
             // Salvar cliente
             document.querySelector('[data-action="save-client"]')?.addEventListener('click', () => {
+                const saveBtn = document.querySelector('[data-action="save-client"]');
+                
                 const name = document.getElementById('client-name').value.trim();
                 if (!name) {
+                    LoadingHelper.setButtonError(saveBtn, 'Nome obrigatório');
                     alert('❌ Digite o nome do cliente');
                     return;
                 }
+                
+                // Mostrar loading
+                LoadingHelper.setButtonLoading(saveBtn, true);
                 
                 const clientData = {
                     id: editingClientId || `cli_${Date.now()}`,
@@ -3275,9 +3348,16 @@ const LucroCertoApp = (function() {
                     updatedClients = [...(clients || []), clientData];
                 }
                 
-                StateManager.setState({ clients: updatedClients });
-                document.getElementById('client-modal').style.display = 'none';
-                editingClientId = null;
+                // Delay para mostrar feedback visual
+                setTimeout(() => {
+                    StateManager.setState({ clients: updatedClients });
+                    LoadingHelper.setButtonLoading(saveBtn, false, 'Cliente salvo!');
+                    
+                    setTimeout(() => {
+                        document.getElementById('client-modal').style.display = 'none';
+                        editingClientId = null;
+                    }, 1500);
+                }, 300);
             });
             
             // Excluir cliente
@@ -5001,7 +5081,7 @@ const LucroCertoApp = (function() {
                 'close-menu': () => UIManager.toggleMenu(false),
                 'logout': () => {
                     if (confirm('Deseja realmente sair da sua conta?')) {
-                        localStorage.removeItem('lucrocerto_logged');
+                        Storage.remove('logged');
                         window.location.href = 'login';
                     }
                 },
@@ -5068,8 +5148,8 @@ const LucroCertoApp = (function() {
     // 7. SYNC USER PLAN FROM DATABASE
     //==================================
     async function syncUserPlanFromDatabase() {
-        const userId = localStorage.getItem('lucrocerto_user_id');
-        const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+        const userId = Storage.get('user_id');
+        const authData = Storage.get('auth', {});
         const email = authData.email;
 
         if (!userId && !email) return; // Sem dados para sincronizar
@@ -5101,20 +5181,20 @@ const LucroCertoApp = (function() {
                     features: data.features
                 };
                 
-                localStorage.setItem('lucrocerto_auth', JSON.stringify(updatedAuth));
-                localStorage.setItem('lucrocerto_user_id', data.user.id);
+                Storage.set('auth', updatedAuth);
+                Storage.set('user_id', data.user.id);
                 
                 console.log('📊 SYNC - Plano do usuário:', data.subscription.plano);
                 console.log('📊 SYNC - É trial?', data.subscription.isTrial);
                 
                 // ✅ CORREÇÃO: Atualizar flags de trial CORRETAMENTE
                 if (data.subscription.isTrial || data.subscription.plano === 'trial') {
-                    localStorage.setItem('lucrocerto_trial', 'true');
+                    Storage.set('trial', 'true');
                     console.log('🧪 SYNC - Trial ATIVADO');
                 } else {
                     // ✅ PLANO PAGO - REMOVER TRIAL FORÇADAMENTE
-                    localStorage.removeItem('lucrocerto_trial');
-                    localStorage.removeItem('lucrocerto_trial_start');
+                    Storage.remove('trial');
+                    Storage.remove('trial_start');
                     console.log('✅ SYNC - Trial REMOVIDO (plano pago:', data.subscription.plano + ')');
                 }
 
@@ -5137,15 +5217,15 @@ const LucroCertoApp = (function() {
     //==================================
     function initTrialMode() {
         // ✅ VERIFICAÇÃO RIGOROSA: Só inicializar trial se flag existir E não tiver plano pago
-        const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
-        const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
+        const authData = Storage.get('auth', {});
+        const isTrial = Storage.get('trial') === 'true';
         
         // 🛑 SE USUÁRIO TEM PLANO PAGO, NÃO MOSTRAR NADA DE TRIAL
         if (authData.plano && authData.plano !== 'trial') {
             console.log('🚫 initTrialMode: Usuário tem plano PAGO (' + authData.plano + ') - Banner trial NÃO será criado');
             // Limpar qualquer flag trial que esteja sobrando
-            localStorage.removeItem('lucrocerto_trial');
-            localStorage.removeItem('lucrocerto_trial_start');
+            Storage.remove('trial');
+            Storage.remove('trial_start');
             // Remover banner se existir
             const existingBanner = document.getElementById('trial-banner');
             if (existingBanner) {
@@ -5165,7 +5245,7 @@ const LucroCertoApp = (function() {
         console.log('🧪 initTrialMode: Modo TRIAL ativo - Criando banner...');
         
         // Calcular dias restantes
-        const trialStartDate = localStorage.getItem('lucrocerto_trial_start');
+        const trialStartDate = Storage.get('trial_start');
         let daysLeft = 7;
         
         if (trialStartDate) {
@@ -5176,7 +5256,7 @@ const LucroCertoApp = (function() {
             daysLeft = Math.max(0, 7 - diffDays);
         } else {
             // Primeira vez - salvar data de início
-            localStorage.setItem('lucrocerto_trial_start', new Date().toISOString());
+            Storage.set('trial_start', new Date().toISOString());
         }
         
         const isDashboard = window.location.pathname.includes('app.html') || 
@@ -5280,7 +5360,7 @@ const LucroCertoApp = (function() {
     }
     
     function updateTrialProductCounter() {
-        const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
+        const isTrial = Storage.get('trial') === 'true';
         if (!isTrial) return;
         
         const state = StateManager.getState();
@@ -5498,5 +5578,54 @@ const LucroCertoApp = (function() {
         closePlanBanner: UIManager.closePlanBanner.bind(UIManager)
     };
 })();
+
+// ============================================
+// 🚀 EVENT DELEGATION GLOBAL (Memory Leak Prevention)
+// ============================================
+// Um único event listener para todo o app (em vez de 30+)
+document.addEventListener('click', (e) => {
+    // Navegação (menu lateral e bottom nav)
+    const navItem = e.target.closest('[data-action="navigate"]');
+    if (navItem) {
+        const route = navItem.dataset.route;
+        if (route) {
+            StateManager.setState({ currentPage: route });
+            // Fechar menu lateral no mobile
+            document.body.classList.remove('menu-open');
+        }
+        return;
+    }
+    
+    // Logout
+    if (e.target.closest('[data-action="logout"]')) {
+        if (confirm('❓ Tem certeza que deseja sair?')) {
+            Storage.clear();
+            window.location.href = './login';
+        }
+        return;
+    }
+    
+    // Toggle menu (hamburger)
+    if (e.target.closest('[data-action="toggle-menu"]')) {
+        document.body.classList.toggle('menu-open');
+        return;
+    }
+    
+    // Fechar menu ao clicar fora (mobile)
+    if (e.target.closest('.menu-overlay')) {
+        document.body.classList.remove('menu-open');
+        return;
+    }
+    
+    // Fechar modal ao clicar no X ou fora
+    const modalClose = e.target.closest('[data-action="close-modal"]');
+    if (modalClose) {
+        const modal = modalClose.closest('.modal');
+        if (modal) {
+            modal.remove();
+        }
+        return;
+    }
+});
 
 document.addEventListener('DOMContentLoaded', LucroCertoApp.init);

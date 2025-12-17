@@ -1,14 +1,15 @@
 // Netlify Function - Completa o cadastro do usuário (cria senha)
 const { createClient } = require('@supabase/supabase-js');
-const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 
 // Configuração do Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
-// Hash simples para senha (em produção use bcrypt)
-function hashPassword(password) {
-    return crypto.createHash('sha256').update(password).digest('hex');
+// Hash seguro para senha (bcrypt com 12 rounds)
+async function hashPassword(password) {
+    const saltRounds = 12; // Mais seguro que o padrão (10)
+    return await bcrypt.hash(password, saltRounds);
 }
 
 exports.handler = async (event) => {
@@ -114,7 +115,7 @@ exports.handler = async (event) => {
         const { error: updateError } = await supabase
             .from('usuarios')
             .update({
-                senha_hash: hashPassword(password),
+                senha_hash: await hashPassword(password),
                 nome: nome || user.nome,
                 telefone: telefone || null,
                 cadastro_completo: true,

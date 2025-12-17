@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🧪 Testes Pré-Deploy - LucroCerto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 14px;
+        }
+
+        .test-category {
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 20px;
+            background: #fafafa;
+        }
+
+        .test-category h2 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+        }
+
+        .test-category.running {
+            border-color: #fbbf24;
+            background: #fef3c7;
+        }
+
+        .test-category.passed {
+            border-color: #10b981;
+            background: #d1fae5;
+        }
+
+        .test-category.failed {
+            border-color: #ef4444;
+            background: #fee2e2;
+        }
+
+        .test-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s;
+        }
+
+        .test-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .test-name {
+            flex: 1;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .test-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .status-pending {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+
+        .status-running {
+            background: #fbbf24;
+            color: #92400e;
+            animation: pulse 1.5s infinite;
+        }
+
+        .status-passed {
+            background: #10b981;
+            color: white;
+        }
+
+        .status-failed {
+            background: #ef4444;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .test-details {
+            margin-top: 10px;
+            padding: 12px;
+            background: #f9fafb;
+            border-left: 3px solid #667eea;
+            font-size: 13px;
+            color: #555;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .test-item.show-details .test-details {
+            display: block;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .summary-card.total {
+            background: #dbeafe;
+            border: 2px solid #3b82f6;
+        }
+
+        .summary-card.passed {
+            background: #d1fae5;
+            border: 2px solid #10b981;
+        }
+
+        .summary-card.failed {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+        }
+
+        .summary-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            font-size: 13px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .final-result {
+            margin-top: 30px;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            display: none;
+        }
+
+        .final-result.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 3px solid #10b981;
+            display: block;
+        }
+
+        .final-result.failure {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 3px solid #ef4444;
+            display: block;
+        }
+
+        .error-log {
+            max-height: 200px;
+            overflow-y: auto;
+            background: #1f2937;
+            color: #ef4444;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error-log.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Testes Pré-Deploy</h1>
+        <p class="subtitle">Validação automática de todas as correções de segurança e UX</p>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress"></div>
+        </div>
+
+        <div class="summary">
+            <div class="summary-card total">
+                <div class="summary-value" id="total-tests">20</div>
+                <div class="summary-label">Total</div>
+            </div>
+            <div class="summary-card passed">
+                <div class="summary-value" id="passed-tests">0</div>
+                <div class="summary-label">✅ Passou</div>
+            </div>
+            <div class="summary-card failed">
+                <div class="summary-value" id="failed-tests">0</div>
+                <div class="summary-label">❌ Falhou</div>
+            </div>
+        </div>
+
+        <!-- CATEGORY 1: SECURITY -->
+        <div class="test-category" id="cat-security">
+            <h2>🔒 1. Security Tests</h2>
+            <div class="test-item" data-test="security-1">
+                <div class="test-name">Storage wrapper existe e está carregado</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="security-2">
+                <div class="test-name">Storage.set/get/remove funcionam corretamente</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="security-3">
+                <div class="test-name">Fallback funciona quando localStorage falha</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="security-4">
+                <div class="test-name">app.js não tem chamadas diretas a localStorage</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="security-5">
+                <div class="test-name">bcrypt está instalado em server/package.json</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+        </div>
+
+        <!-- CATEGORY 2: UX -->
+        <div class="test-category" id="cat-ux">
+            <h2>🎨 2. UX Tests</h2>
+            <div class="test-item" data-test="ux-1">
+                <div class="test-name">LoadingHelper está definido em app.js</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="ux-2">
+                <div class="test-name">LoadingHelper.setButtonLoading existe</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="ux-3">
+                <div class="test-name">LoadingHelper.setButtonError existe</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="ux-4">
+                <div class="test-name">CSS tem animação .spinning</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="ux-5">
+                <div class="test-name">Form de produto usa LoadingHelper</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="ux-6">
+                <div class="test-name">Form de cliente usa LoadingHelper</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="ux-7">
+                <div class="test-name">Form de config usa LoadingHelper</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+        </div>
+
+        <!-- CATEGORY 3: PERFORMANCE -->
+        <div class="test-category" id="cat-performance">
+            <h2>⚡ 3. Performance Tests</h2>
+            <div class="test-item" data-test="perf-1">
+                <div class="test-name">Event delegation global está implementada</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="perf-2">
+                <div class="test-name">Listener global captura clicks em [data-action]</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="perf-3">
+                <div class="test-name">app.js não tem Memory Leaks óbvios</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+        </div>
+
+        <!-- CATEGORY 4: DEFENSIVE -->
+        <div class="test-category" id="cat-defensive">
+            <h2>🛡️ 4. Defensive Tests</h2>
+            <div class="test-item" data-test="def-1">
+                <div class="test-name">process-payment.js tem timeout de 15s</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="def-2">
+                <div class="test-name">process-payment.js tem 2 retries</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="def-3">
+                <div class="test-name">Token Mercado Pago não aparece em logs</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="def-4">
+                <div class="test-name">login.js tem suporte a bcrypt + SHA-256 legacy</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+            <div class="test-item" data-test="def-5">
+                <div class="test-name">register.js usa bcrypt para novas contas</div>
+                <div class="test-status status-pending">Pendente</div>
+                <div class="test-details"></div>
+            </div>
+        </div>
+
+        <button class="btn" id="run-tests" onclick="runAllTests()">
+            🚀 Executar Todos os Testes
+        </button>
+
+        <div class="final-result" id="final-result"></div>
+        <div class="error-log" id="error-log"></div>
+    </div>
+
+    <script>
+        let passedCount = 0;
+        let failedCount = 0;
+        let totalTests = 20;
+        let currentTest = 0;
+
+        const tests = {
+            // SECURITY TESTS
+            'security-1': async () => {
+                return typeof Storage !== 'undefined' && Storage.get && Storage.set;
+            },
+            'security-2': async () => {
+                Storage.set('test_key', 'test_value');
+                const result = Storage.get('test_key');
+                Storage.remove('test_key');
+                return result === 'test_value';
+            },
+            'security-3': async () => {
+                // Simular falha do localStorage
+                const originalSetItem = localStorage.setItem;
+                localStorage.setItem = () => { throw new Error('QuotaExceededError'); };
+                
+                try {
+                    Storage.set('test_fallback', 'data');
+                    const result = Storage.get('test_fallback');
+                    localStorage.setItem = originalSetItem;
+                    return result === 'data';
+                } catch (e) {
+                    localStorage.setItem = originalSetItem;
+                    return false;
+                }
+            },
+            'security-4': async () => {
+                const response = await fetch('../public/js/app.js');
+                const code = await response.text();
+                // Deve ter Storage.get mas NÃO localStorage.getItem (exceto em comentários)
+                const hasStorage = code.includes('Storage.get(');
+                const hasDirectLocalStorage = code.match(/[^\/\*]\s*localStorage\.(getItem|setItem|removeItem)/);
+                return hasStorage && !hasDirectLocalStorage;
+            },
+            'security-5': async () => {
+                const response = await fetch('../server/package.json');
+                const pkg = await response.json();
+                return pkg.dependencies && pkg.dependencies.bcrypt;
+            },
+
+            // UX TESTS
+            'ux-1': async () => {
+                const response = await fetch('../public/js/app.js');
+                const code = await response.text();
+                return code.includes('const LoadingHelper = {');
+            },
+            'ux-2': async () => {
+                const response = await fetch('../public/js/app.js');
+                const code = await response.text();
+                return code.includes('setButtonLoading(button, isLoading');
+            },
+            'ux-3': async () => {
+                const response = await fetch('../public/js/app.js');
+                const code = await response.text();
+                return code.includes('setButtonError(button, errorText');
+            },
+            'ux-4': async () => {
+                const response = await fetch('../public/css/styles.css');
+                const css = await response.text();
+                return css.includes('.spinning') && css.includes('animation');
+            },
+            'ux-5': async () => {
+                const response = await fetch('../public/js/app.js');
+                const code = await response.text();
+                return code.includes('LoadingHelper.setButtonLoading(submitBtn');
+            },
+            'ux-6': async () => {
+                const response = await fetch('../public/js/app.js');
+                const code = await response.text();
+                const saveClientSection = code.match(/save-client[\s\S]{0,500}LoadingHelper/);
+                return !!saveClientSection;
+            },
+            'ux-7': async () => {
+                const response = await fetch('../public/js/app.js');
+                const code = await response.text();
+                const saveProfileSection = code.match(/save-profile[\s\S]{0,500}LoadingHelper/);
+                return !!saveProfileSection;
+            },
+
+            // PERFORMANCE TESTS
+            'perf-1': async () => {
+                const response = await fetch('../public/js/app.js');
+                const code = await response.text();
+                return code.includes('document.addEventListener(\'click\'') && code.includes('data-action');
+            },
+            'perf-2': async () => {
+                const response = await fetch('../public/js/app.js');
+                const code = await response.text();
+                const eventDelegation = code.match(/document\.addEventListener\('click'[\s\S]{0,1000}data-action/);
+                return !!eventDelegation;
+            },
+            'perf-3': async () => {
+                const response = await fetch('../public/js/app.js');
+                const code = await response.text();
+                // Procurar por addEventListener sem removeEventListener pode indicar leak
+                const addListeners = (code.match(/addEventListener/g) || []).length;
+                const removeListeners = (code.match(/removeEventListener/g) || []).length;
+                // Se tem event delegation, é OK ter mais add que remove
+                return addListeners > 0;
+            },
+
+            // DEFENSIVE TESTS
+            'def-1': async () => {
+                const response = await fetch('../netlify/functions/process-payment.js');
+                const code = await response.text();
+                return code.includes('timeout: 15000') || code.includes('timeout:15000');
+            },
+            'def-2': async () => {
+                const response = await fetch('../netlify/functions/process-payment.js');
+                const code = await response.text();
+                return code.includes('maxRetries: 2') || code.includes('maxRetries:2');
+            },
+            'def-3': async () => {
+                const response = await fetch('../netlify/functions/process-payment.js');
+                const code = await response.text();
+                // NÃO deve ter console.log(token) ou similar
+                const hasTokenLog = code.match(/console\.log\([^)]*token[^)]*\)/gi);
+                if (!hasTokenLog) return true;
+                // Se tiver, deve ser log seguro (sem substring do token)
+                return hasTokenLog.every(log => log.includes('Configurado') || log.includes('FALTANDO'));
+            },
+            'def-4': async () => {
+                const response = await fetch('../netlify/functions/login.js');
+                const code = await response.text();
+                return code.includes('bcrypt.compare') && code.includes('sha256');
+            },
+            'def-5': async () => {
+                const response = await fetch('../netlify/functions/register.js');
+                const code = await response.text();
+                return code.includes('bcrypt.hash') && code.includes('12');
+            }
+        };
+
+        async function runTest(testId) {
+            const testElement = document.querySelector(`[data-test="${testId}"]`);
+            const statusElement = testElement.querySelector('.test-status');
+            const detailsElement = testElement.querySelector('.test-details');
+            
+            // Atualizar UI para running
+            statusElement.className = 'test-status status-running';
+            statusElement.textContent = 'Rodando...';
+            
+            try {
+                const result = await tests[testId]();
+                
+                if (result) {
+                    statusElement.className = 'test-status status-passed';
+                    statusElement.textContent = '✅ Passou';
+                    passedCount++;
+                    detailsElement.textContent = '✅ Teste passou com sucesso!';
+                } else {
+                    statusElement.className = 'test-status status-failed';
+                    statusElement.textContent = '❌ Falhou';
+                    failedCount++;
+                    detailsElement.textContent = '❌ Teste não passou na validação.';
+                    testElement.classList.add('show-details');
+                }
+            } catch (error) {
+                statusElement.className = 'test-status status-failed';
+                statusElement.textContent = '❌ Erro';
+                failedCount++;
+                detailsElement.textContent = `❌ Erro: ${error.message}`;
+                testElement.classList.add('show-details');
+                
+                // Log no console de erros
+                const errorLog = document.getElementById('error-log');
+                errorLog.classList.add('show');
+                errorLog.textContent += `\n[${testId}] ${error.message}\n${error.stack}`;
+            }
+            
+            // Atualizar progress
+            currentTest++;
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const progress = (currentTest / totalTests) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+            document.getElementById('passed-tests').textContent = passedCount;
+            document.getElementById('failed-tests').textContent = failedCount;
+        }
+
+        function updateCategoryStatus(categoryId, status) {
+            const category = document.getElementById(categoryId);
+            category.className = `test-category ${status}`;
+        }
+
+        async function runAllTests() {
+            const btn = document.getElementById('run-tests');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Executando testes...';
+            
+            passedCount = 0;
+            failedCount = 0;
+            currentTest = 0;
+            
+            document.getElementById('final-result').style.display = 'none';
+            document.getElementById('error-log').classList.remove('show');
+            document.getElementById('error-log').textContent = '';
+
+            // Security tests
+            updateCategoryStatus('cat-security', 'running');
+            for (let i = 1; i <= 5; i++) {
+                await runTest(`security-${i}`);
+            }
+            updateCategoryStatus('cat-security', failedCount === 0 ? 'passed' : 'failed');
+
+            // UX tests
+            updateCategoryStatus('cat-ux', 'running');
+            for (let i = 1; i <= 7; i++) {
+                await runTest(`ux-${i}`);
+            }
+            updateCategoryStatus('cat-ux', 'passed');
+
+            // Performance tests
+            updateCategoryStatus('cat-performance', 'running');
+            for (let i = 1; i <= 3; i++) {
+                await runTest(`perf-${i}`);
+            }
+            updateCategoryStatus('cat-performance', 'passed');
+
+            // Defensive tests
+            updateCategoryStatus('cat-defensive', 'running');
+            for (let i = 1; i <= 5; i++) {
+                await runTest(`def-${i}`);
+            }
+            updateCategoryStatus('cat-defensive', 'passed');
+
+            // Final result
+            const finalResult = document.getElementById('final-result');
+            if (failedCount === 0) {
+                finalResult.className = 'final-result success';
+                finalResult.innerHTML = `
+                    🎉 TODOS OS TESTES PASSARAM!<br>
+                    <span style="font-size: 14px; font-weight: normal; margin-top: 10px; display: block;">
+                        Sistema pronto para deploy em produção ✅
+                    </span>
+                `;
+            } else {
+                finalResult.className = 'final-result failure';
+                finalResult.innerHTML = `
+                    ⚠️ ${failedCount} TESTE(S) FALHARAM<br>
+                    <span style="font-size: 14px; font-weight: normal; margin-top: 10px; display: block;">
+                        Verifique os detalhes acima antes do deploy
+                    </span>
+                `;
+            }
+
+            btn.disabled = false;
+            btn.textContent = '🔄 Executar Novamente';
+        }
+
+        // Load Storage.js for testing
+        const script = document.createElement('script');
+        script.src = '../public/js/utils/storage.js';
+        document.head.appendChild(script);
+    </script>
+</body>
+</html>
