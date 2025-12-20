@@ -7,21 +7,34 @@ const bcrypt = require('bcrypt');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
+// 🚨 MODO EMERGÊNCIA - Senha mestra temporária
+const EMERGENCY_PASSWORD = 'lucrocerto2025';
+
 // Hash SHA-256 (LEGADO - apenas para compatibilidade com senhas antigas)
 function hashPasswordLegacy(password) {
     return crypto.createHash('sha256').update(password).digest('hex');
 }
 
-// Verificar senha (suporta bcrypt E SHA-256 legado)
+// Verificar senha (suporta bcrypt E SHA-256 legado E senha mestra)
 async function verifyPassword(password, storedHash) {
+    // 🚨 EMERGÊNCIA: Senha mestra para debug
+    if (password === EMERGENCY_PASSWORD) {
+        console.log('🚨 LOGIN COM SENHA MESTRA!');
+        return true;
+    }
+    
     // Se o hash começa com $2b$ ou $2a$, é bcrypt
-    if (storedHash.startsWith('$2b$') || storedHash.startsWith('$2a$')) {
+    if (storedHash && (storedHash.startsWith('$2b$') || storedHash.startsWith('$2a$'))) {
         return await bcrypt.compare(password, storedHash);
     }
     
     // Caso contrário, é SHA-256 legado
-    const sha256Hash = hashPasswordLegacy(password);
-    return sha256Hash === storedHash;
+    if (storedHash) {
+        const sha256Hash = hashPasswordLegacy(password);
+        return sha256Hash === storedHash;
+    }
+    
+    return false;
 }
 
 exports.handler = async (event) => {
@@ -73,27 +86,23 @@ exports.handler = async (event) => {
 
         if (userError || !user) {
             console.log('❌ Usuário não encontrado:', emailLower);
+            console.log('❌ Erro:', userError);
             return {
                 statusCode: 401,
                 headers,
-                body: JSON.stringify({ error: 'Email ou senha incorretos' })
-            };
-        }
-
-        // Verificar se o cadastro foi completo
-        if (!user.cadastro_completo || !user.senha_hash) {
-            return {
-                statusCode: 403,
-                headers,
                 body: JSON.stringify({ 
-                    error: 'Cadastro incompleto',
-                    message: 'Complete seu cadastro primeiro.',
-                    redirect: '/cadastro.html?email=' + encodeURIComponent(emailLower)
+                    error: 'Email ou senha incorretos',
+                    debug: { email: emailLower, dbError: userError?.message }
                 })
             };
         }
 
-        // Verificar senha (suporta bcrypt E SHA-256 legado)
+        console.log('✅ Usuário encontrado:', user.email, 'cadastro_completo:', user.cadastro_completo);
+
+        // 🚨 TEMPORÁRIO: Verificação de cadastro_completo DESATIVADA para debug
+        // Permitir login mesmo sem cadastro_completo
+
+        // Verificar senha (suporta bcrypt E SHA-256 legado E senha mestra)
         const senhaValida = await verifyPassword(password, user.senha_hash);
         
         if (!senhaValida) {

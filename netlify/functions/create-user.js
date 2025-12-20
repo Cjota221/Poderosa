@@ -68,11 +68,11 @@ exports.handler = async (event, context) => {
 
         // Calcular data de expiração
         const dataInicio = new Date();
-        const dataExpiracao = new Date();
+        const dataFim = new Date();
         if (periodo === 'annual') {
-            dataExpiracao.setFullYear(dataExpiracao.getFullYear() + 1);
+            dataFim.setFullYear(dataFim.getFullYear() + 1);
         } else {
-            dataExpiracao.setMonth(dataExpiracao.getMonth() + 1);
+            dataFim.setMonth(dataFim.getMonth() + 1);
         }
 
         // Criar assinatura
@@ -84,7 +84,7 @@ exports.handler = async (event, context) => {
                 periodo: periodo || 'monthly',
                 status: 'active',
                 data_inicio: dataInicio.toISOString(),
-                data_expiracao: dataExpiracao.toISOString(),
+                data_fim: dataFim.toISOString(),
                 payment_id: paymentId,
                 valor: valor || 0
             })

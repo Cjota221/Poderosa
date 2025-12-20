@@ -1628,7 +1628,7 @@
         const getCardBrand = detectCardBrand;
 
         // Tratar resultado do pagamento
-        function handlePaymentResult(result, email, nome, sobrenome) {
+        async function handlePaymentResult(result, email, nome, sobrenome) {
             document.getElementById('loading-overlay').classList.remove('active');
             
             if (result.status === 'approved') {
@@ -1642,6 +1642,35 @@
                     createdAt: new Date().toISOString(),
                     paymentId: result.id
                 };
+                
+                // ==============================================
+                // CRIAR USUÁRIO NO BANCO DE DADOS
+                // ==============================================
+                try {
+                    console.log('📝 Criando usuário no banco:', email);
+                    const createUserResponse = await fetch(`${API_URL}/create-user`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: email,
+                            nome: `${nome} ${sobrenome}`,
+                            plano: currentPlan,
+                            periodo: isAnnual ? 'annual' : 'monthly',
+                            paymentId: result.id,
+                            valor: isAnnual ? (plans[currentPlan]?.annualPrice || 0) : (plans[currentPlan]?.monthlyPrice || 0)
+                        })
+                    });
+                    
+                    const createUserResult = await createUserResponse.json();
+                    console.log('✅ Usuário criado:', createUserResult);
+                    
+                    if (createUserResult.userId) {
+                        authData.userId = createUserResult.userId;
+                    }
+                } catch (createUserError) {
+                    console.error('⚠️ Erro ao criar usuário (continuando):', createUserError);
+                }
+                
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
                 localStorage.setItem('lucrocerto_logged', 'true');
                 localStorage.removeItem('lucrocerto_trial'); // Remove trial
@@ -1790,7 +1819,7 @@
                             statusDiv.style.background = '#E8F5E9';
                             statusDiv.innerHTML = `
                                 <p style="color: #2E7D32; font-size: 16px; margin: 0; font-weight: 600;">
-                                    ✅ Pagamento confirmado!
+                                    ✅ Pagamento confirmado! Criando sua conta...
                                 </p>
                             `;
                         }
@@ -1806,6 +1835,36 @@
                             createdAt: new Date().toISOString(),
                             paymentId: paymentId
                         };
+                        
+                        // ==============================================
+                        // CRIAR USUÁRIO NO BANCO DE DADOS
+                        // ==============================================
+                        try {
+                            console.log('📝 Criando usuário no banco:', authData.email);
+                            const createUserResponse = await fetch(`${API_URL}/create-user`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    email: authData.email,
+                                    nome: authData.nome,
+                                    plano: currentPlan,
+                                    periodo: isAnnual ? 'annual' : 'monthly',
+                                    paymentId: paymentId,
+                                    valor: isAnnual ? (plans[currentPlan]?.annualPrice || 0) : (plans[currentPlan]?.monthlyPrice || 0)
+                                })
+                            });
+                            
+                            const createUserResult = await createUserResponse.json();
+                            console.log('✅ Usuário criado:', createUserResult);
+                            
+                            if (createUserResult.userId) {
+                                authData.userId = createUserResult.userId;
+                            }
+                        } catch (createUserError) {
+                            console.error('⚠️ Erro ao criar usuário (continuando):', createUserError);
+                            // Não bloquear o fluxo, o cadastro vai criar se não existir
+                        }
+                        
                         localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
                         localStorage.setItem('lucrocerto_logged', 'true');
                         localStorage.removeItem('lucrocerto_trial');
