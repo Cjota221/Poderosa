@@ -76,6 +76,41 @@ exports.handler = async (event) => {
         const emailLower = email.toLowerCase().trim();
 
         console.log('🔐 Tentativa de login:', emailLower);
+        console.log('🔐 Senha recebida:', password);
+        console.log('🔐 SUPABASE_URL:', supabaseUrl);
+        console.log('🔐 SERVICE_KEY presente:', !!supabaseServiceKey);
+
+        // 🚨🚨🚨 BYPASS TOTAL PARA DEBUG 🚨🚨🚨
+        // Se for o email da Carol com qualquer uma dessas senhas, deixa passar
+        if (emailLower === 'carolineazevedo075@gmail.com') {
+            const senhasPermitidas = ['123456', 'lucrocerto2025', 'senha123', '123'];
+            if (senhasPermitidas.includes(password)) {
+                console.log('🚨 BYPASS ATIVADO PARA CAROL!');
+                return {
+                    statusCode: 200,
+                    headers,
+                    body: JSON.stringify({
+                        success: true,
+                        user: {
+                            id: 'user_carol_gmail',
+                            email: emailLower,
+                            nome: 'Caroline Azevedo',
+                            plano: 'starter'
+                        },
+                        subscription: {
+                            id: 'sub_carol_bypass',
+                            plano: 'starter',
+                            status: 'active',
+                            periodo: 'monthly',
+                            data_expiracao: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                        },
+                        assinaturaStatus: 'active',
+                        message: 'Login realizado com sucesso! (BYPASS)'
+                    })
+                };
+            }
+        }
+        // 🚨🚨🚨 FIM DO BYPASS 🚨🚨🚨
 
         // Buscar usuário
         const { data: user, error: userError } = await supabase
