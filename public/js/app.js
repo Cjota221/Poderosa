@@ -222,27 +222,49 @@ const LucroCertoApp = (function() {
             const item = this.syncQueue.shift();
             const data = item.data;
             
-            console.log('☁️ Sincronizando com Supabase...', Object.keys(data));
+            // 🔑 CRÍTICO: Garantir que usamos o ID correto do banco
+            const authData = Storage.get('auth', {});
+            let dbUserId = userId;
+            
+            if (authData.email && window.supabase) {
+                try {
+                    const userByEmail = await supabase.select('usuarios', { 
+                        filters: { email: authData.email.toLowerCase() },
+                        limit: 1
+                    });
+                    if (userByEmail.data?.[0]?.id) {
+                        dbUserId = userByEmail.data[0].id;
+                        // Atualiza o user_id local se diferente
+                        if (dbUserId !== userId) {
+                            Storage.set('user_id', dbUserId);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Não foi possível verificar ID do usuário:', e);
+                }
+            }
+            
+            console.log('☁️ Sincronizando com Supabase...', Object.keys(data), 'userId:', dbUserId);
             
             try {
                 // Sincronizar produtos
                 if (data.products) {
-                    await this.syncProducts(userId, data.products);
+                    await this.syncProducts(dbUserId, data.products);
                 }
                 
                 // Sincronizar clientes
                 if (data.clients) {
-                    await this.syncClients(userId, data.clients);
+                    await this.syncClients(dbUserId, data.clients);
                 }
                 
                 // Sincronizar vendas
                 if (data.sales) {
-                    await this.syncSales(userId, data.sales);
+                    await this.syncSales(dbUserId, data.sales);
                 }
                 
                 // Sincronizar user (foto, nome, etc)
                 if (data.user) {
-                    await this.syncUser(userId, data.user);
+                    await this.syncUser(dbUserId, data.user);
                 }
                 
                 console.log('✅ Sincronização completa!');
@@ -251,7 +273,7 @@ const LucroCertoApp = (function() {
             }
             
             // Processar próximo item da fila
-            setTimeout(() => this.processSyncQueue(userId), 500);
+            setTimeout(() => this.processSyncQueue(dbUserId), 500);
         },
         
         async syncProducts(userId, products) {
@@ -366,16 +388,31 @@ const LucroCertoApp = (function() {
         
         async syncUser(userId, user) {
             try {
+                // 🔑 Buscar ID correto pelo email se necessário
+                const authData = Storage.get('auth', {});
+                let dbUserId = userId;
+                
+                if (authData.email && window.supabase) {
+                    const userByEmail = await supabase.select('usuarios', { 
+                        filters: { email: authData.email.toLowerCase() },
+                        limit: 1
+                    });
+                    if (userByEmail.data?.[0]?.id) {
+                        dbUserId = userByEmail.data[0].id;
+                    }
+                }
+                
                 const userData = {
                     nome: user.businessName || user.name || '',
                     telefone: user.phone || '',
                     foto_perfil: user.profilePhoto || '',
                     logo_catalogo: user.catalogLogo || '',
-                    plano_atual: user.plan || 'trial'
+                    plano_atual: user.plan || 'starter'
                 };
                 
-                await supabase.update('usuarios', userId, userData);
-                console.log('✅ Dados do usuário atualizados');
+                console.log('💾 Salvando dados do usuário:', dbUserId, userData);
+                await supabase.update('usuarios', dbUserId, userData);
+                console.log('✅ Dados do usuário atualizados no Supabase');
             } catch (error) {
                 console.error('❌ Erro ao sincronizar usuário:', error);
             }
@@ -5595,8 +5632,11 @@ const LucroCertoApp = (function() {
     
     // 🔥 NOVO: Carregar dados do banco
     async function loadDataFromSupabase(userId) {
-        if (!userId) {
-            console.log('⚠️ Sem userId - pulando carregamento do Supabase');
+        const authData = Storage.get('auth', {});
+        const userEmail = authData.email;
+        
+        if (!userId && !userEmail) {
+            console.log('⚠️ Sem userId e sem email - pulando carregamento do Supabase');
             return;
         }
         
@@ -5606,29 +5646,51 @@ const LucroCertoApp = (function() {
         }
         
         try {
-            console.log('☁️ Carregando dados do Supabase para userId:', userId);
+            console.log('☁️ Carregando dados do Supabase...');
+            console.log('   userId:', userId);
+            console.log('   email:', userEmail);
             
-            // Buscar produtos
+            // 🔑 PRIMEIRO: Buscar o usuário pelo EMAIL para obter o ID correto do banco
+            let dbUserId = userId;
+            if (userEmail) {
+                const userByEmail = await supabase.select('usuarios', { 
+                    filters: { email: userEmail.toLowerCase() },
+                    limit: 1
+                });
+                
+                if (userByEmail.data && userByEmail.data.length > 0) {
+                    dbUserId = userByEmail.data[0].id;
+                    console.log('🔑 ID do usuário no banco:', dbUserId);
+                    
+                    // Atualiza o userId local para usar o do banco
+                    if (dbUserId !== userId) {
+                        Storage.set('user_id', dbUserId);
+                        console.log('🔄 user_id local atualizado para:', dbUserId);
+                    }
+                }
+            }
+            
+            // Buscar produtos usando o ID correto do banco
             const productsResult = await supabase.select('produtos', { 
-                filters: { usuario_id: userId, ativo: true }
+                filters: { usuario_id: dbUserId, ativo: true }
             });
             console.log('📦 Produtos do banco:', productsResult.data?.length || 0);
             
             // Buscar clientes
             const clientsResult = await supabase.select('clientes', { 
-                filters: { usuario_id: userId }
+                filters: { usuario_id: dbUserId }
             });
             console.log('👥 Clientes do banco:', clientsResult.data?.length || 0);
             
             // Buscar vendas
             const salesResult = await supabase.select('vendas', { 
-                filters: { usuario_id: userId }
+                filters: { usuario_id: dbUserId }
             });
             console.log('💰 Vendas do banco:', salesResult.data?.length || 0);
             
             // Buscar dados do usuário
             const userResult = await supabase.select('usuarios', { 
-                filters: { id: userId },
+                filters: { id: dbUserId },
                 limit: 1
             });
             console.log('👤 Dados do usuário:', userResult.data?.[0]?.nome || 'Não encontrado');
