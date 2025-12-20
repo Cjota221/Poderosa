@@ -1344,9 +1344,69 @@
         const mp = new MercadoPago(MP_PUBLIC_KEY, {
             locale: 'pt-BR'
         });
+
+        // ==============================================
+        // FUNÇÕES DE TRATAMENTO DE ERROS
+        // ==============================================
+        
+        // Detectar bloqueadores de anúncios/scripts
+        async function detectarBloqueadores() {
+            try {
+                // Tenta carregar um script comum que bloqueadores bloqueiam
+                const testUrl = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
+                const response = await fetch(testUrl, { mode: 'no-cors', cache: 'no-store' });
+                return false; // Não tem bloqueador
+            } catch (e) {
+                return true; // Provavelmente tem bloqueador
+            }
+        }
+
+        // Fetch com retry e timeout
+        async function fetchComRetry(url, options, maxTentativas = 3, timeoutMs = 15000) {
+            for (let tentativa = 1; tentativa <= maxTentativas; tentativa++) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+                    
+                    const response = await fetch(url, {
+                        ...options,
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    return response;
+                } catch (error) {
+                    console.warn(`Tentativa ${tentativa}/${maxTentativas} falhou:`, error.message);
+                    
+                    if (tentativa === maxTentativas) {
+                        if (error.name === 'AbortError') {
+                            throw new Error('Conexão lenta. Verifique sua internet e tente novamente.');
+                        }
+                        throw error;
+                    }
+                    
+                    // Espera antes de tentar novamente (1s, 2s, 3s...)
+                    await new Promise(r => setTimeout(r, tentativa * 1000));
+                }
+            }
+        }
         
         // Checkout button
         document.getElementById('btn-checkout').addEventListener('click', async () => {
+            // ==============================================
+            // VERIFICAR BLOQUEADORES DE SCRIPT
+            // ==============================================
+            const temBloqueador = await detectarBloqueadores();
+            if (temBloqueador) {
+                const continuar = confirm(
+                    '⚠️ Detectamos um bloqueador de anúncios ativo.\n\n' +
+                    'Isso pode causar problemas no processamento do pagamento.\n\n' +
+                    'Recomendamos desativar o bloqueador e recarregar a página.\n\n' +
+                    'Deseja continuar mesmo assim?'
+                );
+                if (!continuar) return;
+            }
+
             // Validate form
             const nome = document.getElementById('nome').value.trim();
             const sobrenome = document.getElementById('sobrenome').value.trim();
@@ -1419,6 +1479,11 @@
                     const [expMonth, expYear] = cardExpiry.split('/');
                     
                     try {
+                        // Verificar se o SDK está disponível
+                        if (!mp || typeof mp.createCardToken !== 'function') {
+                            throw new Error('SDK_NOT_LOADED');
+                        }
+
                         // Usar a API correta do SDK para criar token
                         const cardTokenData = {
                             cardNumber: cardNumber,
@@ -1434,10 +1499,15 @@
                         const tokenResponse = await mp.createCardToken(cardTokenData);
                         console.log('Token criado:', tokenResponse);
 
+                        // Verificar se o token foi criado corretamente
+                        if (!tokenResponse || !tokenResponse.id) {
+                            throw new Error('TOKEN_INVALID');
+                        }
+
                         document.querySelector('.loading-text').textContent = 'Processando pagamento...';
 
-                        // Enviar token para o backend processar
-                        const paymentResponse = await fetch(`${API_URL}/process-payment`, {
+                        // Enviar token para o backend processar (COM RETRY)
+                        const paymentResponse = await fetchComRetry(`${API_URL}/process-payment`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -1466,7 +1536,32 @@
                     } catch (tokenError) {
                         console.error('Erro ao criar token:', tokenError);
                         document.getElementById('loading-overlay').classList.remove('active');
-                        alert('Erro ao processar cartão. Verifique os dados.');
+                        
+                        // Mensagens de erro mais específicas
+                        let mensagemErro = 'Erro ao processar cartão. ';
+                        
+                        if (tokenError.message === 'SDK_NOT_LOADED') {
+                            mensagemErro = '❌ Erro de carregamento do sistema de pagamento.\n\n' +
+                                '• Desative bloqueadores de anúncios\n' +
+                                '• Recarregue a página (Ctrl+Shift+R)\n' +
+                                '• Tente em uma janela anônima';
+                        } else if (tokenError.message === 'TOKEN_INVALID') {
+                            mensagemErro = '❌ Não foi possível validar o cartão.\n\nVerifique os dados e tente novamente.';
+                        } else if (tokenError.message?.includes('ERR_BLOCKED')) {
+                            mensagemErro = '❌ Requisição bloqueada.\n\n' +
+                                'Seu navegador ou antivírus pode estar bloqueando o pagamento.\n' +
+                                'Tente desativar extensões ou usar outro navegador.';
+                        } else if (tokenError.message?.includes('card_number')) {
+                            mensagemErro = '❌ Número do cartão inválido.\n\nVerifique se digitou corretamente.';
+                        } else if (tokenError.message?.includes('expiration')) {
+                            mensagemErro = '❌ Data de validade inválida.\n\nUse o formato MM/AA.';
+                        } else if (tokenError.message?.includes('security_code')) {
+                            mensagemErro = '❌ CVV inválido.\n\nVerifique o código de segurança do cartão.';
+                        } else {
+                            mensagemErro += 'Verifique os dados do cartão e tente novamente.';
+                        }
+                        
+                        alert(mensagemErro);
                         return;
                     }
                 }
@@ -1476,7 +1571,7 @@
                 else if (paymentMethod === 'pix') {
                     document.querySelector('.loading-text').textContent = 'Gerando PIX...';
                     
-                    const pixResponse = await fetch(`${API_URL}/pix-payment`, {
+                    const pixResponse = await fetchComRetry(`${API_URL}/pix-payment`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
