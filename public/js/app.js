@@ -21,7 +21,21 @@ const LucroCertoApp = (function() {
             try {
                 const fullKey = `lucrocerto_${key}`;
                 const item = localStorage.getItem(fullKey);
-                return item ? JSON.parse(item) : defaultValue;
+                
+                if (item === null || item === undefined) return defaultValue;
+                
+                // 🎯 CORREÇÃO: Tenta parsear, se falhar retorna string
+                try {
+                    return JSON.parse(item);
+                } catch (parseError) {
+                    // Se for uma string que parece JSON corrompido, tenta limpar
+                    if (item.includes('{') || item.includes('[')) {
+                        console.warn('⚠️ Item parece JSON corrompido:', key, item.substring(0, 50));
+                        return defaultValue;
+                    }
+                    // Retorna string pura (ex: "user_carol_gmail")
+                    return item;
+                }
             } catch (error) {
                 console.error('❌ Erro ao ler do localStorage:', error);
                 return defaultValue;
@@ -52,6 +66,81 @@ const LucroCertoApp = (function() {
             }
         }
     };
+
+    //==================================
+    // 0.1 DATA RECOVERY - RECUPERAÇÃO DE DADOS CORROMPIDOS
+    //==================================
+    const DataRecovery = {
+        fixCorruptedStorage() {
+            console.log('🔧 Verificando integridade do localStorage...');
+            const backup = {};
+            let corruptedCount = 0;
+            
+            // Backup de tudo
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('lucrocerto_')) {
+                    backup[key] = localStorage.getItem(key);
+                }
+            }
+            
+            // Verifica e corrige cada item
+            Object.keys(backup).forEach(key => {
+                const value = backup[key];
+                
+                // Pula valores obviamente corrompidos
+                if (value === null || value === 'null' || value === 'undefined') {
+                    console.log('🗑️ Removendo valor corrompido:', key);
+                    localStorage.removeItem(key);
+                    corruptedCount++;
+                    return;
+                }
+                
+                // Verifica se é JSON válido quando deveria ser
+                if (value.startsWith('{') || value.startsWith('[')) {
+                    try {
+                        JSON.parse(value);
+                        // JSON válido, mantém como está
+                    } catch {
+                        // JSON inválido - tenta corrigir ou remove
+                        console.warn('⚠️ JSON corrompido encontrado:', key);
+                        localStorage.removeItem(key);
+                        corruptedCount++;
+                    }
+                }
+            });
+            
+            if (corruptedCount > 0) {
+                console.log(`✅ Storage limpo! ${corruptedCount} itens corrompidos removidos.`);
+            } else {
+                console.log('✅ Storage íntegro!');
+            }
+        },
+        
+        verifyUserId() {
+            // VERIFICAÇÃO DE INTEGRIDADE DO USER_ID
+            const userId = Storage.get('user_id');
+            
+            if (userId && typeof userId !== 'string') {
+                console.warn('⚠️ user_id corrompido. Corrigindo...');
+                Storage.remove('user_id');
+                
+                // Recupera do auth data
+                const authData = Storage.get('auth', {});
+                if (authData.email) {
+                    const fixedId = btoa(authData.email).substring(0, 12);
+                    Storage.set('user_id', fixedId);
+                    console.log('✅ user_id corrigido:', fixedId);
+                    return fixedId;
+                }
+            }
+            
+            return userId;
+        }
+    };
+
+    // 🚀 Executa verificação de integridade ao carregar
+    DataRecovery.fixCorruptedStorage();
 
     //==================================
     // 1. STATE MANAGER
@@ -5451,7 +5540,10 @@ const LucroCertoApp = (function() {
     // 6. INITIALIZATION
     //==================================
     function init() {
-        // 🔑 CRÍTICO: Garantir que user_id sempre existe ANTES de tudo
+        // � VERIFICAÇÃO DE INTEGRIDADE - Corrige dados corrompidos
+        DataRecovery.verifyUserId();
+        
+        // �🔑 CRÍTICO: Garantir que user_id sempre existe ANTES de tudo
         let userId = Storage.get('user_id');
         const authData = Storage.get('auth', {});
         
@@ -5460,6 +5552,13 @@ const LucroCertoApp = (function() {
             userId = btoa(authData.email).substring(0, 12);
             Storage.set('user_id', userId);
             console.log('🔑 user_id gerado:', userId);
+        }
+        
+        // Se ainda não tem userId mas tem authData.userId, usa ele
+        if (!userId && authData.userId) {
+            userId = authData.userId;
+            Storage.set('user_id', userId);
+            console.log('🔑 user_id recuperado do auth:', userId);
         }
         
         // 🔥 NOVO: Carregar dados do Supabase primeiro
