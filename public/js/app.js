@@ -5524,7 +5524,11 @@ const LucroCertoApp = (function() {
                 'close-menu': () => UIManager.toggleMenu(false),
                 'logout': () => {
                     if (confirm('Deseja realmente sair da sua conta?')) {
+                        // 🚨 CRÍTICO: Apenas remove auth, NÃO apaga dados do app
+                        Storage.remove('auth');
                         Storage.remove('logged');
+                        Storage.remove('user_id');
+                        console.log('👋 Logout via menu');
                         window.location.href = 'login';
                     }
                 },
@@ -6211,7 +6215,14 @@ const LucroCertoApp = (function() {
         // Logout
         if (e.target.closest('[data-action="logout"]')) {
             if (confirm('❓ Tem certeza que deseja sair?')) {
-                Storage.clear();
+                // 🚨 CRÍTICO: NÃO apagar dados do app!
+                // Apenas remove dados de autenticação
+                Storage.remove('auth');
+                Storage.remove('logged');
+                Storage.remove('user_id');
+                // Mantém: appState, produtos, clientes, vendas, etc.
+                
+                console.log('👋 Logout - dados de auth removidos, dados do app mantidos');
                 window.location.href = './login';
             }
             return;
