@@ -163,6 +163,7 @@ const LucroCertoApp = (function() {
         subscribers: [],
         syncQueue: [],
         isSyncing: false,
+        isLoadingFromSupabase: false, // 🚨 FLAG para evitar sobrescrever dados durante carregamento
 
         getState() { return this.state; },
         
@@ -172,8 +173,12 @@ const LucroCertoApp = (function() {
             this.notifySubscribers();
             DataManager.save('appState', this.state);
             
-            // 🔥 NOVO: Sincronizar com Supabase automaticamente
-            this.syncToSupabase(newState);
+            // 🔥 CRÍTICO: NÃO sincronizar durante carregamento inicial!
+            if (!this.isLoadingFromSupabase) {
+                this.syncToSupabase(newState);
+            } else {
+                console.log('⏸️ Sincronização pausada (carregando do Supabase)');
+            }
         },
         
         subscribe(callback) { this.subscribers.push(callback); },
@@ -183,6 +188,12 @@ const LucroCertoApp = (function() {
         async syncToSupabase(changedData) {
             // Não sincronizar mudanças de navegação
             if (changedData.currentPage || changedData.editingProductId || changedData.editingClientId) {
+                return;
+            }
+            
+            // 🚨 CRÍTICO: Não sincronizar se estiver carregando do Supabase
+            if (this.isLoadingFromSupabase) {
+                console.log('⏸️ Sincronização bloqueada durante carregamento');
                 return;
             }
             
@@ -5562,7 +5573,18 @@ const LucroCertoApp = (function() {
         }
         
         // 🔥 NOVO: Carregar dados do Supabase primeiro
+        // 🚨 ATIVA FLAG para não sobrescrever dados durante carregamento
+        StateManager.isLoadingFromSupabase = true;
+        
         loadDataFromSupabase(userId).then(() => {
+            // 🚨 DESATIVA FLAG após carregamento completo
+            StateManager.isLoadingFromSupabase = false;
+            console.log('✅ Flag de carregamento desativada - sincronização liberada');
+            
+            continueInit(userId, authData);
+        }).catch(error => {
+            StateManager.isLoadingFromSupabase = false;
+            console.error('❌ Erro no carregamento:', error);
             continueInit(userId, authData);
         });
     }
@@ -5675,29 +5697,47 @@ const LucroCertoApp = (function() {
     
     function continueInit(userId, authData) {
         let savedState = DataManager.load('appState');
-        if (!savedState || !savedState.costs || !savedState.user || !savedState.products) {
-            const DemoData = {
+        
+        // 🚨 CRÍTICO: Verificar se tem dados REAIS (não vazios)
+        const temDadosReais = savedState && 
+                             savedState.products && 
+                             savedState.products.length > 0;
+        
+        console.log('📊 Estado ao iniciar:', {
+            temSavedState: !!savedState,
+            produtos: savedState?.products?.length || 0,
+            clientes: savedState?.clients?.length || 0,
+            vendas: savedState?.sales?.length || 0,
+            temDadosReais
+        });
+        
+        if (!savedState || !savedState.costs) {
+            // Primeiro acesso - criar estrutura básica SEM produtos de demo
+            console.log('🆕 Primeiro acesso - criando estrutura vazia');
+            const InitialData = {
                 user: { 
                     name: authData.nome || authData.name || 'Empreendedora', 
                     email: authData.email || '',
                     monthlyGoal: 8000, 
-                    currentRevenue: 5200, 
+                    currentRevenue: 0, 
                     monthlySalesGoal: 100 
                 },
-                products: [
-                    { id: `prod_1`, name: 'Rasteirinha Comfort', baseCost: 15.00, finalPrice: 39.90, variationType: 'simple', variations: [{ name: 'Tamanho', options: ['35', '36', '37'] }], stock: { '35': 10, '36': 15, '37': 5 }, imageUrl: 'https://placehold.co/100x100/f06292/ffffff?text=RC' },
-                    { id: `prod_2`, name: 'Bolsa Essencial', baseCost: 45.00, finalPrice: 99.00, variationType: 'none', variations: [], stock: { 'total': 20 }, imageUrl: 'https://placehold.co/100x100/BA68C8/ffffff?text=BE' }
-                ],
+                products: [], // 🚨 SEM produtos de demo - usuário vai criar os seus
+                clients: [],
+                sales: [],
                 costs: {
-                    fixed: [ { name: 'Aluguel do espaço', value: 500 }, { name: 'Plano de Internet', value: 100 }, { name: 'Ferramentas online', value: 50 }],
-                    variable: [ { name: 'Taxa da Maquininha', value: 4.5, type: 'percentage' }, { name: 'Embalagem por venda', value: 2.0, type: 'fixed' }],
-                    shipping: 150
+                    fixed: [],
+                    variable: [],
+                    shipping: 0
                 },
                 achievements: [],
-                currentPage: 'dashboard' // Sempre inicia no dashboard
+                currentPage: 'dashboard'
             };
-            StateManager.setState(DemoData);
+            StateManager.setState(InitialData);
         } else {
+            // Tem dados salvos - usar eles
+            console.log('📂 Usando dados salvos:', savedState.products?.length || 0, 'produtos');
+            
             // Garantir que sempre inicie no dashboard
             savedState.currentPage = 'dashboard';
             
