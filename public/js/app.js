@@ -3752,52 +3752,58 @@ const LucroCertoApp = (function() {
 
         // ========== PÁGINA DE VENDAS ==========
         getVendasHTML() {
-            const { sales } = StateManager.getState();
-            const sortedSales = [...(sales || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
-            // Estatísticas
-            const today = new Date().toDateString();
-            const todaySales = sortedSales.filter(s => new Date(s.date).toDateString() === today);
-            const todayRevenue = todaySales.reduce((acc, s) => acc + s.total, 0);
-            
-            const thisMonth = new Date().getMonth();
-            const thisYear = new Date().getFullYear();
-            const monthSales = sortedSales.filter(s => {
-                const d = new Date(s.date);
-                return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
-            });
-            const monthRevenue = monthSales.reduce((acc, s) => acc + s.total, 0);
-            
-            const salesHTML = sortedSales.slice(0, 20).map(s => {
-                const date = new Date(s.date);
-                const formattedDate = date.toLocaleDateString('pt-BR');
-                const formattedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            try {
+                const { sales } = StateManager.getState();
+                const sortedSales = [...(sales || [])].sort((a, b) => new Date(b.date) - new Date(a.date));
                 
-                return `
-                    <div class="sale-card">
-                        <div class="sale-header">
-                            <div class="sale-date">
-                                <i data-lucide="calendar" style="width: 14px; height: 14px;"></i>
-                                ${formattedDate} às ${formattedTime}
+                // Estatísticas
+                const today = new Date().toDateString();
+                const todaySales = sortedSales.filter(s => new Date(s.date).toDateString() === today);
+                const todayRevenue = todaySales.reduce((acc, s) => acc + s.total, 0);
+                
+                const thisMonth = new Date().getMonth();
+                const thisYear = new Date().getFullYear();
+                const monthSales = sortedSales.filter(s => {
+                    const d = new Date(s.date);
+                    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+                });
+                const monthRevenue = monthSales.reduce((acc, s) => acc + s.total, 0);
+                
+                const salesHTML = sortedSales.slice(0, 20).map(s => {
+                    try {
+                        const date = new Date(s.date);
+                        const formattedDate = date.toLocaleDateString('pt-BR');
+                        const formattedTime = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        
+                        return `
+                            <div class="sale-card">
+                                <div class="sale-header">
+                                    <div class="sale-date">
+                                        <i data-lucide="calendar" style="width: 14px; height: 14px;"></i>
+                                        ${formattedDate} às ${formattedTime}
+                                    </div>
+                                    <div class="sale-header-right">
+                                        <span class="sale-total">R$ ${s.total.toFixed(2)}</span>
+                                        <button class="btn-icon" data-action="edit-sale" data-sale-id="${s.id}" title="Editar venda">
+                                            <i data-lucide="edit-2" style="width: 16px; height: 16px;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="sale-details">
+                                    ${s.clientName ? `<span class="sale-client"><i data-lucide="user"></i> ${s.clientName}</span>` : ''}
+                                    <span class="sale-items">${s.items.length} ${s.items.length === 1 ? 'item' : 'itens'}</span>
+                                    <span class="sale-payment"><i data-lucide="credit-card"></i> ${s.paymentMethod || 'Não informado'}</span>
+                                </div>
+                                <div class="sale-products">
+                                    ${s.items.map(item => `<span class="sale-product-tag">${item.quantity}x ${item.productName}</span>`).join('')}
+                                </div>
                             </div>
-                            <div class="sale-header-right">
-                                <span class="sale-total">R$ ${s.total.toFixed(2)}</span>
-                                <button class="btn-icon" data-action="edit-sale" data-sale-id="${s.id}" title="Editar venda">
-                                    <i data-lucide="edit-2" style="width: 16px; height: 16px;"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="sale-details">
-                            ${s.clientName ? `<span class="sale-client"><i data-lucide="user"></i> ${s.clientName}</span>` : ''}
-                            <span class="sale-items">${s.items.length} ${s.items.length === 1 ? 'item' : 'itens'}</span>
-                            <span class="sale-payment"><i data-lucide="credit-card"></i> ${s.paymentMethod || 'Não informado'}</span>
-                        </div>
-                        <div class="sale-products">
-                            ${s.items.map(item => `<span class="sale-product-tag">${item.quantity}x ${item.productName}</span>`).join('')}
-                        </div>
-                    </div>
-                `;
-            }).join('');
+                        `;
+                    } catch (err) {
+                        console.error('Erro ao renderizar venda:', s, err);
+                        return '';
+                    }
+                }).join('');
             
             return `
                 <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
@@ -3847,6 +3853,21 @@ const LucroCertoApp = (function() {
                     </div>
                 `}
             `;
+            } catch (error) {
+                console.error('❌ Erro ao renderizar página de vendas:', error);
+                return `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i data-lucide="alert-circle" style="width: 64px; height: 64px; color: var(--error);"></i>
+                        </div>
+                        <h3>Erro ao carregar vendas</h3>
+                        <p>Tente recarregar a página. Se o problema persistir, entre em contato.</p>
+                        <button class="btn btn-primary" onclick="location.reload()">
+                            <i data-lucide="refresh-cw"></i> Recarregar
+                        </button>
+                    </div>
+                `;
+            }
         },
         
         bindVendasEvents() {
@@ -5594,7 +5615,7 @@ const LucroCertoApp = (function() {
                     notes: s.notas
                 })),
                 user: userResult.data?.[0] ? {
-                    name: userResult.data[0].nome,
+                    name: currentState.user?.name || userResult.data[0].nome || 'Empreendedora',
                     businessName: userResult.data[0].nome,
                     email: userResult.data[0].email,
                     phone: userResult.data[0].telefone,
