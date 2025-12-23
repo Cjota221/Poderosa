@@ -1,7 +1,7 @@
 -- Criar tabela de histórico de mudanças de plano
 CREATE TABLE IF NOT EXISTS historico_planos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     plano_anterior VARCHAR(50),
     plano_novo VARCHAR(50) NOT NULL,
     periodo VARCHAR(20) NOT NULL, -- 'monthly' ou 'annual'
