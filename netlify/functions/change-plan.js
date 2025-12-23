@@ -93,14 +93,14 @@ exports.handler = async (event) => {
         // 3. Atualizar limites baseado no plano
         const planoLimites = {
             starter: {
-                max_produtos: 50,
-                max_clientes: 30,
+                max_produtos: 20,
+                max_clientes: 20,
                 max_vendas_mes: 100,
                 max_usuarios: 1
             },
             pro: {
-                max_produtos: 200,
-                max_clientes: 100,
+                max_produtos: -1, // ilimitado
+                max_clientes: -1, // ilimitado
                 max_vendas_mes: -1, // ilimitado
                 max_usuarios: 3
             },
