@@ -3475,10 +3475,10 @@ const LucroCertoApp = (function() {
                 </div>
                 
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <a href="./precos" class="btn btn-secondary" style="flex: 1; text-decoration: none; text-align: center;">
+                    <a href="./planos" class="btn btn-secondary" style="flex: 1; text-decoration: none; text-align: center;">
                         <i data-lucide="arrow-up-circle" style="width: 16px; height: 16px;"></i> Mudar Plano
                     </a>
-                    <a href="./checkout?plan=${currentPlan}&billing=${billing}" class="btn btn-primary" style="flex: 1; text-decoration: none; text-align: center;">
+                    <a href="./planos" class="btn btn-primary" style="flex: 1; text-decoration: none; text-align: center;">
                         <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i> Renovar
                     </a>
                 </div>

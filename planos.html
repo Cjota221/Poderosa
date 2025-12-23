@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planos e Preços - Lucro Certo</title>
+    <meta name="description" content="Escolha o melhor plano para seu negócio">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="./public/images/favicon.svg">
+    <link rel="apple-touch-icon" href="./public/images/favicon.svg">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        :root {
+            --primary: #E91E63;
+            --primary-light: #F06292;
+            --primary-dark: #C2185B;
+            --primary-gradient: linear-gradient(135deg, #E91E63 0%, #F06292 100%);
+            --secondary: #9C27B0;
+            --success: #4CAF50;
+            --warning: #FF9800;
+            --error: #F44336;
+            --dark-gray: #37474F;
+            --elegant-gray: #607D8B;
+            --light-gray: #f4f6f8;
+            --white: #ffffff;
+            --background: #f8f8fc;
+            --shadow-soft: 0 4px 20px rgba(233, 30, 99, 0.1);
+            --shadow-medium: 0 8px 30px rgba(233, 30, 99, 0.15);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--background);
+            color: var(--dark-gray);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: var(--white);
+            padding: 16px 24px;
+            box-shadow: var(--shadow-soft);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--primary-gradient);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--dark-gray);
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: var(--light-gray);
+            border: none;
+            border-radius: 8px;
+            color: var(--dark-gray);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: #e0e0e0;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .hero h1 {
+            font-size: 36px;
+            color: var(--dark-gray);
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: var(--elegant-gray);
+        }
+
+        /* Current Plan Banner */
+        .current-plan-banner {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .current-plan-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Billing Toggle */
+        .billing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 40px;
+            padding: 12px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .toggle-option {
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--elegant-gray);
+            transition: var(--transition-smooth);
+        }
+
+        .toggle-option.active {
+            color: var(--primary);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 56px;
+            height: 28px;
+            background: var(--light-gray);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .toggle-switch.active {
+            background: var(--primary);
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            transition: var(--transition-smooth);
+        }
+
+        .toggle-switch.active .toggle-slider {
+            transform: translateX(28px);
+        }
+
+        .discount-badge {
+            background: var(--success);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Plans Grid */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 48px;
+        }
+
+        .plan-card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: var(--shadow-soft);
+            transition: var(--transition-smooth);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plan-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .plan-card.current {
+            border: 2px solid var(--primary);
+        }
+
+        .plan-card.popular {
+            border: 2px solid var(--primary);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: var(--primary-gradient);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .current-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: var(--success);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .plan-header {
+            margin-bottom: 24px;
+        }
+
+        .plan-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
+        }
+
+        .plan-description {
+            font-size: 14px;
+            color: var(--elegant-gray);
+        }
+
+        .plan-price {
+            margin-bottom: 24px;
+        }
+
+        .price-value {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .price-period {
+            font-size: 16px;
+            color: var(--elegant-gray);
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+
+        .plan-features li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--light-gray);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .plan-features li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            color: var(--success);
+            flex-shrink: 0;
+        }
+
+        .feature-icon.disabled {
+            color: var(--elegant-gray);
+        }
+
+        .plan-btn {
+            width: 100%;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .plan-btn.primary {
+            background: var(--primary-gradient);
+            color: white;
+        }
+
+        .plan-btn.primary:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .plan-btn.secondary {
+            background: var(--light-gray);
+            color: var(--dark-gray);
+        }
+
+        .plan-btn.secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .plan-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .faq-section h2 {
+            font-size: 28px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid var(--light-gray);
+            padding: 20px 0;
+        }
+
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: var(--dark-gray);
+            margin-bottom: 8px;
+        }
+
+        .faq-answer {
+            color: var(--elegant-gray);
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 28px;
+            }
+
+            .plans-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .price-value {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <a href="./" class="logo">
+                <div class="logo-icon">
+                    <i data-lucide="sparkles" style="width: 24px; height: 24px; color: white;"></i>
+                </div>
+                <span class="logo-text">Lucro Certo</span>
+            </a>
+            <a href="./index.html" class="back-btn">
+                <i data-lucide="arrow-left" style="width: 18px; height: 18px;"></i>
+                Voltar ao Sistema
+            </a>
+        </div>
+    </header>
+
+    <!-- Container -->
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <h1>Escolha o Melhor Plano para Você</h1>
+            <p>Gerencie seu negócio com eficiência e controle total</p>
+        </div>
+
+        <!-- Current Plan Banner -->
+        <div class="current-plan-banner" id="current-plan-banner" style="display: none;">
+            <div class="current-plan-info">
+                <i data-lucide="info" style="width: 24px; height: 24px;"></i>
+                <div>
+                    <strong>Seu plano atual:</strong>
+                    <span id="current-plan-name"></span>
+                </div>
+            </div>
+            <div>
+                Vence em: <strong id="current-plan-expiry"></strong>
+            </div>
+        </div>
+
+        <!-- Billing Toggle -->
+        <div class="billing-toggle">
+            <span class="toggle-option active" id="monthly-label">Mensal</span>
+            <div class="toggle-switch" id="billing-toggle">
+                <div class="toggle-slider"></div>
+            </div>
+            <span class="toggle-option" id="annual-label">Anual</span>
+            <span class="discount-badge">Economize 20%</span>
+        </div>
+
+        <!-- Plans Grid -->
+        <div class="plans-grid" id="plans-grid">
+            <!-- Plans will be loaded here -->
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="faq-section">
+            <h2>Perguntas Frequentes</h2>
+            <div class="faq-item">
+                <div class="faq-question">Como funciona a troca de plano?</div>
+                <div class="faq-answer">
+                    Ao fazer upgrade, você terá acesso imediato às novas funcionalidades. O valor é calculado proporcionalmente ao tempo restante da sua assinatura atual.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">Posso fazer downgrade do meu plano?</div>
+                <div class="faq-answer">
+                    Sim! Você pode mudar para um plano inferior a qualquer momento. As mudanças entrarão em vigor na próxima renovação.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">O que acontece com meus dados ao trocar de plano?</div>
+                <div class="faq-answer">
+                    Todos os seus dados são preservados! Você apenas ganha ou perde acesso a funcionalidades específicas do plano.
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">Posso testar antes de fazer upgrade?</div>
+                <div class="faq-answer">
+                    Todo novo plano vem com 7 dias de teste gratuito! Experimente sem compromisso.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Storage Helper
+        const Storage = {
+            get(key, defaultValue = null) {
+                try {
+                    const item = localStorage.getItem(key);
+                    if (item === null) return defaultValue;
+                    
+                    // Try to parse as JSON
+                    try {
+                        return JSON.parse(item);
+                    } catch (e) {
+                        // If not JSON, return as string
+                        return item;
+                    }
+                } catch (error) {
+                    console.error('Storage.get error:', error);
+                    return defaultValue;
+                }
+            }
+        };
+
+        // Plans Configuration
+        const plansConfig = {
+            starter: {
+                name: 'Starter',
+                description: 'Ideal para começar',
+                monthlyPrice: 29.90,
+                annualPrice: 287.04, // 20% desconto
+                features: [
+                    { text: 'Até 50 produtos', enabled: true },
+                    { text: 'Até 30 clientes', enabled: true },
+                    { text: 'Até 100 vendas/mês', enabled: true },
+                    { text: 'Gestão de estoque básica', enabled: true },
+                    { text: 'Relatórios básicos', enabled: true },
+                    { text: 'Suporte por email', enabled: true },
+                    { text: 'Múltiplos usuários', enabled: false },
+                    { text: 'Relatórios avançados', enabled: false },
+                    { text: 'Integrações', enabled: false }
+                ]
+            },
+            pro: {
+                name: 'Pro',
+                description: 'Para negócios em crescimento',
+                monthlyPrice: 49.90,
+                annualPrice: 479.04, // 20% desconto
+                popular: true,
+                features: [
+                    { text: 'Até 200 produtos', enabled: true },
+                    { text: 'Até 100 clientes', enabled: true },
+                    { text: 'Vendas ilimitadas', enabled: true },
+                    { text: 'Gestão de estoque avançada', enabled: true },
+                    { text: 'Relatórios avançados', enabled: true },
+                    { text: 'Suporte prioritário', enabled: true },
+                    { text: 'Até 3 usuários', enabled: true },
+                    { text: 'Backup automático', enabled: true },
+                    { text: 'Integrações básicas', enabled: true }
+                ]
+            },
+            premium: {
+                name: 'Premium',
+                description: 'Solução completa',
+                monthlyPrice: 79.90,
+                annualPrice: 767.04, // 20% desconto
+                features: [
+                    { text: 'Produtos ilimitados', enabled: true },
+                    { text: 'Clientes ilimitados', enabled: true },
+                    { text: 'Vendas ilimitadas', enabled: true },
+                    { text: 'Gestão completa de estoque', enabled: true },
+                    { text: 'Relatórios personalizados', enabled: true },
+                    { text: 'Suporte 24/7', enabled: true },
+                    { text: 'Usuários ilimitados', enabled: true },
+                    { text: 'Backup automático diário', enabled: true },
+                    { text: 'Todas as integrações', enabled: true }
+                ]
+            }
+        };
+
+        // State
+        let currentBilling = 'monthly';
+        let userCurrentPlan = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCurrentPlan();
+            renderPlans();
+            setupEventListeners();
+            lucide.createIcons();
+        });
+
+        function loadCurrentPlan() {
+            const authData = Storage.get('auth', {});
+            if (authData.plano) {
+                userCurrentPlan = authData.plano;
+                currentBilling = authData.billing || 'monthly';
+                
+                // Show current plan banner
+                const banner = document.getElementById('current-plan-banner');
+                banner.style.display = 'flex';
+                
+                const planName = plansConfig[userCurrentPlan]?.name || userCurrentPlan;
+                document.getElementById('current-plan-name').textContent = planName;
+                
+                if (authData.expiry) {
+                    const expiryDate = new Date(authData.expiry);
+                    document.getElementById('current-plan-expiry').textContent = expiryDate.toLocaleDateString('pt-BR');
+                }
+
+                // Set billing toggle
+                if (currentBilling === 'annual') {
+                    document.getElementById('billing-toggle').classList.add('active');
+                    document.getElementById('monthly-label').classList.remove('active');
+                    document.getElementById('annual-label').classList.add('active');
+                }
+            }
+        }
+
+        function setupEventListeners() {
+            const toggle = document.getElementById('billing-toggle');
+            toggle.addEventListener('click', () => {
+                currentBilling = currentBilling === 'monthly' ? 'annual' : 'monthly';
+                
+                toggle.classList.toggle('active');
+                document.getElementById('monthly-label').classList.toggle('active');
+                document.getElementById('annual-label').classList.toggle('active');
+                
+                renderPlans();
+            });
+        }
+
+        function renderPlans() {
+            const grid = document.getElementById('plans-grid');
+            grid.innerHTML = '';
+
+            Object.keys(plansConfig).forEach(planKey => {
+                const plan = plansConfig[planKey];
+                const price = currentBilling === 'monthly' ? plan.monthlyPrice : plan.annualPrice;
+                const isCurrent = planKey === userCurrentPlan;
+                
+                const card = document.createElement('div');
+                card.className = 'plan-card';
+                if (isCurrent) card.classList.add('current');
+                if (plan.popular) card.classList.add('popular');
+
+                let badge = '';
+                if (isCurrent) {
+                    badge = '<div class="current-badge">Plano Atual</div>';
+                } else if (plan.popular) {
+                    badge = '<div class="popular-badge">Mais Popular</div>';
+                }
+
+                const features = plan.features.map(f => `
+                    <li>
+                        <i data-lucide="${f.enabled ? 'check-circle' : 'x-circle'}" 
+                           class="feature-icon ${!f.enabled ? 'disabled' : ''}"
+                           style="width: 20px; height: 20px;"></i>
+                        <span>${f.text}</span>
+                    </li>
+                `).join('');
+
+                let buttonHTML;
+                if (isCurrent) {
+                    buttonHTML = `
+                        <a href="./checkout?plan=${planKey}&billing=${currentBilling}&action=renew" class="plan-btn secondary">
+                            <i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i>
+                            Renovar Plano
+                        </a>
+                    `;
+                } else {
+                    buttonHTML = `
+                        <a href="./checkout?plan=${planKey}&billing=${currentBilling}&action=change" class="plan-btn primary">
+                            <i data-lucide="arrow-up-circle" style="width: 18px; height: 18px;"></i>
+                            ${userCurrentPlan ? 'Mudar para este Plano' : 'Assinar Agora'}
+                        </a>
+                    `;
+                }
+
+                card.innerHTML = `
+                    ${badge}
+                    <div class="plan-header">
+                        <h3 class="plan-name">${plan.name}</h3>
+                        <p class="plan-description">${plan.description}</p>
+                    </div>
+                    <div class="plan-price">
+                        <div>
+                            <span class="price-value">R$ ${price.toFixed(2)}</span>
+                            <span class="price-period">/${currentBilling === 'monthly' ? 'mês' : 'ano'}</span>
+                        </div>
+                        ${currentBilling === 'annual' ? '<small style="color: var(--success);">Economize R$ ' + ((plan.monthlyPrice * 12) - plan.annualPrice).toFixed(2) + '/ano</small>' : ''}
+                    </div>
+                    <ul class="plan-features">
+                        ${features}
+                    </ul>
+                    ${buttonHTML}
+                `;
+
+                grid.appendChild(card);
+            });
+
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>

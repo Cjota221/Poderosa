@@ -1155,8 +1155,9 @@
         const urlParams = new URLSearchParams(window.location.search);
         let currentPlan = urlParams.get('plan') || urlParams.get('plano') || 'pro';
         let isAnnual = urlParams.get('billing') === 'annual' || false;
+        const action = urlParams.get('action') || 'new'; // new, renew, change
         
-        console.log('📋 Checkout iniciado:', { currentPlan, isAnnual, url: window.location.href });
+        console.log('📋 Checkout iniciado:', { currentPlan, isAnnual, action, url: window.location.href });
         
         // Verificar cupom (da URL ou localStorage)
         let cupomAtivo = urlParams.get('cupom') || localStorage.getItem('lucrocerto_cupom') || null;
@@ -1644,31 +1645,61 @@
                 };
                 
                 // ==============================================
-                // CRIAR USUÁRIO NO BANCO DE DADOS
+                // CRIAR/ATUALIZAR USUÁRIO NO BANCO DE DADOS
                 // ==============================================
                 try {
-                    console.log('📝 Criando usuário no banco:', email);
-                    const createUserResponse = await fetch(`${API_URL}/create-user`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            email: email,
-                            nome: `${nome} ${sobrenome}`,
-                            plano: currentPlan,
-                            periodo: isAnnual ? 'annual' : 'monthly',
-                            paymentId: result.id,
-                            valor: isAnnual ? (plans[currentPlan]?.annualPrice || 0) : (plans[currentPlan]?.monthlyPrice || 0)
-                        })
-                    });
-                    
-                    const createUserResult = await createUserResponse.json();
-                    console.log('✅ Usuário criado:', createUserResult);
-                    
-                    if (createUserResult.userId) {
-                        authData.userId = createUserResult.userId;
+                    if (action === 'change') {
+                        // MUDANÇA DE PLANO
+                        console.log('🔄 Alterando plano do usuário:', email);
+                        const changePlanResponse = await fetch(`${API_URL}/change-plan`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                email: email,
+                                newPlan: currentPlan,
+                                billing: isAnnual ? 'annual' : 'monthly',
+                                paymentId: result.id,
+                                valor: isAnnual ? (plans[currentPlan]?.annualPrice * 12 || 0) : (plans[currentPlan]?.monthlyPrice || 0)
+                            })
+                        });
+                        
+                        const changePlanResult = await changePlanResponse.json();
+                        console.log('✅ Plano alterado:', changePlanResult);
+                        
+                        if (changePlanResult.userId) {
+                            authData.userId = changePlanResult.userId;
+                        }
+                        
+                        // Atualizar dados locais
+                        authData.plano = currentPlan;
+                        authData.billing = isAnnual ? 'annual' : 'monthly';
+                        authData.expiry = changePlanResult.expiry;
+                        
+                    } else {
+                        // CRIAR NOVO USUÁRIO
+                        console.log('📝 Criando usuário no banco:', email);
+                        const createUserResponse = await fetch(`${API_URL}/create-user`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                email: email,
+                                nome: `${nome} ${sobrenome}`,
+                                plano: currentPlan,
+                                periodo: isAnnual ? 'annual' : 'monthly',
+                                paymentId: result.id,
+                                valor: isAnnual ? (plans[currentPlan]?.annualPrice * 12 || 0) : (plans[currentPlan]?.monthlyPrice || 0)
+                            })
+                        });
+                        
+                        const createUserResult = await createUserResponse.json();
+                        console.log('✅ Usuário criado:', createUserResult);
+                        
+                        if (createUserResult.userId) {
+                            authData.userId = createUserResult.userId;
+                        }
                     }
                 } catch (createUserError) {
-                    console.error('⚠️ Erro ao criar usuário (continuando):', createUserError);
+                    console.error('⚠️ Erro ao criar/atualizar usuário (continuando):', createUserError);
                 }
                 
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
