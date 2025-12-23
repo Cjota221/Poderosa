@@ -2515,8 +2515,11 @@ const LucroCertoApp = (function() {
                     
                     // Coleta estoque para cada opção
                     variationOptions1.forEach(option => {
-                        const stockInput = document.querySelector(`[data-stock-option="${option}"]`);
-                        productData.stock[option] = parseInt(stockInput?.value) || 0;
+                        const optValue = typeof option === 'string' ? option : option.value;
+                        const stockInput = document.querySelector(`[data-stock-option="${optValue}"]`);
+                        const stockQty = parseInt(stockInput?.value) || 0;
+                        productData.stock[optValue] = stockQty;
+                        console.log(`📦 Estoque variação simples [${optValue}]:`, stockQty);
                     });
                     
                     // Usa o mapa de fotos vinculadas que foi construído durante a edição
