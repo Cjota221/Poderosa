@@ -3058,16 +3058,12 @@ const LucroCertoApp = (function() {
         getMeuCatalogoHTML() {
             const { user } = StateManager.getState();
             
-            // Pegar ID do usuário (do Supabase ou gerar um único)
-            let userId = Storage.get('user_id');
-            if (!userId) {
-                // Se não tem ID, gera um único baseado no email
-                userId = user.email ? btoa(user.email).substring(0, 12) : 'demo-' + Date.now().toString(36);
-                Storage.set('user_id', userId);
-            }
+            // Pegar email do usuário para gerar link do catálogo
+            const userEmail = user.email || Storage.get('auth', {}).email || '';
             
-            // Link do catálogo com ID único da loja
-            const catalogUrl = `https://sistemalucrocerto.com/catalogo?loja=${userId}`;
+            // Link do catálogo usando email codificado em base64 COMPLETO
+            const catalogId = userEmail ? btoa(userEmail) : '';
+            const catalogUrl = catalogId ? `https://sistemalucrocerto.com/catalogo?loja=${encodeURIComponent(catalogId)}` : '';
             const catalogLogo = user.catalogLogo || '';
             const catalogColor = user.catalogColor || 'pink';
             
@@ -3236,13 +3232,11 @@ const LucroCertoApp = (function() {
                 const { user } = StateManager.getState();
                 
                 // Pegar ID único da loja
-                let userId = Storage.get('user_id');
-                if (!userId) {
-                    userId = user.email ? btoa(user.email).substring(0, 12) : 'demo-' + Date.now().toString(36);
-                    Storage.set('user_id', userId);
-                }
+                // Gerar link do catálogo usando email completo em base64
+                const userEmail = user.email || Storage.get('auth', {}).email || '';
+                const catalogId = userEmail ? btoa(userEmail) : '';
                 
-                const catalogUrl = `https://sistemalucrocerto.com/catalogo?loja=${userId}`;
+                const catalogUrl = catalogId ? `https://sistemalucrocerto.com/catalogo?loja=${encodeURIComponent(catalogId)}` : '';
                 const msg = `Olá! 💖 Confira o catálogo da ${user.businessName || 'minha loja'}: ${catalogUrl}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
             });

@@ -73,13 +73,13 @@ exports.handler = async (event) => {
         const { data: produtos, error: prodError } = await supabase
             .from('produtos')
             .select('*')
-            .eq('usuario_id', usuario.id)
-            .eq('ativo', true)
-            .eq('visivel_catalogo', true);
+            .eq('usuario_id', usuario.id);
 
         if (prodError) {
             console.error('❌ Erro ao buscar produtos:', prodError);
         }
+        
+        console.log('📦 Produtos encontrados:', produtos?.length || 0);
 
         // Formatar dados para o frontend
         const store = {
