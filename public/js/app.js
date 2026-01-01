@@ -1051,7 +1051,8 @@ const LucroCertoApp = (function() {
                 // Variações display
                 let variationsText = '';
                 if (p.variationType === 'simple' && p.variations[0]) {
-                    variationsText = `${p.variations[0].name}: ${p.variations[0].options.join(', ')}`;
+                    const opts = p.variations[0].options.map(o => ProductManager.getOptionLabel(o));
+                    variationsText = `${p.variations[0].name}: ${opts.join(', ')}`;
                 } else if (p.variationType === 'combined' && p.variations.length >= 2) {
                     variationsText = `${p.variations[0].name} × ${p.variations[1].name}`;
                 }
@@ -1260,28 +1261,41 @@ const LucroCertoApp = (function() {
                     } else if (product.variationType === 'simple') {
                         stockHTML = `
                             <p style="margin-bottom: 16px; color: var(--dark-gray);">Estoque de <strong>${product.name}</strong> por ${product.variations[0]?.name || 'opção'}:</p>
-                            ${product.variations[0]?.options.map(opt => `
-                                <div class="quick-stock-row">
-                                    <label>${opt}</label>
-                                    <input type="number" class="form-input" data-option="${opt}" value="${product.stock[opt] || 0}" min="0">
-                                </div>
-                            `).join('')}
+                            ${product.variations[0]?.options.map(opt => {
+                                const key = ProductManager.getOptionKey(opt);
+                                const label = ProductManager.getOptionLabel(opt);
+                                return `
+                                    <div class="quick-stock-row">
+                                        <label>${label}</label>
+                                        <input type="number" class="form-input" data-option="${key}" value="${product.stock[key] || 0}" min="0">
+                                    </div>
+                                `;
+                            }).join('')}
                         `;
                     } else if (product.variationType === 'combined') {
                         stockHTML = `
                             <p style="margin-bottom: 16px; color: var(--dark-gray);">Estoque de <strong>${product.name}</strong>:</p>
                             <div class="quick-stock-grid">
-                            ${product.variations[0]?.options.map(opt1 => `
-                                <div class="quick-stock-section">
-                                    <h5>${opt1}</h5>
-                                    ${product.variations[1]?.options.map(opt2 => `
-                                        <div class="quick-stock-row">
-                                            <label>${opt2}</label>
-                                            <input type="number" class="form-input" data-combined="${opt1}-${opt2}" value="${product.stock[`${opt1}-${opt2}`] || 0}" min="0">
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            `).join('')}
+                            ${product.variations[0]?.options.map(opt1 => {
+                                const key1 = ProductManager.getOptionKey(opt1);
+                                const label1 = ProductManager.getOptionLabel(opt1);
+                                return `
+                                    <div class="quick-stock-section">
+                                        <h5>${label1}</h5>
+                                        ${product.variations[1]?.options.map(opt2 => {
+                                            const key2 = ProductManager.getOptionKey(opt2);
+                                            const label2 = ProductManager.getOptionLabel(opt2);
+                                            const combinedKey = `${key1}-${key2}`;
+                                            return `
+                                                <div class="quick-stock-row">
+                                                    <label>${label2}</label>
+                                                    <input type="number" class="form-input" data-combined="${combinedKey}" value="${product.stock[combinedKey] || 0}" min="0">
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                `;
+                            }).join('')}
                             </div>
                         `;
                     }
@@ -4398,15 +4412,17 @@ const LucroCertoApp = (function() {
                             <label><strong>${variation.name}</strong></label>
                             <div class="variation-options-grid">
                                 ${variation.options.map(opt => {
-                                    const stock = product.stock?.[opt] || 0;
+                                    const key = ProductManager.getOptionKey(opt);
+                                    const label = ProductManager.getOptionLabel(opt);
+                                    const stock = product.stock?.[key] || 0;
                                     const isOutOfStock = stock <= 0;
                                     return `
                                         <button class="variation-option-btn ${isOutOfStock ? 'out-of-stock' : ''}" 
                                                 data-variation-type="${variation.name}" 
-                                                data-variation-value="${opt}"
+                                                data-variation-value="${key}"
                                                 data-stock="${stock}"
                                                 ${isOutOfStock ? 'disabled' : ''}>
-                                            ${opt}
+                                            ${label}
                                             ${isOutOfStock ? '<span class="stock-badge esgotado">Esgotado</span>' : `<span class="stock-badge">${stock} un.</span>`}
                                         </button>
                                     `;
@@ -4422,14 +4438,18 @@ const LucroCertoApp = (function() {
                         <div class="form-group">
                             <label><strong>${var1.name}</strong></label>
                             <div class="variation-options-grid" id="variation-1-options">
-                                ${var1.options.map(opt => `
-                                    <button class="variation-option-btn" 
-                                            data-variation-type="${var1.name}" 
-                                            data-variation-value="${opt}"
-                                            data-variation-index="1">
-                                        ${opt}
-                                    </button>
-                                `).join('')}
+                                ${var1.options.map(opt => {
+                                    const key = ProductManager.getOptionKey(opt);
+                                    const label = ProductManager.getOptionLabel(opt);
+                                    return `
+                                        <button class="variation-option-btn" 
+                                                data-variation-type="${var1.name}" 
+                                                data-variation-value="${key}"
+                                                data-variation-index="1">
+                                            ${label}
+                                        </button>
+                                    `;
+                                }).join('')}
                             </div>
                         </div>
                         <div class="form-group" id="variation-2-container" style="display: none; margin-top: 16px;">
@@ -4454,17 +4474,19 @@ const LucroCertoApp = (function() {
                                 const options2 = document.getElementById('variation-2-options');
                                 
                                 options2.innerHTML = var2.options.map(opt => {
-                                    const key = `${selectedVariations.var1}-${opt}`;
-                                    const stock = product.stock?.[key] || 0;
+                                    const key2 = ProductManager.getOptionKey(opt);
+                                    const label2 = ProductManager.getOptionLabel(opt);
+                                    const combinedKey = `${selectedVariations.var1}-${key2}`;
+                                    const stock = product.stock?.[combinedKey] || 0;
                                     const isOutOfStock = stock <= 0;
                                     return `
                                         <button class="variation-option-btn ${isOutOfStock ? 'out-of-stock' : ''}" 
                                                 data-variation-type="${var2.name}" 
-                                                data-variation-value="${opt}"
+                                                data-variation-value="${key2}"
                                                 data-stock="${stock}"
                                                 data-variation-index="2"
                                                 ${isOutOfStock ? 'disabled' : ''}>
-                                            ${opt}
+                                            ${label2}
                                             ${isOutOfStock ? '<span class="stock-badge esgotado">Esgotado</span>' : `<span class="stock-badge">${stock} un.</span>`}
                                         </button>
                                     `;
@@ -5373,6 +5395,25 @@ const LucroCertoApp = (function() {
                 return product.stock.total || 0;
             }
             return Object.values(product.stock).reduce((acc, val) => acc + (parseInt(val, 10) || 0), 0);
+        },
+        // 🆕 Funções auxiliares para lidar com variações (objetos ou strings)
+        getOptionLabel(opt) {
+            if (opt === null || opt === undefined) return '';
+            if (typeof opt === 'string') return opt;
+            if (typeof opt === 'object' && !Array.isArray(opt)) {
+                const label = opt.label || opt.value || opt.name;
+                return label ? String(label) : '';
+            }
+            return String(opt);
+        },
+        getOptionKey(opt) {
+            if (opt === null || opt === undefined) return '';
+            if (typeof opt === 'string') return opt;
+            if (typeof opt === 'object' && !Array.isArray(opt)) {
+                const key = opt.value || opt.label || opt.name;
+                return key ? String(key) : '';
+            }
+            return String(opt);
         }
     };
     const CostManager = {
