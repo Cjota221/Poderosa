@@ -2515,7 +2515,8 @@ const LucroCertoApp = (function() {
                     
                     // Coleta estoque para cada opção
                     variationOptions1.forEach(option => {
-                        const optValue = typeof option === 'string' ? option : option.value;
+                        // Extrair valor correto da opção (pode ser string ou objeto {value, color})
+                        const optValue = typeof option === 'string' ? option : (option.value || option.label || String(option));
                         const stockInput = document.querySelector(`[data-stock-option="${optValue}"]`);
                         const stockQty = parseInt(stockInput?.value) || 0;
                         productData.stock[optValue] = stockQty;
@@ -3057,13 +3058,23 @@ const LucroCertoApp = (function() {
         // ========== PÁGINA MEU CATÁLOGO ==========
         getMeuCatalogoHTML() {
             const { user } = StateManager.getState();
+            const authData = Storage.get('auth', {});
             
-            // Pegar email do usuário para gerar link do catálogo
-            const userEmail = user.email || Storage.get('auth', {}).email || '';
+            // Usar slug salvo ou gerar um a partir do nome da loja
+            let slug = user.slug || authData.slug || '';
             
-            // Link do catálogo usando email codificado em base64 COMPLETO
-            const catalogId = userEmail ? btoa(userEmail) : '';
-            const catalogUrl = catalogId ? `https://sistemalucrocerto.com/catalogo?loja=${encodeURIComponent(catalogId)}` : '';
+            if (!slug) {
+                // Gerar slug localmente como fallback
+                const userEmail = user.email || authData.email || '';
+                const rawName = (user.businessName || user.nome || (userEmail.split && userEmail.split('@')[0]) || 'minha-loja');
+                slug = String(rawName).toLowerCase()
+                    .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/(^-|-$)/g, '') || 'minha-loja';
+            }
+
+            // Link do catálogo em formato amigável: /catalogo/<slug>
+            const catalogUrl = `https://sistemalucrocerto.com/catalogo/${encodeURIComponent(slug)}`;
             const catalogLogo = user.catalogLogo || '';
             const catalogColor = user.catalogColor || 'pink';
             
@@ -3230,13 +3241,21 @@ const LucroCertoApp = (function() {
             // Compartilhar WhatsApp
             document.querySelector('[data-action="share-catalog-whatsapp-page"]')?.addEventListener('click', () => {
                 const { user } = StateManager.getState();
+                const authData = Storage.get('auth', {});
                 
-                // Pegar ID único da loja
-                // Gerar link do catálogo usando email completo em base64
-                const userEmail = user.email || Storage.get('auth', {}).email || '';
-                const catalogId = userEmail ? btoa(userEmail) : '';
+                // Usar slug salvo ou gerar um como fallback
+                let slugShare = user.slug || authData.slug || '';
                 
-                const catalogUrl = catalogId ? `https://sistemalucrocerto.com/catalogo?loja=${encodeURIComponent(catalogId)}` : '';
+                if (!slugShare) {
+                    const userEmail = user.email || authData.email || '';
+                    const rawName = (user.businessName || user.nome || (userEmail.split && userEmail.split('@')[0]) || 'minha-loja');
+                    slugShare = String(rawName).toLowerCase()
+                        .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/(^-|-$)/g, '') || 'minha-loja';
+                }
+
+                const catalogUrl = `https://sistemalucrocerto.com/catalogo/${encodeURIComponent(slugShare)}`;
                 const msg = `Olá! 💖 Confira o catálogo da ${user.businessName || 'minha loja'}: ${catalogUrl}`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
             });

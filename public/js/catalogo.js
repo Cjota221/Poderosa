@@ -46,9 +46,22 @@
     // ==================================
     async function loadStoreData() {
         try {
-            // Pegar ID da loja da URL (ex: ?loja=abc123)
+            // Pegar ID da loja da URL (ex: ?loja=abc123) ou rota amigável /catalogo/<slug>
             const urlParams = new URLSearchParams(window.location.search);
-            const storeId = urlParams.get('loja');
+            let storeId = urlParams.get('loja');
+
+            if (!storeId) {
+                // Tentar extrair slug da path: /catalogo/<slug>
+                try {
+                    const parts = window.location.pathname.split('/').filter(Boolean);
+                    const catalogIndex = parts.indexOf('catalogo');
+                    if (catalogIndex > -1 && parts.length > catalogIndex + 1) {
+                        storeId = parts[catalogIndex + 1];
+                    }
+                } catch (e) {
+                    // ignorar
+                }
+            }
             
             if (storeId) {
                 // 🔥 BUSCAR DADOS DO SUPABASE pela API
@@ -252,10 +265,22 @@
 
     function getTotalStock(product) {
         if (!product.stock) return 0;
+        
+        // Produto sem variações
         if (product.variationType === 'none') {
             return product.stock.total || 0;
         }
-        return Object.values(product.stock).reduce((acc, val) => acc + (parseInt(val, 10) || 0), 0);
+        
+        // Produto com variações - somar todos os estoques das variações
+        let total = 0;
+        for (const key in product.stock) {
+            const value = product.stock[key];
+            const numValue = parseInt(value, 10);
+            if (!isNaN(numValue)) {
+                total += numValue;
+            }
+        }
+        return total;
     }
 
     function getStockBadge(stock) {
@@ -269,11 +294,36 @@
 
     function getVariationsText(product) {
         if (product.variationType === 'simple' && product.variations[0]) {
-            return `${product.variations[0].name}: ${product.variations[0].options.slice(0, 4).join(', ')}${product.variations[0].options.length > 4 ? '...' : ''}`;
+            const opts = product.variations[0].options.slice(0, 4).map(o => getOptionLabel(o));
+            return `${product.variations[0].name}: ${opts.join(', ')}${product.variations[0].options.length > 4 ? '...' : ''}`;
         } else if (product.variationType === 'combined' && product.variations.length >= 2) {
             return `${product.variations[0].name} × ${product.variations[1].name}`;
         }
         return '';
+    }
+
+    // Normaliza/labeliza uma opção que pode ser string ou objeto { value, label, color }
+    function getOptionLabel(opt) {
+        if (opt === null || opt === undefined) return '';
+        if (typeof opt === 'string') return opt;
+        if (typeof opt === 'object' && !Array.isArray(opt)) {
+            // Prioridade: label > value > name
+            const label = opt.label || opt.value || opt.name;
+            return label ? String(label) : '';
+        }
+        return String(opt);
+    }
+
+    function getOptionKey(opt) {
+        // chave usada em estoque/variationImages - preferir value, então label, então string
+        if (opt === null || opt === undefined) return '';
+        if (typeof opt === 'string') return opt;
+        if (typeof opt === 'object' && !Array.isArray(opt)) {
+            // Prioridade: value > label > name
+            const key = opt.value || opt.label || opt.name;
+            return key ? String(key) : '';
+        }
+        return String(opt);
     }
 
     // ==================================
@@ -428,22 +478,24 @@
         const variation = currentProduct.variations[0];
         const variationImages = currentProduct.variationImages || {};
         const productImages = currentProduct.images || (currentProduct.imageUrl ? [currentProduct.imageUrl] : []);
-        
+
         container.innerHTML = `
             <div class="variation-group">
                 <p class="variation-group-label">${variation.name}</p>
                 <div class="variation-options-inner">
                     ${variation.options.map(opt => {
-                        const stock = currentProduct.stock[opt] || 0;
+                        const key = getOptionKey(opt);
+                        const label = getOptionLabel(opt);
+                        const stock = currentProduct.stock[key] || 0;
                         const outOfStock = stock === 0;
-                        const hasLinkedPhoto = variationImages[opt] !== undefined && productImages[variationImages[opt]];
-                        
+                        const hasLinkedPhoto = variationImages[key] !== undefined && productImages[variationImages[key]];
+
                         return `
                             <button class="variation-btn ${outOfStock ? 'out-of-stock' : ''}" 
-                                    data-variation="${opt}"
-                                    data-photo-idx="${hasLinkedPhoto ? variationImages[opt] : ''}"
+                                    data-variation="${key}"
+                                    data-photo-idx="${hasLinkedPhoto ? variationImages[key] : ''}"
                                     ${outOfStock ? 'disabled' : ''}>
-                                ${opt}${stock > 0 && stock <= 3 ? ` (${stock})` : ''}
+                                ${label}${stock > 0 && stock <= 3 ? ` (${stock})` : ''}
                             </button>
                         `;
                     }).join('')}
@@ -452,13 +504,14 @@
         `;
         
         // Selecionar primeira opção disponível
-        const firstAvailable = variation.options.find(opt => (currentProduct.stock[opt] || 0) > 0);
+        const firstAvailable = variation.options.find(opt => (currentProduct.stock[getOptionKey(opt)] || 0) > 0);
         if (firstAvailable) {
-            selectedVariation = firstAvailable;
-            container.querySelector(`[data-variation="${firstAvailable}"]`)?.classList.add('active');
-            
+            const key = getOptionKey(firstAvailable);
+            selectedVariation = key;
+            container.querySelector(`[data-variation="${key}"]`)?.classList.add('active');
+
             // Trocar foto se houver foto vinculada
-            updateProductPhoto(firstAvailable);
+            updateProductPhoto(key);
         }
         
         updateStockInfo();
@@ -471,10 +524,10 @@
                 selectedVariation = btn.dataset.variation;
                 quantity = 1;
                 document.getElementById('qty-value').textContent = '1';
-                
+
                 // Trocar foto baseado na variação selecionada
                 updateProductPhoto(selectedVariation);
-                
+
                 updateStockInfo();
             });
         });
@@ -516,17 +569,19 @@
         const updateVar2Options = () => {
             const var2Container = document.getElementById('var2-options');
             if (!var2Container || !selectedVar1) return;
-            
+
             var2Container.innerHTML = var2.options.map(opt2 => {
-                const key = `${selectedVar1}-${opt2}`;
+                const key2 = getOptionKey(opt2);
+                const key = `${selectedVar1}-${key2}`;
+                const label2 = getOptionLabel(opt2);
                 const stock = currentProduct.stock[key] || 0;
                 const outOfStock = stock === 0;
-                
+
                 return `
-                    <button class="variation-btn ${outOfStock ? 'out-of-stock' : ''} ${selectedVar2 === opt2 ? 'active' : ''}" 
-                            data-var2="${opt2}"
+                    <button class="variation-btn ${outOfStock ? 'out-of-stock' : ''} ${selectedVar2 === key2 ? 'active' : ''}" 
+                            data-var2="${key2}"
                             ${outOfStock ? 'disabled' : ''}>
-                        ${opt2}${stock > 0 && stock <= 3 ? ` (${stock})` : ''}
+                        ${label2}${stock > 0 && stock <= 3 ? ` (${stock})` : ''}
                     </button>
                 `;
             }).join('');
@@ -545,10 +600,10 @@
             
             // Auto-selecionar primeiro tamanho disponível
             if (!selectedVar2 || (currentProduct.stock[`${selectedVar1}-${selectedVar2}`] || 0) === 0) {
-                const firstAvailable = var2.options.find(opt2 => (currentProduct.stock[`${selectedVar1}-${opt2}`] || 0) > 0);
+                const firstAvailable = var2.options.find(opt2 => (currentProduct.stock[`${selectedVar1}-${getOptionKey(opt2)}`] || 0) > 0);
                 if (firstAvailable) {
-                    selectedVar2 = firstAvailable;
-                    var2Container.querySelector(`[data-var2="${firstAvailable}"]`)?.classList.add('active');
+                    selectedVar2 = getOptionKey(firstAvailable);
+                    var2Container.querySelector(`[data-var2="${selectedVar2}"]`)?.classList.add('active');
                 } else {
                     selectedVar2 = null;
                 }
@@ -576,14 +631,16 @@
                 <p class="variation-group-label">${var1.name}</p>
                 <div class="variation-options-inner" id="var1-options">
                     ${var1.options.map(opt => {
-                        const hasLinkedPhoto = variationImages[opt] !== undefined && productImages[variationImages[opt]];
-                        const hasStock = hasAnyStockForVar1(opt);
+                        const key1 = getOptionKey(opt);
+                        const label1 = getOptionLabel(opt);
+                        const hasLinkedPhoto = variationImages[key1] !== undefined && productImages[variationImages[key1]];
+                        const hasStock = hasAnyStockForVar1(key1);
                         return `
                             <button class="variation-btn ${!hasStock ? 'out-of-stock' : ''}" 
-                                    data-var1="${opt}" 
-                                    data-photo-idx="${hasLinkedPhoto ? variationImages[opt] : ''}"
+                                    data-var1="${key1}" 
+                                    data-photo-idx="${hasLinkedPhoto ? variationImages[key1] : ''}"
                                     ${!hasStock ? 'disabled' : ''}>
-                                ${opt}
+                                ${label1}
                             </button>
                         `;
                     }).join('')}

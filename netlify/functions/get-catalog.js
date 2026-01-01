@@ -40,7 +40,7 @@ exports.handler = async (event) => {
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-        // Decodificar o storeId (pode ser base64)
+        // Decodificar o storeId (pode ser base64, slug ou email)
         let decodedEmail;
         try {
             decodedEmail = Buffer.from(storeId, 'base64').toString('utf-8');
@@ -50,15 +50,58 @@ exports.handler = async (event) => {
             decodedEmail = storeId;
         }
 
-        // Buscar usuário pelo email
-        const { data: usuario, error: userError } = await supabase
-            .from('usuarios')
-            .select('*')
-            .eq('email', decodedEmail)
-            .single();
+        // Buscar usuário: 1) por slug exato, 2) por email, 3) por nome aproximado
+        let usuario = null;
+        let userError = null;
+
+        // 1. Tentar buscar por SLUG exato (URLs amigáveis)
+        const slugNormalizado = storeId.toLowerCase().replace(/[^a-z0-9-]/g, '');
+        if (slugNormalizado) {
+            const resSlug = await supabase
+                .from('usuarios')
+                .select('*')
+                .eq('slug', slugNormalizado)
+                .limit(1)
+                .single();
+            
+            if (resSlug.data) {
+                usuario = resSlug.data;
+                console.log('✅ Encontrado por slug:', slugNormalizado);
+            }
+        }
+
+        // 2. Se não encontrou por slug e parece email, buscar por email
+        if (!usuario && decodedEmail && decodedEmail.includes('@')) {
+            const res = await supabase
+                .from('usuarios')
+                .select('*')
+                .eq('email', decodedEmail.toLowerCase())
+                .limit(1)
+                .single();
+            usuario = res.data;
+            userError = res.error;
+            if (usuario) console.log('✅ Encontrado por email:', decodedEmail);
+        }
+
+        // 3. Fallback: buscar por nome da loja (aproximado)
+        if (!usuario) {
+            try {
+                const res2 = await supabase
+                    .from('usuarios')
+                    .select('*')
+                    .ilike('nome', `%${storeId}%`)
+                    .limit(1)
+                    .single();
+                usuario = res2.data;
+                userError = res2.error;
+                if (usuario) console.log('✅ Encontrado por nome aproximado:', storeId);
+            } catch (e) {
+                // ignorar
+            }
+        }
 
         if (userError || !usuario) {
-            console.error('❌ Usuário não encontrado:', decodedEmail);
+            console.error('❌ Usuário não encontrado:', storeId, decodedEmail);
             return {
                 statusCode: 404,
                 headers,
@@ -91,7 +134,9 @@ exports.handler = async (event) => {
             foto_perfil: usuario.foto_perfil,
             catalogLogo: usuario.logo_catalogo,
             logo_catalogo: usuario.logo_catalogo,
-            catalogColor: 'pink' // Default, você pode adicionar no banco depois
+            catalogColor: 'pink', // Default, você pode adicionar no banco depois
+            slug: usuario.slug || null, // Adicionar slug
+            email: usuario.email // Adicionar email como fallback
         };
 
         const products = (produtos || []).map(p => ({

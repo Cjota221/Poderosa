@@ -12,6 +12,42 @@ async function hashPassword(password) {
     return await bcrypt.hash(password, saltRounds);
 }
 
+// Função para gerar slug único a partir do nome
+async function gerarSlugUnico(supabase, nome, excludeUserId = null) {
+    let slugBase = (nome || 'loja')
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+    
+    if (!slugBase) slugBase = 'loja';
+    
+    let slugFinal = slugBase;
+    let contador = 0;
+    
+    while (true) {
+        let query = supabase
+            .from('usuarios')
+            .select('id')
+            .eq('slug', slugFinal);
+        
+        // Excluir o próprio usuário da verificação (para updates)
+        if (excludeUserId) {
+            query = query.neq('id', excludeUserId);
+        }
+        
+        const { data: existing } = await query.single();
+        
+        if (!existing) break;
+        
+        contador++;
+        slugFinal = `${slugBase}-${contador}`;
+    }
+    
+    return slugFinal;
+}
+
 exports.handler = async (event) => {
     // CORS headers
     const headers = {
@@ -110,17 +146,39 @@ exports.handler = async (event) => {
             console.log('⚠️ Sem assinatura ativa, usando plano do usuário:', userPlan);
         }
 
+        // Verificar se usuário já tem slug, se não, gerar um
+        let userSlug = null;
+        const { data: currentUser } = await supabase
+            .from('usuarios')
+            .select('slug')
+            .eq('id', userId)
+            .single();
+        
+        if (!currentUser?.slug) {
+            userSlug = await gerarSlugUnico(supabase, nome || user.nome, userId);
+            console.log('🏷️ Gerando novo slug:', userSlug);
+        } else {
+            userSlug = currentUser.slug;
+        }
+
         // Atualizar usuário com senha e dados
         console.log('💾 Atualizando usuário com senha...');
+        const updateData = {
+            senha_hash: await hashPassword(password),
+            nome: nome || user.nome,
+            telefone: telefone || null,
+            cadastro_completo: true,
+            updated_at: new Date().toISOString()
+        };
+        
+        // Adicionar slug se foi gerado novo
+        if (!currentUser?.slug && userSlug) {
+            updateData.slug = userSlug;
+        }
+        
         const { error: updateError } = await supabase
             .from('usuarios')
-            .update({
-                senha_hash: await hashPassword(password),
-                nome: nome || user.nome,
-                telefone: telefone || null,
-                cadastro_completo: true,
-                updated_at: new Date().toISOString()
-            })
+            .update(updateData)
             .eq('id', userId);
 
         if (updateError) {
@@ -144,7 +202,8 @@ exports.handler = async (event) => {
                     id: userId,
                     email: emailLower,
                     nome: nome,
-                    plano: userPlan
+                    plano: userPlan,
+                    slug: userSlug
                 },
                 subscription: subscription || null
             })

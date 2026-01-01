@@ -4,6 +4,38 @@ const { createClient } = require('@supabase/supabase-js');
 const supabaseUrl = process.env.SUPABASE_URL || 'https://ldfahdueqzgemplxrffm.supabase.co';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
 
+// Função para gerar slug único a partir do nome
+async function gerarSlugUnico(supabase, nome) {
+    // Normalizar: lowercase, remover acentos, substituir caracteres especiais por hífen
+    let slugBase = (nome || 'loja')
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/[^a-z0-9]+/g, '-')     // Substitui não-alfanuméricos por hífen
+        .replace(/(^-|-$)/g, '');        // Remove hífens do início/fim
+    
+    if (!slugBase) slugBase = 'loja';
+    
+    let slugFinal = slugBase;
+    let contador = 0;
+    
+    // Verificar unicidade
+    while (true) {
+        const { data: existing } = await supabase
+            .from('usuarios')
+            .select('id')
+            .eq('slug', slugFinal)
+            .single();
+        
+        if (!existing) break; // Slug disponível
+        
+        contador++;
+        slugFinal = `${slugBase}-${contador}`;
+    }
+    
+    return slugFinal;
+}
+
 exports.handler = async (event, context) => {
     const headers = {
         'Access-Control-Allow-Origin': '*',
@@ -43,17 +75,40 @@ exports.handler = async (event, context) => {
             .single();
 
         let userId;
+        let userSlug;
 
         if (existingUser) {
             userId = existingUser.id;
             console.log('Usuário existente:', userId);
+            
+            // Buscar slug existente
+            const { data: userData } = await supabase
+                .from('usuarios')
+                .select('slug')
+                .eq('id', userId)
+                .single();
+            userSlug = userData?.slug;
+            
+            // Se não tem slug, gerar um
+            if (!userSlug) {
+                userSlug = await gerarSlugUnico(supabase, nome || email.split('@')[0]);
+                await supabase
+                    .from('usuarios')
+                    .update({ slug: userSlug })
+                    .eq('id', userId);
+                console.log('Slug gerado para usuário existente:', userSlug);
+            }
         } else {
-            // Criar novo usuário
+            // Gerar slug único para novo usuário
+            userSlug = await gerarSlugUnico(supabase, nome || email.split('@')[0]);
+            
+            // Criar novo usuário com slug
             const { data: newUser, error: userError } = await supabase
                 .from('usuarios')
                 .insert({
                     email: email,
-                    nome: nome || email.split('@')[0]
+                    nome: nome || email.split('@')[0],
+                    slug: userSlug
                 })
                 .select()
                 .single();
@@ -63,7 +118,7 @@ exports.handler = async (event, context) => {
             }
 
             userId = newUser.id;
-            console.log('Novo usuário criado:', userId);
+            console.log('Novo usuário criado:', userId, 'slug:', userSlug);
         }
 
         // Calcular data de expiração
@@ -101,6 +156,7 @@ exports.handler = async (event, context) => {
             body: JSON.stringify({
                 success: true,
                 userId: userId,
+                slug: userSlug,
                 assinaturaId: assinatura?.id,
                 message: 'Usuário e assinatura criados com sucesso'
             })

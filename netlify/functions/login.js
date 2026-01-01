@@ -95,7 +95,11 @@ exports.handler = async (event) => {
                             id: 'user_carol_gmail',
                             email: emailLower,
                             nome: 'Caroline Azevedo',
-                            plano: 'starter'
+                            plano: 'starter',
+                            slug: 'caroline-azevedo',
+                            telefone: '',
+                            foto_perfil: '',
+                            logo_catalogo: ''
                         },
                         subscription: {
                             id: 'sub_carol_bypass',
@@ -115,7 +119,7 @@ exports.handler = async (event) => {
         // Buscar usuário
         const { data: user, error: userError } = await supabase
             .from('usuarios')
-            .select('id, email, nome, plano, senha_hash, cadastro_completo')
+            .select('id, email, nome, plano, senha_hash, cadastro_completo, slug, telefone, foto_perfil, logo_catalogo')
             .eq('email', emailLower)
             .single();
 
@@ -285,7 +289,11 @@ exports.handler = async (event) => {
                     id: user.id,
                     email: user.email,
                     nome: user.nome,
-                    plano: planoAtivo
+                    plano: planoAtivo,
+                    slug: user.slug || null,
+                    telefone: user.telefone || '',
+                    foto_perfil: user.foto_perfil || '',
+                    logo_catalogo: user.logo_catalogo || ''
                 },
                 subscription: assinaturaInfo,
                 subscriptionStatus: assinaturaStatus, // Status da assinatura

@@ -14,9 +14,10 @@
 /login              /login.html             200
 /cadastro           /cadastro.html          200
 /catalogo           /catalogo.html          200
+/catalogo/*         /catalogo.html          200
 /checkout           /checkout.html          200
 /precos             /index.html             200
-/planos             /index.html             200
+/planos             /planos.html            200
 /admin              /admin.html             200
 /pagamento-sucesso  /pagamento-sucesso.html 200
 /pagamento-erro     /pagamento-erro.html    200
