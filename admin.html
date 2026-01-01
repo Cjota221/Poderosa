@@ -645,21 +645,21 @@
                     <div class="stat-card">
                         <div class="stat-header">
                             <div class="stat-icon warning">
-                                <i data-lucide="ticket"></i>
+                                <i data-lucide="users"></i>
                             </div>
                         </div>
-                        <div class="stat-value" id="totalCupons">0</div>
-                        <div class="stat-label">Cupons Usados</div>
+                        <div class="stat-value" id="totalTrials">0</div>
+                        <div class="stat-label">Em Trial</div>
                     </div>
 
                     <div class="stat-card">
                         <div class="stat-header">
                             <div class="stat-icon info">
-                                <i data-lucide="wallet"></i>
+                                <i data-lucide="dollar-sign"></i>
                             </div>
                         </div>
-                        <div class="stat-value" id="totalReceita">R$ 0</div>
-                        <div class="stat-label">Receita Mensal</div>
+                        <div class="stat-value" id="receitaTotal">R$ 0</div>
+                        <div class="stat-label">Receita Total</div>
                     </div>
                 </div>
 
@@ -721,20 +721,20 @@
                                 <input type="text" placeholder="Buscar por nome ou email..." id="searchLeads">
                             </div>
                             <button class="filter-btn active" data-filter="all">Todos</button>
-                            <button class="filter-btn" data-filter="new">Novos</button>
-                            <button class="filter-btn" data-filter="contacted">Contatados</button>
-                            <button class="filter-btn" data-filter="converted">Convertidos</button>
+                            <button class="filter-btn" data-filter="new">Trials</button>
+                            <button class="filter-btn" data-filter="converted">Assinantes</button>
                         </div>
 
                         <div class="table-wrapper">
                             <table class="data-table">
                                 <thead>
                                     <tr>
-                                        <th>Lead</th>
+                                        <th>Usuário</th>
                                         <th>Telefone</th>
-                                        <th>Cupom</th>
-                                        <th>Data</th>
                                         <th>Status</th>
+                                        <th>Plano</th>
+                                        <th>Cadastro</th>
+                                        <th>Assinatura</th>
                                         <th>Ações</th>
                                     </tr>
                                 </thead>
@@ -1022,6 +1022,171 @@
     <script>
         lucide.createIcons();
 
+        // ========== CONFIGURAÇÃO DA API ==========
+        const API_BASE = '/.netlify/functions/admin-api';
+        const ADMIN_PASSWORD = 'lucrocerto2024'; // Senha para acesso admin
+        
+        // Verificar se está autenticado como admin
+        let isAdminAuthenticated = sessionStorage.getItem('admin_authenticated') === 'true';
+        
+        // ========== AUTENTICAÇÃO ADMIN ==========
+        function checkAdminAuth() {
+            if (!isAdminAuthenticated) {
+                const password = prompt('🔐 Digite a senha de administrador:');
+                if (password === ADMIN_PASSWORD) {
+                    isAdminAuthenticated = true;
+                    sessionStorage.setItem('admin_authenticated', 'true');
+                    loadDashboardFromAPI();
+                } else {
+                    alert('❌ Senha incorreta! Usando dados locais (localStorage).');
+                    isAdminAuthenticated = false;
+                    loadData(); // Fallback para localStorage
+                }
+            } else {
+                loadDashboardFromAPI();
+            }
+        }
+        
+        // ========== BUSCAR DADOS DO SUPABASE ==========
+        async function loadDashboardFromAPI() {
+            try {
+                showLoading(true);
+                
+                // Buscar estatísticas do dashboard
+                const response = await fetch(`${API_BASE}?action=dashboard`, {
+                    headers: {
+                        'Authorization': `Bearer ${ADMIN_PASSWORD}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao buscar dados da API');
+                }
+                
+                const data = await response.json();
+                
+                // Atualizar estatísticas
+                document.getElementById('totalLeads').textContent = data.totalUsuarios || 0;
+                document.getElementById('totalAssinantes').textContent = data.totalAssinantes || 0;
+                document.getElementById('totalTrials').textContent = data.totalTrials || 0;
+                document.getElementById('receitaTotal').textContent = `R$ ${(data.receitaTotal || 0).toFixed(2)}`;
+                
+                // Atualizar tabela de usuários recentes
+                updateRecentUsersTable(data.usuariosRecentes || []);
+                
+                // Buscar lista completa de usuários
+                await loadAllUsers();
+                
+                showLoading(false);
+                console.log('✅ Dados carregados do Supabase com sucesso!');
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar dados da API:', error);
+                showLoading(false);
+                alert('⚠️ Erro ao conectar com o banco de dados. Usando dados locais.');
+                loadData(); // Fallback para localStorage
+            }
+        }
+        
+        async function loadAllUsers() {
+            try {
+                const response = await fetch(`${API_BASE}?action=usuarios`, {
+                    headers: {
+                        'Authorization': `Bearer ${ADMIN_PASSWORD}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Erro ao buscar usuários');
+                
+                const data = await response.json();
+                updateUsersTable(data.usuarios || []);
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar usuários:', error);
+            }
+        }
+        
+        function updateRecentUsersTable(usuarios) {
+            const table = document.getElementById('dashboardLeadsTable');
+            
+            if (!usuarios || usuarios.length === 0) {
+                table.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--elegant-gray);">Nenhum usuário ainda</td></tr>';
+                return;
+            }
+            
+            table.innerHTML = usuarios.slice(0, 5).map(user => `
+                <tr>
+                    <td><strong>${user.nome || 'Sem nome'}</strong></td>
+                    <td>${user.email}</td>
+                    <td>${formatDate(user.created_at)}</td>
+                    <td><span class="badge ${user.plano === 'trial' ? 'new' : 'converted'}">${getPlanName(user.plano)}</span></td>
+                </tr>
+            `).join('');
+        }
+        
+        function updateUsersTable(usuarios) {
+            const table = document.getElementById('leadsTableBody');
+            const emptyState = document.getElementById('emptyLeads');
+            
+            if (!usuarios || usuarios.length === 0) {
+                table.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            table.innerHTML = usuarios.map(user => {
+                const assinatura = user.assinaturas?.[0];
+                const isPaid = user.plano !== 'trial';
+                const status = isPaid ? 'converted' : 'new';
+                const statusText = isPaid ? 'Assinante' : 'Trial';
+                
+                return `
+                    <tr data-status="${status}">
+                        <td>
+                            <div><strong>${user.nome || 'Sem nome'}</strong></div>
+                            <div style="font-size: 12px; color: var(--elegant-gray);">${user.email}</div>
+                        </td>
+                        <td>${user.telefone || '-'}</td>
+                        <td><span class="badge ${status}">${statusText}</span></td>
+                        <td><span class="badge ${user.plano === 'trial' ? 'new' : 'converted'}">${getPlanName(user.plano)}</span></td>
+                        <td>${formatDate(user.created_at)}</td>
+                        <td>
+                            ${assinatura ? `
+                                <div style="font-size: 12px;">
+                                    <div>R$ ${assinatura.valor?.toFixed(2) || '0.00'}</div>
+                                    <div style="color: var(--elegant-gray);">${assinatura.periodo === 'monthly' ? 'Mensal' : 'Anual'}</div>
+                                </div>
+                            ` : '-'}
+                        </td>
+                        <td>
+                            <button class="btn-icon" onclick="viewUserDetails('${user.id}')" title="Ver detalhes">
+                                <i data-lucide="eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+        
+        function viewUserDetails(userId) {
+            alert(`Detalhes do usuário: ${userId}\n\nEm breve: modal com todos os dados do usuário!`);
+        }
+        
+        function showLoading(show) {
+            const btn = document.querySelector('.btn-primary[onclick="loadData()"]');
+            if (btn) {
+                btn.disabled = show;
+                btn.innerHTML = show 
+                    ? '<i data-lucide="loader"></i> Carregando...' 
+                    : '<i data-lucide="refresh-cw"></i> Atualizar';
+                lucide.createIcons();
+            }
+        }
+
         // ========== TOUR DE BOAS-VINDAS ==========
         const urlParams = new URLSearchParams(window.location.search);
         const isWelcome = urlParams.get('welcome') === 'true';
@@ -1252,10 +1417,16 @@
 
         // ========== DADOS ==========
         function loadData() {
-            loadLeads();
-            loadCupons();
-            loadNichos();
-            updateStats();
+            // Se autenticado como admin, buscar do Supabase
+            if (isAdminAuthenticated) {
+                loadDashboardFromAPI();
+            } else {
+                // Fallback: localStorage (antigo)
+                loadLeads();
+                loadCupons();
+                loadNichos();
+                updateStats();
+            }
         }
 
         function loadLeads() {
@@ -1545,7 +1716,9 @@
             return new Date(dateStr).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
         }
 
-        loadData();
+        // ========== INICIALIZAÇÃO ==========
+        // Verificar autenticação e carregar dados
+        checkAdminAuth();
     </script>
 </body>
 </html>
