@@ -1728,7 +1728,7 @@
                     </li>
                 </ul>
                 
-                <a href="./checkout?plan=starter&billing=monthly" class="plan-btn secondary">
+                <a href="./checkout?plan=starter&billing=monthly&source=landing" class="plan-btn secondary">
                     <i data-lucide="arrow-right"></i>
                     Começar Agora
                 </a>
@@ -1801,7 +1801,7 @@
                     </li>
                 </ul>
                 
-                <a href="./checkout?plan=pro&billing=monthly" class="plan-btn primary">
+                <a href="./checkout?plan=pro&billing=monthly&source=landing" class="plan-btn primary">
                     <i data-lucide="sparkles"></i>
                     Escolher Profissional
                 </a>
@@ -1872,7 +1872,7 @@
                     </li>
                 </ul>
                 
-                <a href="./checkout?plan=premium&billing=monthly" class="plan-btn secondary">
+                <a href="./checkout?plan=premium&billing=monthly&source=landing" class="plan-btn secondary">
                     <i data-lucide="arrow-right"></i>
                     Escolher Premium
                 </a>
@@ -2226,10 +2226,10 @@
                     </p>
                     
                     <div class="lead-success-btns">
-                        <a href="./checkout?plan=starter&cupom=LUCRO10" class="btn-primary">
+                        <a href="./checkout?plan=starter&cupom=LUCRO10&source=landing_popup" class="btn-primary">
                             Básico R$17,91
                         </a>
-                        <a href="./checkout?plan=pro&cupom=LUCRO10" class="btn-secondary">
+                        <a href="./checkout?plan=pro&cupom=LUCRO10&source=landing_popup" class="btn-secondary">
                             Pro R$31,41
                         </a>
                     </div>
@@ -2323,7 +2323,7 @@
                 
                 // Update button link
                 if (btn.hasAttribute('href')) {
-                    btn.href = `./checkout?plan=${planKey}&billing=${currentBilling}`;
+                    btn.href = `./checkout?plan=${planKey}&billing=${currentBilling}&source=landing`;
                 }
             });
         }

@@ -387,6 +387,36 @@
     });
 
     // ==================================
+    // RASTREAMENTO DE PARÂMETROS UTM/SOURCE
+    // ==================================
+    function trackPageSource() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const source = urlParams.get('source');
+        
+        if (source) {
+            console.log('📍 Source detectado:', source);
+            
+            // Enviar evento customizado para Analytics
+            gtag('event', 'page_source', {
+                source: source,
+                page_path: getCleanPath(),
+                page_title: document.title
+            });
+            
+            // Salvar no localStorage para tracking de conversão
+            try {
+                localStorage.setItem('lucrocerto_last_source', source);
+                localStorage.setItem('lucrocerto_last_source_time', Date.now());
+            } catch (e) {
+                console.warn('Não foi possível salvar source:', e);
+            }
+        }
+    }
+    
+    // Executar tracking de source ao carregar
+    trackPageSource();
+
+    // ==================================
     // EXPORTAR PARA USO GLOBAL
     // ==================================
     window.Tracker = Tracker;

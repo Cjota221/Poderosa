@@ -654,7 +654,7 @@ const LucroCertoApp = (function() {
                 banner.className = 'plan-alert-banner danger';
                 banner.innerHTML = `
                     <span>⚠️ <strong>Seu plano venceu!</strong> Sua conta será desativada em ${daysUntilDeactivation > 0 ? daysUntilDeactivation : 0} dia(s). 
-                    <a href="./checkout?plan=${authData.plano || 'pro'}&billing=${authData.billing || 'monthly'}">Renove agora</a></span>
+                    <a href="./checkout?plan=${authData.plano || 'pro'}&billing=${authData.billing || 'monthly'}&source=app_renewal">Renove agora</a></span>
                 `;
                 banner.style.display = 'flex';
                 document.body.classList.add('has-plan-banner');
@@ -664,7 +664,7 @@ const LucroCertoApp = (function() {
                 banner.className = 'plan-alert-banner warning';
                 banner.innerHTML = `
                     <span>📅 Seu plano vence em <strong>${daysUntilExpiry} dia(s)</strong>. 
-                    <a href="./checkout?plan=${authData.plano || 'pro'}&billing=${authData.billing || 'monthly'}">Clique aqui para renovar</a></span>
+                    <a href="./checkout?plan=${authData.plano || 'pro'}&billing=${authData.billing || 'monthly'}&source=app_expiration">Clique aqui para renovar</a></span>
                     <button class="close-banner" onclick="LucroCertoApp.closePlanBanner()">✕</button>
                 `;
                 banner.style.display = 'flex';
@@ -5933,7 +5933,7 @@ const LucroCertoApp = (function() {
             trialBanner.innerHTML = `
                 <div class="trial-banner-content">
                     <span><i data-lucide="${bannerIcon}"></i> ${bannerMessage}</span>
-                    <a href="/checkout.html" class="trial-upgrade-btn">Assinar Agora</a>
+                    <a href="/checkout?source=trial_banner" class="trial-upgrade-btn">Assinar Agora</a>
                 </div>
             `;
             trialBanner.style.cssText = `
@@ -5976,7 +5976,7 @@ const LucroCertoApp = (function() {
             trialBanner.innerHTML = `
                 <div class="trial-banner-compact">
                     <i data-lucide="clock"></i> Teste Grátis: ${daysLeft} ${daysLeft === 1 ? 'dia' : 'dias'} restantes
-                    <a href="/" style="color: white; text-decoration: underline; margin-left: 8px;">Fazer upgrade</a>
+                    <a href="/planos?source=trial_compact" style="color: white; text-decoration: underline; margin-left: 8px;">Fazer upgrade</a>
                 </div>
             `;
             trialBanner.style.cssText = `
@@ -6068,7 +6068,7 @@ const LucroCertoApp = (function() {
                     <div class="benefit"><i data-lucide="check-circle"></i> Suporte prioritário</div>
                 </div>
                 <div class="trial-modal-buttons">
-                    <a href="planos" class="btn-upgrade">Ver Planos</a>
+                    <a href="planos?source=limit_modal" class="btn-upgrade">Ver Planos</a>
                     <button onclick="closeTrialLimitModal()" class="btn-later">Depois</button>
                 </div>
             </div>
@@ -6201,7 +6201,7 @@ const LucroCertoApp = (function() {
         banner.innerHTML = `
             <div style="max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                 <span>🎉 <strong>Parabéns!</strong> Você cadastrou 3 produtos! Para continuar, faça upgrade do seu plano.</span>
-                <a href="planos" style="background: white; color: #FF9800; padding: 8px 20px; border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 13px;">Ver Planos</a>
+                <a href="planos?source=achievement_modal" style="background: white; color: #FF9800; padding: 8px 20px; border-radius: 20px; text-decoration: none; font-weight: 600; font-size: 13px;">Ver Planos</a>
             </div>
         `;
         banner.style.cssText = `
@@ -6387,7 +6387,7 @@ const LucroCertoApp = (function() {
                     </div>
                 </div>
 
-                <a href="/checkout.html" style="
+                <a href="/checkout?source=trial_expired" style="
                     display: block;
                     background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);
                     color: white;
