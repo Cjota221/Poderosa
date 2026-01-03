@@ -5783,6 +5783,12 @@ const LucroCertoApp = (function() {
         const authData = Storage.get('auth', {});
         const email = authData.email;
 
+        // Se é usuário trial offline (trial_timestamp), não precisa sincronizar
+        if (userId && userId.startsWith('trial_')) {
+            console.log('🧪 Usuário trial offline - Skip sync');
+            return;
+        }
+
         if (!userId && !email) return; // Sem dados para sincronizar
 
         try {
@@ -5849,7 +5855,7 @@ const LucroCertoApp = (function() {
     function initTrialMode() {
         // ✅ VERIFICAÇÃO RIGOROSA: Só inicializar trial se flag existir E não tiver plano pago
         const authData = Storage.get('auth', {});
-        const isTrial = Storage.get('trial') === 'true';
+        const isTrial = Storage.get('trial') === true || Storage.get('trial') === 'true';
         
         // 🛑 SE USUÁRIO TEM PLANO PAGO, NÃO MOSTRAR NADA DE TRIAL
         if (authData.plano && authData.plano !== 'trial') {
