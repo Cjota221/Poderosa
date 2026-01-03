@@ -400,15 +400,15 @@
 
         /* ===== FREE TRIAL SECTION ===== */
         .trial-section {
-            padding: 40px 20px;
-            max-width: 900px;
+            padding: 60px 20px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
         .trial-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 24px;
-            padding: 40px;
+            padding: 50px;
             position: relative;
             overflow: hidden;
             box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
@@ -444,11 +444,11 @@
         }
 
         .trial-content {
-            display: grid;
-            grid-template-columns: auto 1fr auto;
-            gap: 30px;
+            display: flex;
+            gap: 40px;
             align-items: center;
             color: white;
+            justify-content: space-between;
         }
 
         .trial-icon {
@@ -459,6 +459,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .trial-text {
+            flex: 1;
         }
 
         .trial-icon svg {
@@ -505,7 +510,11 @@
         }
 
         .trial-cta {
-            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            flex-shrink: 0;
         }
 
         .btn-trial {
@@ -543,13 +552,22 @@
         }
 
         @media (max-width: 768px) {
+            .trial-section {
+                padding: 40px 20px;
+            }
+
+            .trial-card {
+                padding: 30px 20px;
+            }
+
             .trial-content {
-                grid-template-columns: 1fr;
+                flex-direction: column;
+                gap: 24px;
                 text-align: center;
             }
 
-            .trial-icon {
-                margin: 0 auto;
+            .trial-text h2 {
+                font-size: 24px;
             }
 
             .trial-features {
@@ -557,12 +575,13 @@
                 flex-wrap: wrap;
             }
 
-            .trial-card {
-                padding: 30px 20px;
+            .trial-cta {
+                width: 100%;
             }
 
-            .trial-text h2 {
-                font-size: 24px;
+            .btn-trial {
+                width: 100%;
+                justify-content: center;
             }
         }
 
