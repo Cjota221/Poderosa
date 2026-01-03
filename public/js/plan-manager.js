@@ -10,10 +10,10 @@ const PlanManager = {
             name: 'Teste Grátis',
             duration: 7, // dias
             limits: {
-                produtos: 3,
-                clientes: 5,
-                vendas: 10,
-                catalogos: 0
+                produtos: 10,      // Aumentado para testar melhor
+                clientes: 20,      // Aumentado para testar melhor
+                vendas: 50,        // Aumentado para testar melhor
+                catalogos: 1       // LIBERADO catálogo
             },
             features: {
                 dashboard: true,
@@ -21,11 +21,11 @@ const PlanManager = {
                 clientes: true,
                 vendas: true,
                 precificacao: true,
-                despesas: false,
-                relatorios: false,
-                catalogo: false,
-                exportarPdf: false,
-                suportePrioritario: false
+                despesas: true,           // ✅ LIBERADO
+                relatorios: true,         // ✅ LIBERADO
+                catalogo: true,           // ✅ LIBERADO
+                exportarPdf: false,       // Só Premium
+                suportePrioritario: false // Só Premium
             }
         },
         starter: {

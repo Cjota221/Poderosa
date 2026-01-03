@@ -9,18 +9,18 @@ const PLAN_FEATURES = {
     trial: {
         name: 'Teste Grátis',
         duration: 7,
-        limits: { produtos: 3, clientes: 5, vendas: 10, catalogos: 0 },
+        limits: { produtos: 10, clientes: 20, vendas: 50, catalogos: 1 },
         features: {
             dashboard: true,
             produtos: true,
             clientes: true,
             vendas: true,
             precificacao: true,
-            despesas: false,
-            relatorios: false,
-            catalogo: false,
-            exportarPdf: false,
-            suportePrioritario: false
+            despesas: true,           // ✅ LIBERADO
+            relatorios: true,         // ✅ LIBERADO
+            catalogo: true,           // ✅ LIBERADO
+            exportarPdf: false,       // Só Premium
+            suportePrioritario: false // Só Premium
         }
     },
     starter: {

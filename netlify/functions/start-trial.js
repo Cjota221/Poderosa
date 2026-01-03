@@ -148,9 +148,10 @@ exports.handler = async (event, context) => {
                 trialEndDate: trialEndDate.toISOString(),
                 daysLeft: 7,
                 limits: {
-                    produtos: 3,
-                    clientes: 5,
-                    vendas: 10
+                    produtos: 10,
+                    clientes: 20,
+                    vendas: 50,
+                    catalogos: 1
                 },
                 features: {
                     dashboard: true,
@@ -158,11 +159,11 @@ exports.handler = async (event, context) => {
                     clientes: true,
                     vendas: true,
                     precificacao: true,
-                    despesas: false,
-                    relatorios: false,
-                    catalogo: false
+                    despesas: true,      // ✅ LIBERADO
+                    relatorios: true,    // ✅ LIBERADO
+                    catalogo: true       // ✅ LIBERADO
                 },
-                message: 'Conta trial criada com sucesso! Você tem 7 dias para testar.'
+                message: 'Conta trial criada com sucesso! Você tem 7 dias para testar TODAS as funcionalidades.'
             })
         };
 

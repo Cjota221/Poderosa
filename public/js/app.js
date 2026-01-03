@@ -5895,6 +5895,31 @@ const LucroCertoApp = (function() {
             // Primeira vez - salvar data de início
             Storage.set('trial_start', new Date().toISOString());
         }
+
+        // ⚠️ SE TRIAL EXPIROU - MOSTRAR MODAL DE BLOQUEIO
+        if (daysLeft === 0) {
+            showTrialExpiredModal();
+            return; // Não criar banner, só modal
+        }
+        
+        // Definir cor do banner baseado nos dias restantes
+        let bannerColor, bannerIcon, bannerMessage;
+        if (daysLeft >= 3) {
+            // 7-3 dias: Verde/Roxo - tudo bem
+            bannerColor = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            bannerIcon = 'sparkles';
+            bannerMessage = `<strong>Teste Grátis</strong> - ${daysLeft} dias restantes`;
+        } else if (daysLeft === 2) {
+            // 2 dias: Amarelo - aviso leve
+            bannerColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+            bannerIcon = 'clock';
+            bannerMessage = `<strong>⚠️ Seu teste expira em 2 dias!</strong> Faça upgrade para não perder acesso`;
+        } else if (daysLeft === 1) {
+            // 1 dia: Laranja - aviso urgente
+            bannerColor = 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)';
+            bannerIcon = 'alert-triangle';
+            bannerMessage = `<strong>🔥 ÚLTIMO DIA de teste!</strong> Assine agora para continuar usando`;
+        }
         
         const isDashboard = window.location.pathname.includes('app.html') || 
                            window.location.pathname === '/app' ||
@@ -5907,8 +5932,8 @@ const LucroCertoApp = (function() {
             // Banner completo na dashboard
             trialBanner.innerHTML = `
                 <div class="trial-banner-content">
-                    <span><i data-lucide="sparkles"></i> <strong>Modo Teste Grátis</strong> - ${daysLeft} ${daysLeft === 1 ? 'dia restante' : 'dias restantes'}</span>
-                    <a href="/" class="trial-upgrade-btn">Fazer Upgrade</a>
+                    <span><i data-lucide="${bannerIcon}"></i> ${bannerMessage}</span>
+                    <a href="/checkout.html" class="trial-upgrade-btn">Assinar Agora</a>
                 </div>
             `;
             trialBanner.style.cssText = `
@@ -5916,7 +5941,7 @@ const LucroCertoApp = (function() {
                 top: 60px;
                 left: 0;
                 right: 0;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                background: ${bannerColor};
                 color: white;
                 padding: 12px 20px;
                 z-index: 999;
@@ -6265,6 +6290,161 @@ const LucroCertoApp = (function() {
             return;
         }
     });
+
+    //==================================
+    // 8. TRIAL EXPIRED MODAL
+    //==================================
+    function showTrialExpiredModal() {
+        // Remover modal anterior se existir
+        const existingModal = document.getElementById('trial-expired-modal');
+        if (existingModal) existingModal.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'trial-expired-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        `;
+
+        modal.innerHTML = `
+            <div style="
+                background: white;
+                border-radius: 20px;
+                padding: 40px;
+                max-width: 500px;
+                width: 100%;
+                text-align: center;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            ">
+                <div style="
+                    width: 80px;
+                    height: 80px;
+                    background: linear-gradient(135deg, #f59e0b 0%, #dc2626 100%);
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin: 0 auto 24px;
+                ">
+                    <i data-lucide="lock" style="width: 40px; height: 40px; color: white;"></i>
+                </div>
+                
+                <h2 style="
+                    font-size: 28px;
+                    font-weight: 700;
+                    color: #1f2937;
+                    margin: 0 0 16px;
+                ">Seu Teste Grátis Expirou</h2>
+                
+                <p style="
+                    font-size: 16px;
+                    color: #6b7280;
+                    margin: 0 0 24px;
+                    line-height: 1.6;
+                ">
+                    Seus <strong>7 dias de teste</strong> chegaram ao fim! 
+                    <br>Seus dados estão salvos e seguros.
+                    <br><br>
+                    Assine agora para continuar usando <strong>TODAS as funcionalidades</strong>:
+                </p>
+
+                <div style="
+                    background: #f9fafb;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 24px;
+                    text-align: left;
+                ">
+                    <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+                        <i data-lucide="check-circle" style="width: 20px; height: 20px; color: #10b981;"></i>
+                        <span>Dashboard completo com métricas</span>
+                    </div>
+                    <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+                        <i data-lucide="check-circle" style="width: 20px; height: 20px; color: #10b981;"></i>
+                        <span>Produtos, clientes e vendas ilimitados</span>
+                    </div>
+                    <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+                        <i data-lucide="check-circle" style="width: 20px; height: 20px; color: #10b981;"></i>
+                        <span>Precificação inteligente</span>
+                    </div>
+                    <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 12px;">
+                        <i data-lucide="check-circle" style="width: 20px; height: 20px; color: #10b981;"></i>
+                        <span>Catálogo digital profissional</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <i data-lucide="check-circle" style="width: 20px; height: 20px; color: #10b981;"></i>
+                        <span>Relatórios e controle financeiro</span>
+                    </div>
+                </div>
+
+                <a href="/checkout.html" style="
+                    display: block;
+                    background: linear-gradient(135deg, #E91E63 0%, #C2185B 100%);
+                    color: white;
+                    padding: 16px 32px;
+                    border-radius: 12px;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 16px;
+                    margin-bottom: 12px;
+                    transition: transform 0.2s;
+                " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                    🚀 Assinar Agora - A partir de R$ 34,90/mês
+                </a>
+
+                <a href="/login.html" style="
+                    display: block;
+                    color: #6b7280;
+                    text-decoration: none;
+                    font-size: 14px;
+                    margin-top: 16px;
+                ">Sair da conta</a>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        
+        // Inicializar ícones Lucide
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+
+        // Banner vermelho no topo
+        const banner = document.createElement('div');
+        banner.id = 'trial-expired-banner';
+        banner.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            color: white;
+            padding: 12px 20px;
+            text-align: center;
+            z-index: 10000;
+            font-weight: 600;
+            font-size: 14px;
+        `;
+        banner.innerHTML = `
+            <i data-lucide="alert-circle" style="width: 16px; height: 16px; vertical-align: middle;"></i>
+            Trial Expirado - Assine para continuar
+        `;
+        document.body.appendChild(banner);
+        
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+    }
 
     return { 
         init,
