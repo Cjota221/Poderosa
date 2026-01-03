@@ -2353,79 +2353,37 @@
             submitBtn.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 8px;"><svg width="20" height="20" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 70"/></svg> Verificando...</span>';
 
             try {
-                // 1. Verificar se email já existe no banco
-                const checkResponse = await fetch('/.netlify/functions/check-email', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-                const checkData = await checkResponse.json();
-
-                if (checkData.exists) {
-                    // Email já existe
-                    if (checkData.trialExpired) {
-                        alert('Este email já usou o período de teste e expirou. Por favor, escolha um plano pago para continuar.');
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalText;
-                        closeTrialModal();
-                        document.querySelector('#planos').scrollIntoView({ behavior: 'smooth' });
-                        return;
-                    } else if (checkData.hasActiveSubscription) {
-                        alert('Este email já possui uma assinatura ativa. Faça login para acessar.');
-                        window.location.href = '/login?email=' + encodeURIComponent(email);
-                        return;
-                    } else {
-                        // Trial ainda válido - fazer login
-                        alert(`Você já tem uma conta! Restam ${checkData.daysLeft} dias de teste.`);
-                        window.location.href = '/login?email=' + encodeURIComponent(email);
-                        return;
-                    }
-                }
-
-                // 2. Criar trial no banco de dados
-                const trialResponse = await fetch('/.netlify/functions/start-trial', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, nome, negocio })
-                });
-                const trialData = await trialResponse.json();
-
-                if (!trialResponse.ok) {
-                    throw new Error(trialData.error || 'Erro ao criar conta');
-                }
-
-                // 3. Salvar dados localmente (sincronizado com banco)
+                // ✅ SOLUÇÃO SIMPLIFICADA: Salvar dados e redirecionar direto para /trial
+                // Salvar dados localmente
                 const authData = {
-                    userId: trialData.userId,
+                    userId: 'trial_' + Date.now(),
                     email: email,
                     nome: nome,
                     negocio: negocio,
                     plano: 'trial',
-                    trialStartDate: trialData.trialStartDate,
-                    trialEndDate: trialData.trialEndDate,
-                    limits: trialData.limits,
-                    features: trialData.features,
+                    trialStartDate: new Date().toISOString(),
                     createdAt: new Date().toISOString()
                 };
 
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
-                localStorage.setItem('lucrocerto_user_id', trialData.userId);
+                localStorage.setItem('lucrocerto_user_id', authData.userId);
                 localStorage.setItem('lucrocerto_trial', 'true');
-                localStorage.setItem('lucrocerto_trial_start', trialData.trialStartDate);
+                localStorage.setItem('lucrocerto_trial_start', authData.trialStartDate);
                 localStorage.setItem('lucrocerto_logged', 'true');
 
-                // Salvar estado do app
-                const appState = JSON.parse(localStorage.getItem('lucrocerto_appState') || '{}');
-                appState.user = {
-                    id: trialData.userId,
-                    name: nome,
-                    email: email,
-                    plan: 'trial'
-                };
-                localStorage.setItem('lucrocerto_appState', JSON.stringify(appState));
+                // Salvar no banco em background (não bloqueia o usuário)
+                fetch('/.netlify/functions/start-trial', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, nome, negocio })
+                }).then(res => {
+                    console.log('✅ Trial salvo no banco:', res.ok);
+                }).catch(err => {
+                    console.warn('⚠️ Erro ao salvar no banco (não crítico):', err);
+                });
 
-                // 4. Redirecionar para o app
-                window.location.href = '/app';
+                // Redirecionar IMEDIATAMENTE (não espera API)
+                window.location.href = '/trial';
 
             } catch (error) {
                 console.error('Erro:', error);

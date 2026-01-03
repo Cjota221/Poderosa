@@ -45,8 +45,22 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Verificar se Supabase está configurado
+        if (!supabaseUrl || !supabaseServiceKey) {
+            console.error('❌ SUPABASE não configurado');
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ 
+                    error: 'Configuração do banco de dados não encontrada',
+                    details: 'SUPABASE_URL ou SUPABASE_SERVICE_KEY não configurados'
+                })
+            };
+        }
+
         // Criar cliente Supabase
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        console.log('🔍 Verificando email:', email);
 
         // Buscar usuário pelo email
         const { data: usuario, error } = await supabase
@@ -122,11 +136,16 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
-        console.error('Erro ao verificar email:', error);
+        console.error('❌ Erro ao verificar email:', error);
+        console.error('Stack:', error.stack);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Erro interno do servidor' })
+            body: JSON.stringify({ 
+                error: 'Erro interno do servidor',
+                details: error.message || 'Erro desconhecido',
+                code: error.code || 'UNKNOWN'
+            })
         };
     }
 };

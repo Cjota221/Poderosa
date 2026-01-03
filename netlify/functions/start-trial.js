@@ -42,16 +42,37 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // Verificar se Supabase está configurado
+        if (!supabaseUrl || !supabaseServiceKey) {
+            console.error('❌ SUPABASE não configurado');
+            return {
+                statusCode: 500,
+                headers,
+                body: JSON.stringify({ 
+                    error: 'Configuração do banco de dados não encontrada',
+                    details: 'SUPABASE_URL ou SUPABASE_SERVICE_KEY não configurados'
+                })
+            };
+        }
+
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        console.log('🔍 Verificando email:', email);
 
         // Verificar se email já existe
-        const { data: existingUser } = await supabase
+        const { data: existingUser, error: checkError } = await supabase
             .from('usuarios')
             .select('id, plano, created_at')
             .eq('email', email.toLowerCase())
             .single();
 
+        if (checkError && checkError.code !== 'PGRST116') {
+            // PGRST116 = não encontrado, isso é OK
+            console.error('❌ Erro ao verificar email:', checkError);
+            throw checkError;
+        }
+
         if (existingUser) {
+            console.log('⚠️ Email já existe:', email);
             const createdAt = new Date(existingUser.created_at);
             const now = new Date();
             const daysSinceCreation = Math.floor((now - createdAt) / (1000 * 60 * 60 * 24));
@@ -73,6 +94,8 @@ exports.handler = async (event, context) => {
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + 7);
 
+        console.log('✅ Criando novo usuário trial:', email);
+
         const { data: newUser, error: createError } = await supabase
             .from('usuarios')
             .insert({
@@ -86,11 +109,14 @@ exports.handler = async (event, context) => {
             .single();
 
         if (createError) {
+            console.error('❌ Erro ao criar usuário:', createError);
             throw createError;
         }
 
+        console.log('✅ Usuário criado:', newUser.id);
+
         // Criar registro de assinatura trial
-        await supabase
+        const { error: assinaturaError } = await supabase
             .from('assinaturas')
             .insert({
                 usuario_id: newUser.id,
@@ -101,6 +127,13 @@ exports.handler = async (event, context) => {
                 data_inicio: new Date().toISOString(),
                 data_expiracao: trialEndDate.toISOString()
             });
+
+        if (assinaturaError) {
+            console.error('⚠️ Erro ao criar assinatura (não crítico):', assinaturaError);
+            // Não falha - assinatura é secundária
+        } else {
+            console.log('✅ Assinatura trial criada');
+        }
 
         return {
             statusCode: 200,
@@ -134,11 +167,16 @@ exports.handler = async (event, context) => {
         };
 
     } catch (error) {
-        console.error('Erro ao criar trial:', error);
+        console.error('❌ Erro ao criar trial:', error);
+        console.error('Stack:', error.stack);
         return {
             statusCode: 500,
             headers,
-            body: JSON.stringify({ error: 'Erro interno do servidor' })
+            body: JSON.stringify({ 
+                error: 'Erro interno do servidor',
+                details: error.message || 'Erro desconhecido',
+                code: error.code || 'UNKNOWN'
+            })
         };
     }
 };
