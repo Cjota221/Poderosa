@@ -11,7 +11,7 @@
     // CONFIGURAÇÃO
     // ==================================
     const PIXEL_ID = '1973607160089954';
-    const GA_ID = 'G-E3W506DTB2'; // Google Analytics 4 - Sistema Lucro Certo
+    const GA_ID = 'G-5G79YPBBGC'; // Google Analytics 4 - Sistema Lucro Certo (ATUALIZADO)
 
     // ==================================
     // META PIXEL (FACEBOOK)
@@ -30,8 +30,16 @@
     fbq('track', 'PageView');
 
     // ==================================
-    // GOOGLE ANALYTICS 4
+    // GOOGLE ANALYTICS 4 - TAG OFICIAL
     // ==================================
+    
+    // Carregar script do Google Analytics
+    const gaScript = document.createElement('script');
+    gaScript.async = true;
+    gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+    document.head.appendChild(gaScript);
+    
+    // Inicializar dataLayer e gtag
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
