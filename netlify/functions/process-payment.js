@@ -60,7 +60,9 @@ exports.handler = async (event, context) => {
             payer,
             transaction_amount,
             description,
-            external_reference
+            external_reference,
+            isExistingUser, // 🎯 NOVO: Indica se é usuário existente
+            userId // 🎯 NOVO: ID do usuário se existir
         } = body;
 
         // Validações
@@ -71,6 +73,8 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({ error: 'Dados incompletos para pagamento' })
             };
         }
+
+        console.log('🔍 USUÁRIO EXISTENTE:', isExistingUser, '- ID:', userId);
 
         const client = getClient();
         const payment = new Payment(client);
@@ -121,43 +125,65 @@ exports.handler = async (event, context) => {
                 console.log('📋 Plano:', plano);
                 console.log('📅 Período:', periodo);
 
-                // Verificar se usuário já existe
-                const { data: existingUser, error: searchError } = await supabase
-                    .from('usuarios')
-                    .select('id')
-                    .eq('email', payer.email.toLowerCase())
-                    .single();
-                
-                if (searchError && searchError.code !== 'PGRST116') {
-                    console.error('Erro ao buscar usuário:', searchError);
-                }
+                let userIdToUse = userId; // ID passado do frontend (se existir)
 
-                let userId;
-
-                if (existingUser) {
-                    userId = existingUser.id;
-                    console.log('👤 Usuário existente:', userId);
-                } else {
-                    // Criar novo usuário
-                    const { data: newUser, error: userError } = await supabase
+                // 🎯 SE É USUÁRIO EXISTENTE, USAR O ID FORNECIDO
+                if (isExistingUser && userId) {
+                    console.log('✅ Usando ID de usuário existente:', userId);
+                    userIdToUse = userId;
+                    
+                    // Atualizar plano do usuário existente
+                    const { error: updateError } = await supabase
                         .from('usuarios')
-                        .insert({
-                            email: payer.email.toLowerCase(),
-                            nome: nomeCompleto || payer.email.split('@')[0],
-                            plano: plano
+                        .update({ 
+                            plano: plano,
+                            updated_at: new Date().toISOString()
                         })
-                        .select()
-                        .single();
-
-                    if (userError) {
-                        console.error('Erro ao criar usuário:', userError);
+                        .eq('id', userId);
+                    
+                    if (updateError) {
+                        console.error('Erro ao atualizar usuário:', updateError);
                     } else {
-                        userId = newUser.id;
-                        console.log('👤 Novo usuário criado:', userId);
+                        console.log('✅ Plano do usuário atualizado!');
+                    }
+                } else {
+                    // BUSCAR OU CRIAR USUÁRIO
+                    // Verificar se usuário já existe
+                    const { data: existingUser, error: searchError } = await supabase
+                        .from('usuarios')
+                        .select('id')
+                        .eq('email', payer.email.toLowerCase())
+                        .single();
+                    
+                    if (searchError && searchError.code !== 'PGRST116') {
+                        console.error('Erro ao buscar usuário:', searchError);
+                    }
+
+                    if (existingUser) {
+                        userIdToUse = existingUser.id;
+                        console.log('👤 Usuário encontrado no banco:', userIdToUse);
+                    } else {
+                        // Criar novo usuário
+                        const { data: newUser, error: userError } = await supabase
+                            .from('usuarios')
+                            .insert({
+                                email: payer.email.toLowerCase(),
+                                nome: nomeCompleto || payer.email.split('@')[0],
+                                plano: plano
+                            })
+                            .select()
+                            .single();
+
+                        if (userError) {
+                            console.error('Erro ao criar usuário:', userError);
+                        } else {
+                            userIdToUse = newUser.id;
+                            console.log('👤 Novo usuário criado:', userIdToUse);
+                        }
                     }
                 }
 
-                if (userId) {
+                if (userIdToUse) {
                     // Calcular data de expiração
                     const dataExpiracao = new Date();
                     if (periodo === 'annual') {
@@ -170,7 +196,7 @@ exports.handler = async (event, context) => {
                     const { error: subError } = await supabase
                         .from('assinaturas')
                         .insert({
-                            usuario_id: userId,
+                            usuario_id: userIdToUse,
                             plano: plano,
                             status: 'active',
                             periodo: periodo,
@@ -186,11 +212,11 @@ exports.handler = async (event, context) => {
                         console.log('✅ Assinatura salva no banco!');
                     }
 
-                    // Atualizar plano do usuário
+                    // Atualizar plano do usuário (garantir que está atualizado)
                     await supabase
                         .from('usuarios')
                         .update({ plano: plano })
-                        .eq('id', userId);
+                        .eq('id', userIdToUse);
                 }
 
             } catch (dbError) {

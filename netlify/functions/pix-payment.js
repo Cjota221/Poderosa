@@ -47,7 +47,9 @@ exports.handler = async (event, context) => {
             transaction_amount,
             description,
             payer,
-            external_reference
+            external_reference,
+            isExistingUser, // 🎯 NOVO: Indica se é usuário existente
+            userId // 🎯 NOVO: ID do usuário se existir
         } = body;
 
         // Validações
@@ -58,6 +60,8 @@ exports.handler = async (event, context) => {
                 body: JSON.stringify({ error: 'Dados incompletos para PIX' })
             };
         }
+
+        console.log('🔍 PIX - USUÁRIO EXISTENTE:', isExistingUser, '- ID:', userId);
 
         const client = getClient();
         const payment = new Payment(client);
@@ -95,40 +99,49 @@ exports.handler = async (event, context) => {
                 const periodo = body.billing || 'monthly';
                 const nomeCompleto = `${payer.first_name || ''} ${payer.last_name || ''}`.trim();
 
-                // Verificar se usuário já existe
-                const { data: existingUser } = await supabase
-                    .from('usuarios')
-                    .select('id')
-                    .eq('email', payer.email.toLowerCase())
-                    .single();
+                let userIdToUse = userId; // ID passado do frontend (se existir)
 
-                let userId;
-
-                if (existingUser) {
-                    userId = existingUser.id;
+                // 🎯 SE É USUÁRIO EXISTENTE, USAR O ID FORNECIDO
+                if (isExistingUser && userId) {
+                    console.log('✅ Usando ID de usuário existente:', userId);
+                    userIdToUse = userId;
                 } else {
-                    // Criar novo usuário
-                    const { data: newUser } = await supabase
+                    // BUSCAR OU CRIAR USUÁRIO
+                    // Verificar se usuário já existe
+                    const { data: existingUser } = await supabase
                         .from('usuarios')
-                        .insert({
-                            email: payer.email.toLowerCase(),
-                            nome: nomeCompleto || payer.email.split('@')[0],
-                            plano: 'trial' // Ainda trial até pagar
-                        })
-                        .select()
+                        .select('id')
+                        .eq('email', payer.email.toLowerCase())
                         .single();
 
-                    if (newUser) {
-                        userId = newUser.id;
+                    if (existingUser) {
+                        userIdToUse = existingUser.id;
+                        console.log('👤 Usuário encontrado no banco:', userIdToUse);
+                    } else {
+                        // Criar novo usuário
+                        const { data: newUser } = await supabase
+                            .from('usuarios')
+                            .insert({
+                                email: payer.email.toLowerCase(),
+                                nome: nomeCompleto || payer.email.split('@')[0],
+                                plano: 'trial' // Ainda trial até pagar
+                            })
+                            .select()
+                            .single();
+
+                        if (newUser) {
+                            userIdToUse = newUser.id;
+                            console.log('👤 Novo usuário criado:', userIdToUse);
+                        }
                     }
                 }
 
-                if (userId) {
+                if (userIdToUse) {
                     // Criar assinatura pendente
                     await supabase
                         .from('assinaturas')
                         .insert({
-                            usuario_id: userId,
+                            usuario_id: userIdToUse,
                             plano: plano,
                             status: 'pending', // Pendente até pagar PIX
                             periodo: periodo,
@@ -137,7 +150,7 @@ exports.handler = async (event, context) => {
                             payment_id: result.id.toString()
                         });
 
-                    console.log('✅ Assinatura PIX pendente criada');
+                    console.log('✅ Assinatura PIX pendente criada para usuário:', userIdToUse);
                 }
             } catch (dbError) {
                 console.error('Erro ao salvar PIX no banco:', dbError);

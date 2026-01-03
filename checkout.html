@@ -1507,6 +1507,20 @@
 
                         document.querySelector('.loading-text').textContent = 'Processando pagamento...';
 
+                        // 🎯 VERIFICAR SE É USUÁRIO EXISTENTE (TRIAL OU RENOVAÇÃO)
+                        const existingUserData = JSON.parse(localStorage.getItem('lucrocerto_user') || '{}');
+                        const existingTrialData = JSON.parse(localStorage.getItem('lucrocerto_trial') || '{}');
+                        const existingAuthData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+                        
+                        const isExistingUser = !!(existingUserData.email || existingTrialData.email || existingAuthData.email);
+                        const existingUserId = existingUserData.id || existingAuthData.userId || existingTrialData.userId;
+                        
+                        console.log('🔍 Verificação de usuário:', {
+                            isExistingUser,
+                            existingUserId,
+                            email: email
+                        });
+
                         // Enviar token para o backend processar (COM RETRY)
                         const paymentResponse = await fetchComRetry(`${API_URL}/process-payment`, {
                             method: 'POST',
@@ -1527,7 +1541,9 @@
                                 },
                                 description: `${plan.name} - ${isAnnual ? 'Anual' : 'Mensal'}`,
                                 plan: currentPlan,
-                                billing: isAnnual ? 'annual' : 'monthly'
+                                billing: isAnnual ? 'annual' : 'monthly',
+                                isExistingUser: isExistingUser, // 🎯 NOVO: Informar se é usuário existente
+                                userId: existingUserId // 🎯 NOVO: Enviar ID se existir
                             })
                         });
 
@@ -1572,6 +1588,20 @@
                 else if (paymentMethod === 'pix') {
                     document.querySelector('.loading-text').textContent = 'Gerando PIX...';
                     
+                    // 🎯 VERIFICAR SE É USUÁRIO EXISTENTE (TRIAL OU RENOVAÇÃO)
+                    const existingUserData = JSON.parse(localStorage.getItem('lucrocerto_user') || '{}');
+                    const existingTrialData = JSON.parse(localStorage.getItem('lucrocerto_trial') || '{}');
+                    const existingAuthData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+                    
+                    const isExistingUser = !!(existingUserData.email || existingTrialData.email || existingAuthData.email);
+                    const existingUserId = existingUserData.id || existingAuthData.userId || existingTrialData.userId;
+                    
+                    console.log('🔍 PIX - Verificação de usuário:', {
+                        isExistingUser,
+                        existingUserId,
+                        email: email
+                    });
+                    
                     const pixResponse = await fetchComRetry(`${API_URL}/pix-payment`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -1588,7 +1618,9 @@
                             },
                             description: `${plan.name} - ${isAnnual ? 'Anual' : 'Mensal'}`,
                             plan: currentPlan,
-                            billing: isAnnual ? 'annual' : 'monthly'
+                            billing: isAnnual ? 'annual' : 'monthly',
+                            isExistingUser: isExistingUser, // 🎯 NOVO: Informar se é usuário existente
+                            userId: existingUserId // 🎯 NOVO: Enviar ID se existir
                         })
                     });
 
@@ -1957,8 +1989,78 @@
             alert('✅ Código PIX copiado!');
         }
 
+        // ==============================================
+        // AUTO-PREENCHER DADOS DO USUÁRIO LOGADO
+        // ==============================================
+        function autoFillUserData() {
+            // Verificar se usuário está logado (trial ou já tem conta)
+            const userData = JSON.parse(localStorage.getItem('lucrocerto_user') || '{}');
+            const trialData = JSON.parse(localStorage.getItem('lucrocerto_trial') || '{}');
+            const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+            
+            let userEmail = '';
+            let userName = '';
+            
+            // Prioridade: userData > authData > trialData
+            if (userData.email) {
+                userEmail = userData.email;
+                userName = userData.nome || '';
+            } else if (authData.email) {
+                userEmail = authData.email;
+                userName = authData.nome || '';
+            } else if (trialData.email) {
+                userEmail = trialData.email;
+                userName = trialData.nome || '';
+            }
+            
+            // Se encontrou dados, preencher e bloquear email
+            if (userEmail) {
+                console.log('✅ Usuário já logado:', userEmail);
+                
+                // Preencher email
+                const emailInput = document.getElementById('email');
+                if (emailInput) {
+                    emailInput.value = userEmail;
+                    emailInput.readOnly = true;
+                    emailInput.style.background = '#f5f5f5';
+                    emailInput.style.cursor = 'not-allowed';
+                }
+                
+                // Preencher nome se disponível
+                if (userName) {
+                    const nomeInput = document.getElementById('nome');
+                    if (nomeInput && !nomeInput.value) {
+                        // Separar nome e sobrenome
+                        const partesNome = userName.split(' ');
+                        nomeInput.value = partesNome[0] || '';
+                        
+                        const sobrenomeInput = document.getElementById('sobrenome');
+                        if (sobrenomeInput && partesNome.length > 1) {
+                            sobrenomeInput.value = partesNome.slice(1).join(' ');
+                        }
+                    }
+                }
+                
+                // Adicionar indicador visual
+                const emailField = emailInput?.parentElement;
+                if (emailField && !emailField.querySelector('.user-indicator')) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'user-indicator';
+                    indicator.innerHTML = '✓ Usuário identificado';
+                    indicator.style.cssText = `
+                        color: #4CAF50;
+                        font-size: 12px;
+                        margin-top: 4px;
+                        font-weight: 500;
+                    `;
+                    emailField.appendChild(indicator);
+                }
+            }
+        }
+        
         // Inicializar
         initPlan();
+        autoFillUserData(); // 🎯 NOVO: Auto-preencher dados
         
         // Salvar dados do checkout para uso posterior
         document.querySelectorAll('#nome, #sobrenome, #email, #cpf, #telefone').forEach(input => {
