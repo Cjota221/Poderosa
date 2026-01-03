@@ -129,7 +129,21 @@
             if (isTrialUrl) {
                 // URL tem ?trial=true → ativar modo trial
                 localStorage.setItem('lucrocerto_trial', 'true');
+                localStorage.setItem('lucrocerto_logged', 'true'); // ✅ Marcar como logado para trial
                 console.log('🧪 Modo TRIAL ativado via URL');
+                
+                // Criar auth data mínimo para trial
+                if (!authData.email) {
+                    const trialAuth = {
+                        email: 'trial@lucrocerto.com',
+                        nome: 'Usuária Trial',
+                        plano: 'trial',
+                        userId: 'trial_' + Date.now()
+                    };
+                    localStorage.setItem('lucrocerto_auth', JSON.stringify(trialAuth));
+                    localStorage.setItem('lucrocerto_user_id', trialAuth.userId);
+                    console.log('✅ Conta trial criada automaticamente');
+                }
             } else if (authData.plano && authData.plano !== 'trial') {
                 // ✅ USUÁRIO TEM PLANO PAGO → FORÇAR REMOÇÃO DO TRIAL
                 localStorage.removeItem('lucrocerto_trial');
@@ -144,11 +158,18 @@
                 }
             }
             
-            // Verificar login
+            // Verificar login (permitir trial)
             const isLogged = localStorage.getItem('lucrocerto_logged');
+            const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
+            
             if (!isLogged || isLogged !== 'true') {
-                // Redirecionar para login se não estiver logado
-                window.location.href = '/login';
+                // Se não está logado E não é trial, redirecionar para login
+                if (!isTrial && !isTrialUrl) {
+                    console.log('❌ Não logado e não é trial - redirecionando para login');
+                    window.location.href = '/login';
+                } else {
+                    console.log('✅ Acesso permitido em modo trial');
+                }
             }
         })();
         

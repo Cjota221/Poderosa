@@ -5527,7 +5527,19 @@ const LucroCertoApp = (function() {
     // 6. INITIALIZATION
     //==================================
     function init() {
-        // � VERIFICAÇÃO DE INTEGRIDADE - Corrige dados corrompidos
+        // ✅ VERIFICAR SE É ACESSO VIA TRIAL (?trial=true)
+        const urlParams = new URLSearchParams(window.location.search);
+        const isTrialAccess = urlParams.get('trial') === 'true';
+        
+        if (isTrialAccess) {
+            console.log('🧪 Acesso via trial detectado - ativando modo trial');
+            Storage.set('trial', 'true');
+            Storage.set('trial_start', new Date().toISOString());
+            // Limpar parâmetro da URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
+        // 🔍 VERIFICAÇÃO DE INTEGRIDADE - Corrige dados corrompidos
         DataRecovery.verifyUserId();
         
         // �🔑 CRÍTICO: Garantir que user_id sempre existe ANTES de tudo
