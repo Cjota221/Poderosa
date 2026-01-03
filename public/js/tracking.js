@@ -43,7 +43,30 @@
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
-    gtag('config', GA_ID);
+    
+    // ==================================
+    // NORMALIZAÇÃO DE URLS
+    // ==================================
+    // Remove .html das URLs para evitar duplicatas no Analytics
+    function getCleanPath() {
+        let path = window.location.pathname;
+        
+        // Remover .html do final
+        path = path.replace(/\.html$/, '');
+        
+        // Se for página raiz, retornar /
+        if (path === '' || path === '/index') {
+            return '/';
+        }
+        
+        return path;
+    }
+    
+    // Configurar Analytics com URL limpa
+    const cleanPath = getCleanPath();
+    gtag('config', GA_ID, {
+        page_path: cleanPath
+    });
 
     // ==================================
     // SISTEMA DE TRACKING INTELIGENTE
@@ -60,11 +83,12 @@
                 timestamp: new Date().toISOString()
             });
             
-            // Google Analytics
+            // Google Analytics - sempre usar URL limpa
+            const cleanPath = getCleanPath();
             gtag('event', 'page_view', {
                 page_title: pageName,
                 page_location: window.location.href,
-                page_path: window.location.pathname
+                page_path: cleanPath
             });
         },
 
