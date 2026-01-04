@@ -5881,19 +5881,43 @@ const LucroCertoApp = (function() {
         
         console.log('🧪 initTrialMode: Modo TRIAL ativo - Criando banner...');
         
-        // Calcular dias restantes
-        const trialStartDate = Storage.get('trial_start');
+        // 🎯 Calcular dias restantes usando data de expiração do banco
+        const trialEndDate = Storage.get('trial_end'); // Data de expiração do banco
+        const trialStartDate = Storage.get('trial_start'); // Data de início
         let daysLeft = 7;
         
-        if (trialStartDate) {
+        if (trialEndDate) {
+            // USAR DATA DE EXPIRAÇÃO DO BANCO (mais confiável)
+            const endDate = new Date(trialEndDate);
+            const today = new Date();
+            const diffTime = endDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            daysLeft = Math.max(0, diffDays);
+            
+            console.log('📅 Data expiração trial:', endDate.toLocaleDateString('pt-BR'));
+            console.log('📊 Dias restantes calculados:', daysLeft);
+        } else if (trialStartDate) {
+            // FALLBACK: Calcular baseado na data de início (se não tiver expiração)
             const startDate = new Date(trialStartDate);
             const today = new Date();
             const diffTime = today - startDate;
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
             daysLeft = Math.max(0, 7 - diffDays);
+            
+            console.log('📅 Data início trial:', startDate.toLocaleDateString('pt-BR'));
+            console.log('📊 Dias restantes (calculado por início):', daysLeft);
         } else {
-            // Primeira vez - salvar data de início
-            Storage.set('trial_start', new Date().toISOString());
+            // PRIMEIRA VEZ - Salvar data de início
+            const startDate = new Date();
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + 7);
+            
+            Storage.set('trial_start', startDate.toISOString());
+            Storage.set('trial_end', endDate.toISOString());
+            
+            console.log('✨ Primeira vez no trial - Salvando datas...');
+            console.log('📅 Início:', startDate.toLocaleDateString('pt-BR'));
+            console.log('📅 Expiração:', endDate.toLocaleDateString('pt-BR'));
         }
 
         // ⚠️ SE TRIAL EXPIROU - MOSTRAR MODAL DE BLOQUEIO

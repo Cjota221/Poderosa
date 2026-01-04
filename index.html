@@ -2378,13 +2378,18 @@
             try {
                 // ✅ SOLUÇÃO SIMPLIFICADA: Salvar dados e redirecionar direto para /trial
                 // Salvar dados localmente
+                const trialStart = new Date();
+                const trialEnd = new Date();
+                trialEnd.setDate(trialEnd.getDate() + 7); // 7 dias de trial
+                
                 const authData = {
                     userId: 'trial_' + Date.now(),
                     email: email,
                     nome: nome,
                     negocio: negocio,
                     plano: 'trial',
-                    trialStartDate: new Date().toISOString(),
+                    trialStartDate: trialStart.toISOString(),
+                    trialEndDate: trialEnd.toISOString(), // 🎯 NOVO: Salvar data de expiração
                     createdAt: new Date().toISOString()
                 };
 
@@ -2392,7 +2397,15 @@
                 localStorage.setItem('lucrocerto_user_id', authData.userId);
                 localStorage.setItem('lucrocerto_trial', 'true');
                 localStorage.setItem('lucrocerto_trial_start', authData.trialStartDate);
+                localStorage.setItem('lucrocerto_trial_end', authData.trialEndDate); // 🎯 NOVO
                 localStorage.setItem('lucrocerto_logged', 'true');
+                
+                console.log('🧪 Trial criado:', {
+                    email,
+                    inicio: trialStart.toLocaleDateString('pt-BR'),
+                    expiracao: trialEnd.toLocaleDateString('pt-BR'),
+                    diasRestantes: 7
+                });
 
                 // Salvar no banco em background (não bloqueia o usuário)
                 fetch('/.netlify/functions/start-trial', {

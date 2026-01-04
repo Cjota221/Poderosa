@@ -563,6 +563,28 @@
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
                 localStorage.setItem('lucrocerto_logged', 'true');
                 
+                // 🎯 CONFIGURAR TRIAL: Se plano é trial e tem data de expiração
+                if (result.user.plano === 'trial' && result.subscription?.data_expiracao) {
+                    console.log('🧪 Configurando modo TRIAL...');
+                    
+                    // Calcular data de início do trial (7 dias antes da expiração)
+                    const dataExpiracao = new Date(result.subscription.data_expiracao);
+                    const dataInicio = new Date(dataExpiracao);
+                    dataInicio.setDate(dataInicio.getDate() - 7);
+                    
+                    // Salvar informações do trial
+                    localStorage.setItem('lucrocerto_trial', 'true');
+                    localStorage.setItem('lucrocerto_trial_start', dataInicio.toISOString());
+                    localStorage.setItem('lucrocerto_trial_end', dataExpiracao.toISOString());
+                    
+                    const hoje = new Date();
+                    const diasRestantes = Math.max(0, Math.ceil((dataExpiracao - hoje) / (1000 * 60 * 60 * 24)));
+                    
+                    console.log(`🧪 Trial configurado: ${diasRestantes} dias restantes`);
+                    console.log('📅 Data início:', dataInicio.toLocaleDateString('pt-BR'));
+                    console.log('📅 Data expiração:', dataExpiracao.toLocaleDateString('pt-BR'));
+                }
+                
                 // 🔑 CRUCIAL: Salvar user_id separado para identificação persistente
                 if (result.user.id) {
                     localStorage.setItem('lucrocerto_user_id', result.user.id);
@@ -580,6 +602,8 @@
                 // IMPORTANTE: Limpar flag de trial se usuário tem plano pago
                 if (result.user.plano !== 'trial') {
                     localStorage.removeItem('lucrocerto_trial');
+                    localStorage.removeItem('lucrocerto_trial_start');
+                    localStorage.removeItem('lucrocerto_trial_end');
                     console.log('✅ Flag trial removida - Plano ativo:', result.user.plano);
                 }
                 
