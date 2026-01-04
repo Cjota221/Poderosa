@@ -78,8 +78,8 @@ FROM auth.users
 WHERE email LIKE '%trial%' OR email LIKE '%temporario%'
 ORDER BY created_at DESC;
 
--- 🔍 QUERY 9: Ver se tem registro em logs (se a tabela existir)
-SELECT * FROM logs 
-WHERE usuario_id LIKE 'trial_%'
-ORDER BY created_at DESC
-LIMIT 50;
+-- ==================================================
+-- FIM DAS QUERIES
+-- ==================================================
+-- Se encontrar dados em alguma tabela, use UPDATE para atualizar o email:
+-- UPDATE usuarios SET email = 'email_encontrado@exemplo.com' WHERE id = 'trial_1767437190538';
