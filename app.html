@@ -125,6 +125,21 @@
             console.log('🔍 URL tem ?trial=true:', isTrialUrl);
             console.log('🔍 Flag trial no localStorage:', localStorage.getItem('lucrocerto_trial'));
             
+            // 🎯 VERIFICAR SE PRECISA ATUALIZAR DADOS (trials com email temporário)
+            const userId = authData.userId || localStorage.getItem('lucrocerto_user_id');
+            const needsUpdate = userId === 'trial_1767404409888' || userId === 'trial_1767437190538';
+            
+            if (needsUpdate && !sessionStorage.getItem('update_dados_dismissed')) {
+                // Mostrar popup pedindo para atualizar dados
+                setTimeout(() => {
+                    if (confirm('👋 Olá! Vimos que você está usando o sistema mas ainda não completou seu cadastro.\n\n📧 Para garantir que você não perca acesso aos seus produtos, atualize seus dados agora!\n\nLeva só 2 minutos. Deseja atualizar?')) {
+                        window.location.href = '/atualizar-dados.html';
+                    } else {
+                        sessionStorage.setItem('update_dados_dismissed', 'true');
+                    }
+                }, 2000);
+            }
+            
             // Lógica do Trial - PRIORIDADE: Plano PAGO
             if (isTrialUrl) {
                 // URL tem ?trial=true → ativar modo trial
