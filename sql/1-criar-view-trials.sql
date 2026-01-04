@@ -10,7 +10,6 @@ SELECT
     u.telefone,
     u.plano,
     u.created_at as data_cadastro,
-    u.ultimo_login,
     
     -- Informações da assinatura trial
     a.id as assinatura_id,
