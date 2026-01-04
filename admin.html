@@ -1435,16 +1435,24 @@
         // ========== CARREGAR TODOS OS USUÁRIOS ==========
         async function loadTodosUsuarios() {
             try {
+                console.log('🔍 Buscando TODOS os usuários...');
+                
                 const response = await fetch(`${API_BASE}?action=todos-usuarios`, {
                     headers: {
                         'Authorization': `Bearer ${ADMIN_PASSWORD}`
                     }
                 });
                 
+                console.log('📡 Response status:', response.status);
+                
                 if (!response.ok) throw new Error('Erro ao buscar todos os usuários');
                 
                 const data = await response.json();
+                console.log('📦 Dados recebidos:', data);
+                
                 const usuarios = data.usuarios || [];
+                console.log(`👥 Total de usuários encontrados: ${usuarios.length}`);
+                console.log('📋 Lista de emails:', usuarios.map(u => u.email));
                 
                 updateTodosUsuariosTable(usuarios);
                 updateTodosUsuariosStats(usuarios);

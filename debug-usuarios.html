@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Debug - Ver Todos Usuários</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        tr:hover {
+            background: #f8f9ff;
+        }
+        .email {
+            color: #667eea;
+            font-weight: 500;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-trial { background: #FFF3CD; color: #856404; }
+        .badge-starter { background: #D1ECF1; color: #0C5460; }
+        .badge-pro { background: #D4EDDA; color: #155724; }
+        .badge-active { background: #D4EDDA; color: #155724; }
+        .badge-cancelled { background: #F8D7DA; color: #721C24; }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 18px;
+        }
+        .error {
+            background: #F8D7DA;
+            color: #721C24;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            overflow: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug - Todos os Usuários</h1>
+        <p class="subtitle">Conectando DIRETO no Supabase para ver TODOS os cadastrados</p>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalUsuarios">-</div>
+                <div class="stat-label">Total Cadastrados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalTrials">-</div>
+                <div class="stat-label">Em Trial</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalPagos">-</div>
+                <div class="stat-label">Assinaturas Ativas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalRecentes">-</div>
+                <div class="stat-label">Últimos 7 Dias</div>
+            </div>
+        </div>
+
+        <button onclick="carregarUsuarios()">🔄 Atualizar</button>
+        <button onclick="exportarCSV()">📥 Exportar CSV</button>
+        <button onclick="mostrarJSON()">📋 Ver JSON</button>
+
+        <div id="error" style="display: none;" class="error"></div>
+        <div id="loading" class="loading" style="display: none;">
+            ⏳ Carregando dados do Supabase...
+        </div>
+
+        <table id="tabelaUsuarios">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Nome</th>
+                    <th>Email</th>
+                    <th>Telefone</th>
+                    <th>Plano</th>
+                    <th>Status Assinatura</th>
+                    <th>Cadastro</th>
+                </tr>
+            </thead>
+            <tbody id="tbody">
+                <!-- Dados carregados aqui -->
+            </tbody>
+        </table>
+
+        <pre id="jsonOutput" style="display: none;"></pre>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        // ⚠️ COLOQUE SUAS CREDENCIAIS AQUI
+        const SUPABASE_URL = 'https://okauexrurzdtyaieqnlu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYXVleHJ1cnpkdHlhaWVxbmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ2NTI4OTMsImV4cCI6MjA1MDIyODg5M30.tU6xEOsLK9fEHMl2FN-6AcC5bC_WnY6g_s28k3iKPUM';
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let todosUsuarios = [];
+
+        window.carregarUsuarios = async function() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const tbody = document.getElementById('tbody');
+            
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            tbody.innerHTML = '';
+
+            try {
+                console.log('🔍 Buscando TODOS os usuários do Supabase...');
+
+                // Buscar TODOS os usuários
+                const { data: usuarios, error: usuariosError } = await supabase
+                    .from('usuarios')
+                    .select(`
+                        id,
+                        email,
+                        nome,
+                        telefone,
+                        plano,
+                        slug,
+                        created_at,
+                        assinaturas (
+                            plano,
+                            status,
+                            valor,
+                            data_inicio,
+                            data_expiracao
+                        )
+                    `)
+                    .order('created_at', { ascending: false });
+
+                if (usuariosError) {
+                    throw new Error(`Erro Supabase: ${usuariosError.message}`);
+                }
+
+                todosUsuarios = usuarios || [];
+                
+                console.log(`✅ ${todosUsuarios.length} usuários encontrados!`);
+                console.log('📋 Emails:', todosUsuarios.map(u => u.email));
+
+                // Atualizar estatísticas
+                document.getElementById('totalUsuarios').textContent = todosUsuarios.length;
+                
+                const trials = todosUsuarios.filter(u => u.plano === 'trial');
+                document.getElementById('totalTrials').textContent = trials.length;
+
+                const pagos = todosUsuarios.filter(u => 
+                    u.assinaturas?.[0]?.status === 'active' && 
+                    u.assinaturas?.[0]?.plano !== 'trial'
+                );
+                document.getElementById('totalPagos').textContent = pagos.length;
+
+                const seteDiasAtras = new Date();
+                seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+                const recentes = todosUsuarios.filter(u => new Date(u.created_at) >= seteDiasAtras);
+                document.getElementById('totalRecentes').textContent = recentes.length;
+
+                // Preencher tabela
+                tbody.innerHTML = todosUsuarios.map((user, index) => {
+                    const assinatura = user.assinaturas?.[0];
+                    
+                    let planoBadge = user.plano || 'N/A';
+                    let planoClass = 'badge-starter';
+                    if (user.plano === 'trial') planoClass = 'badge-trial';
+                    if (user.plano === 'pro') planoClass = 'badge-pro';
+
+                    let statusBadge = '-';
+                    let statusClass = '';
+                    if (assinatura) {
+                        statusBadge = assinatura.status;
+                        statusClass = assinatura.status === 'active' ? 'badge-active' : 'badge-cancelled';
+                    }
+
+                    const data = new Date(user.created_at).toLocaleDateString('pt-BR');
+
+                    return `
+                        <tr>
+                            <td><strong>${index + 1}</strong></td>
+                            <td>${user.nome || '(Sem nome)'}</td>
+                            <td class="email">${user.email}</td>
+                            <td>${user.telefone || '-'}</td>
+                            <td><span class="badge ${planoClass}">${planoBadge}</span></td>
+                            <td><span class="badge ${statusClass}">${statusBadge}</span></td>
+                            <td>${data}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                loading.style.display = 'none';
+
+            } catch (err) {
+                console.error('❌ Erro:', err);
+                loading.style.display = 'none';
+                error.style.display = 'block';
+                error.textContent = `❌ ERRO: ${err.message}`;
+            }
+        };
+
+        window.exportarCSV = function() {
+            if (todosUsuarios.length === 0) {
+                alert('⚠️ Carregue os dados primeiro!');
+                return;
+            }
+
+            let csv = 'Nome,Email,Telefone,Plano,Status,Cadastro\n';
+            todosUsuarios.forEach(user => {
+                const nome = (user.nome || '').replace(/,/g, ';');
+                const email = user.email || '';
+                const telefone = user.telefone || '';
+                const plano = user.plano || '';
+                const status = user.assinaturas?.[0]?.status || '-';
+                const data = new Date(user.created_at).toLocaleDateString('pt-BR');
+                
+                csv += `${nome},${email},${telefone},${plano},${status},${data}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `usuarios_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        };
+
+        window.mostrarJSON = function() {
+            const jsonOutput = document.getElementById('jsonOutput');
+            if (jsonOutput.style.display === 'none') {
+                jsonOutput.style.display = 'block';
+                jsonOutput.textContent = JSON.stringify(todosUsuarios, null, 2);
+            } else {
+                jsonOutput.style.display = 'none';
+            }
+        };
+
+        // Carregar automaticamente ao abrir a página
+        carregarUsuarios();
+    </script>
+</body>
+</html>
