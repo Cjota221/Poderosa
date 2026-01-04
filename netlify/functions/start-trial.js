@@ -101,9 +101,8 @@ exports.handler = async (event, context) => {
             .insert({
                 email: email.toLowerCase(),
                 nome: nome || email.split('@')[0],
-                negocio: negocio || '',
-                plano: 'trial',
-                plano_expira_em: trialEndDate.toISOString()
+                telefone: '',
+                plano: 'trial'
             })
             .select()
             .single();
