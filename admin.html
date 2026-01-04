@@ -552,6 +552,13 @@
                     </button>
                 </li>
                 <li>
+                    <button class="nav-btn" data-page="todos-usuarios">
+                        <i data-lucide="database"></i>
+                        Todos Usuários
+                        <span class="badge-count" id="todosUsuariosCount" style="margin-left: auto; background: #2196F3; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">0</span>
+                    </button>
+                </li>
+                <li>
                     <button class="nav-btn" data-page="trials">
                         <i data-lucide="clock"></i>
                         Teste Grátis
@@ -756,6 +763,96 @@
                             </div>
                             <h3 class="empty-title">Nenhum lead ainda</h3>
                             <p class="empty-text">Os leads capturados no popup aparecerão aqui.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== TODOS OS USUÁRIOS CADASTRADOS ========== -->
+            <section class="page-section" id="page-todos-usuarios">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">👥 Todos os Usuários Cadastrados</h1>
+                        <p class="page-subtitle">Lista completa de TODOS que se cadastraram no sistema (banco de dados)</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-primary" onclick="loadTodosUsuarios()">
+                            <i data-lucide="refresh-cw"></i>
+                            Atualizar
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportTodosUsuarios()">
+                            <i data-lucide="download"></i>
+                            Exportar CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stats-grid" style="margin-bottom: 24px;">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #2196F3;">
+                            <i data-lucide="database"></i>
+                        </div>
+                        <div>
+                            <div class="stat-label">Total Cadastrados</div>
+                            <div class="stat-value" id="totalCadastrados">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #FF9800;">
+                            <i data-lucide="clock"></i>
+                        </div>
+                        <div>
+                            <div class="stat-label">Em Trial</div>
+                            <div class="stat-value" id="totalTrialsCount">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #4CAF50;">
+                            <i data-lucide="credit-card"></i>
+                        </div>
+                        <div>
+                            <div class="stat-label">Pagos</div>
+                            <div class="stat-value" id="totalPagosCount">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: #9C27B0;">
+                            <i data-lucide="user-plus"></i>
+                        </div>
+                        <div>
+                            <div class="stat-label">Últimos 7 dias</div>
+                            <div class="stat-value" id="novosUsuarios">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Email</th>
+                                        <th>Telefone</th>
+                                        <th>Plano</th>
+                                        <th>Status Assinatura</th>
+                                        <th>Cadastro</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="todosUsuariosTableBody">
+                                    <!-- Dados carregados via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="empty-state" id="emptyTodosUsuarios" style="display: none;">
+                            <div class="empty-icon">
+                                <i data-lucide="database"></i>
+                            </div>
+                            <h3 class="empty-title">Nenhum usuário cadastrado</h3>
+                            <p class="empty-text">Quando alguém se cadastrar, aparecerá aqui.</p>
                         </div>
                     </div>
                 </div>
@@ -1137,6 +1234,9 @@
                 // Buscar lista completa de usuários
                 await loadAllUsers();
                 
+                // Carregar também a lista de TODOS os usuários cadastrados
+                await loadTodosUsuarios();
+                
                 showLoading(false);
                 console.log('✅ Dados carregados do Supabase com sucesso!');
                 
@@ -1330,6 +1430,148 @@
         
         function exportTrials() {
             alert('🔄 Exportar lista de trials em desenvolvimento...');
+        }
+        
+        // ========== CARREGAR TODOS OS USUÁRIOS ==========
+        async function loadTodosUsuarios() {
+            try {
+                const response = await fetch(`${API_BASE}?action=todos-usuarios`, {
+                    headers: {
+                        'Authorization': `Bearer ${ADMIN_PASSWORD}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Erro ao buscar todos os usuários');
+                
+                const data = await response.json();
+                const usuarios = data.usuarios || [];
+                
+                updateTodosUsuariosTable(usuarios);
+                updateTodosUsuariosStats(usuarios);
+                
+                // Atualizar contador no menu
+                const countBadge = document.getElementById('todosUsuariosCount');
+                if (countBadge) {
+                    countBadge.textContent = usuarios.length;
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar todos usuários:', error);
+            }
+        }
+        
+        function updateTodosUsuariosStats(usuarios) {
+            const totalCadastrados = document.getElementById('totalCadastrados');
+            const totalTrialsCount = document.getElementById('totalTrialsCount');
+            const totalPagosCount = document.getElementById('totalPagosCount');
+            const novosUsuarios = document.getElementById('novosUsuarios');
+            
+            if (totalCadastrados) totalCadastrados.textContent = usuarios.length;
+            
+            // Contar trials
+            const trials = usuarios.filter(u => u.plano === 'trial');
+            if (totalTrialsCount) totalTrialsCount.textContent = trials.length;
+            
+            // Contar pagos (planos diferentes de trial)
+            const pagos = usuarios.filter(u => 
+                u.assinaturas && 
+                u.assinaturas.length > 0 && 
+                u.assinaturas[0].status === 'active' && 
+                u.assinaturas[0].plano !== 'trial'
+            );
+            if (totalPagosCount) totalPagosCount.textContent = pagos.length;
+            
+            // Usuários dos últimos 7 dias
+            const seteDiasAtras = new Date();
+            seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
+            const novos = usuarios.filter(u => {
+                const created = new Date(u.created_at);
+                return created >= seteDiasAtras;
+            });
+            if (novosUsuarios) novosUsuarios.textContent = novos.length;
+        }
+        
+        function updateTodosUsuariosTable(usuarios) {
+            const table = document.getElementById('todosUsuariosTableBody');
+            const emptyState = document.getElementById('emptyTodosUsuarios');
+            
+            if (!usuarios || usuarios.length === 0) {
+                table.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            table.innerHTML = usuarios.map(user => {
+                const assinatura = user.assinaturas?.[0];
+                
+                // Badge do plano
+                let planoBadge = '';
+                let planoColor = 'secondary';
+                
+                if (user.plano === 'trial') {
+                    planoBadge = '🧪 Trial (7 dias)';
+                    planoColor = 'warning';
+                } else if (user.plano === 'starter') {
+                    planoBadge = '🌱 Starter';
+                    planoColor = 'info';
+                } else if (user.plano === 'pro') {
+                    planoBadge = '⚡ Pro';
+                    planoColor = 'success';
+                } else {
+                    planoBadge = user.plano || 'Não definido';
+                }
+                
+                // Status da assinatura
+                let statusBadge = '-';
+                let statusColor = 'secondary';
+                
+                if (assinatura) {
+                    if (assinatura.status === 'active') {
+                        statusBadge = '✅ Ativa';
+                        statusColor = 'success';
+                    } else if (assinatura.status === 'cancelled') {
+                        statusBadge = '❌ Cancelada';
+                        statusColor = 'danger';
+                    } else if (assinatura.status === 'pending') {
+                        statusBadge = '⏳ Pendente';
+                        statusColor = 'warning';
+                    } else {
+                        statusBadge = assinatura.status;
+                    }
+                }
+                
+                return `
+                    <tr>
+                        <td>
+                            <div><strong>${user.nome || '(Sem nome)'}</strong></div>
+                        </td>
+                        <td>
+                            <div style="font-size: 13px;">${user.email}</div>
+                        </td>
+                        <td>${user.telefone || '-'}</td>
+                        <td><span class="badge ${planoColor}">${planoBadge}</span></td>
+                        <td><span class="badge ${statusColor}">${statusBadge}</span></td>
+                        <td>${formatDate(user.created_at)}</td>
+                        <td>
+                            <button class="btn-icon" onclick="viewUsuarioCompleto('${user.id}')" title="Ver detalhes completos">
+                                <i data-lucide="eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+        
+        function viewUsuarioCompleto(userId) {
+            alert(`Ver detalhes completos do usuário: ${userId}\n\nEm breve: modal com TODOS os dados!`);
+        }
+        
+        function exportTodosUsuarios() {
+            alert('🔄 Exportar CSV de todos usuários em desenvolvimento...');
         }
         
         function viewUserDetails(userId) {
@@ -1571,6 +1813,8 @@
                 // 🎯 Carregar dados específicos da página
                 if (page === 'trials' && isAdminAuthenticated) {
                     loadTrials(); // Carregar usuários trial
+                } else if (page === 'todos-usuarios' && isAdminAuthenticated) {
+                    loadTodosUsuarios(); // Carregar TODOS os usuários
                 } else {
                     loadData();
                 }

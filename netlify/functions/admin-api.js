@@ -164,6 +164,38 @@ exports.handler = async (event, context) => {
             };
         }
 
+        // BUSCAR TODOS OS USUÁRIOS CADASTRADOS (para ver quem está usando)
+        if (action === 'todos-usuarios') {
+            const { data: todosUsuarios, error } = await supabase
+                .from('usuarios')
+                .select(`
+                    id,
+                    email,
+                    nome,
+                    telefone,
+                    plano,
+                    slug,
+                    created_at,
+                    assinaturas (
+                        plano,
+                        status,
+                        valor,
+                        periodo,
+                        data_inicio,
+                        data_expiracao
+                    )
+                `)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            return {
+                statusCode: 200,
+                headers,
+                body: JSON.stringify({ usuarios: todosUsuarios || [] })
+            };
+        }
+
         return {
             statusCode: 400,
             headers,
