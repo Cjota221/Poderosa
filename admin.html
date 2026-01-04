@@ -552,6 +552,13 @@
                     </button>
                 </li>
                 <li>
+                    <button class="nav-btn" data-page="trials">
+                        <i data-lucide="clock"></i>
+                        Teste Grátis
+                        <span class="badge-count" id="trialsCount" style="margin-left: auto; background: #FF9800; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;">0</span>
+                    </button>
+                </li>
+                <li>
                     <button class="nav-btn" data-page="assinantes">
                         <i data-lucide="user-check"></i>
                         Assinantes
@@ -749,6 +756,53 @@
                             </div>
                             <h3 class="empty-title">Nenhum lead ainda</h3>
                             <p class="empty-text">Os leads capturados no popup aparecerão aqui.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== USUÁRIOS TRIAL ========== -->
+            <section class="page-section" id="page-trials">
+                <div class="page-header">
+                    <div>
+                        <h1 class="page-title">🧪 Usuários em Teste Grátis</h1>
+                        <p class="page-subtitle">Acompanhe quem está testando o sistema (7 dias grátis)</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary" onclick="exportTrials()">
+                            <i data-lucide="download"></i>
+                            Exportar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>Email</th>
+                                        <th>Iniciou em</th>
+                                        <th>Expira em</th>
+                                        <th>Dias Restantes</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trialsTableBody">
+                                    <!-- Dados carregados via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="empty-state" id="emptyTrials" style="display: none;">
+                            <div class="empty-icon">
+                                <i data-lucide="clock"></i>
+                            </div>
+                            <h3 class="empty-title">Nenhum usuário em teste</h3>
+                            <p class="empty-text">Quando alguém iniciar o teste grátis, aparecerá aqui.</p>
                         </div>
                     </div>
                 </div>
@@ -1071,6 +1125,12 @@
                 document.getElementById('totalTrials').textContent = data.totalTrials || 0;
                 document.getElementById('receitaTotal').textContent = `R$ ${(data.receitaTotal || 0).toFixed(2)}`;
                 
+                // Atualizar contador no menu de trials
+                const trialsCount = document.getElementById('trialsCount');
+                if (trialsCount) {
+                    trialsCount.textContent = data.totalTrials || 0;
+                }
+                
                 // Atualizar tabela de usuários recentes
                 updateRecentUsersTable(data.usuariosRecentes || []);
                 
@@ -1170,6 +1230,106 @@
             }).join('');
             
             lucide.createIcons();
+        }
+        
+        // ========== CARREGAR USUÁRIOS TRIAL ==========
+        async function loadTrials() {
+            try {
+                const response = await fetch(`${API_BASE}?action=usuarios`, {
+                    headers: {
+                        'Authorization': `Bearer ${ADMIN_PASSWORD}`
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Erro ao buscar usuários');
+                
+                const data = await response.json();
+                const trials = data.usuarios?.filter(u => u.plano === 'trial') || [];
+                
+                updateTrialsTable(trials);
+                
+                // Atualizar contador no menu
+                const trialsCount = document.getElementById('trialsCount');
+                if (trialsCount) {
+                    trialsCount.textContent = trials.length;
+                }
+                
+            } catch (error) {
+                console.error('❌ Erro ao carregar trials:', error);
+            }
+        }
+        
+        function updateTrialsTable(trials) {
+            const table = document.getElementById('trialsTableBody');
+            const emptyState = document.getElementById('emptyTrials');
+            
+            if (!trials || trials.length === 0) {
+                table.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            table.innerHTML = trials.map(user => {
+                // Calcular dias restantes
+                const assinatura = user.assinaturas?.[0];
+                const dataExpiracao = assinatura?.data_expiracao ? new Date(assinatura.data_expiracao) : null;
+                const hoje = new Date();
+                let diasRestantes = 7;
+                let statusClass = 'success';
+                let statusText = 'Ativo';
+                
+                if (dataExpiracao) {
+                    const diff = dataExpiracao - hoje;
+                    diasRestantes = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+                    
+                    if (diasRestantes === 0) {
+                        statusClass = 'danger';
+                        statusText = 'Expirado';
+                    } else if (diasRestantes <= 2) {
+                        statusClass = 'warning';
+                        statusText = 'Expirando';
+                    }
+                }
+                
+                const dataInicio = user.created_at ? new Date(user.created_at) : null;
+                const dataExpiraTexto = dataExpiracao ? dataExpiracao.toLocaleDateString('pt-BR') : '-';
+                
+                return `
+                    <tr>
+                        <td>
+                            <div><strong>${user.nome || 'Sem nome'}</strong></div>
+                        </td>
+                        <td>
+                            <div style="font-size: 13px;">${user.email}</div>
+                        </td>
+                        <td>${formatDate(user.created_at)}</td>
+                        <td>${dataExpiraTexto}</td>
+                        <td>
+                            <span class="badge ${statusClass}" style="font-weight: 600;">
+                                ${diasRestantes} ${diasRestantes === 1 ? 'dia' : 'dias'}
+                            </span>
+                        </td>
+                        <td><span class="badge ${statusClass}">${statusText}</span></td>
+                        <td>
+                            <button class="btn-icon" onclick="viewTrialDetails('${user.id}')" title="Ver detalhes">
+                                <i data-lucide="eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            lucide.createIcons();
+        }
+        
+        function viewTrialDetails(userId) {
+            alert(`Ver detalhes do usuário trial: ${userId}\n\nEm breve: modal completo com histórico de uso!`);
+        }
+        
+        function exportTrials() {
+            alert('🔄 Exportar lista de trials em desenvolvimento...');
         }
         
         function viewUserDetails(userId) {
@@ -1407,7 +1567,13 @@
                 document.getElementById(`page-${page}`).classList.add('active');
                 
                 document.getElementById('sidebar').classList.remove('open');
-                loadData();
+                
+                // 🎯 Carregar dados específicos da página
+                if (page === 'trials' && isAdminAuthenticated) {
+                    loadTrials(); // Carregar usuários trial
+                } else {
+                    loadData();
+                }
             });
         });
 
