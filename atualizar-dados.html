@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atualizar Dados - Lucro Certo</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #E91E63 0%, #FF6B9D 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #E91E63;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .alert {
+            background: #FFF3CD;
+            border: 1px solid #FFC107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 25px;
+            color: #856404;
+        }
+        .alert strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #E0E0E0;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            outline: none;
+            border-color: #E91E63;
+        }
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #E91E63 0%, #FF6B9D 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 20px rgba(233, 30, 99, 0.4);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .success {
+            background: #D4EDDA;
+            border: 1px solid #4CAF50;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+        .error {
+            background: #F8D7DA;
+            border: 1px solid #F44336;
+            color: #721C24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+        .info-box {
+            background: #F5F5F5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #666;
+        }
+        .info-box strong {
+            color: #E91E63;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📝 Atualizar Seus Dados</h1>
+        <p class="subtitle">
+            Olá! Identificamos que você está usando o sistema mas precisamos atualizar seus dados cadastrais.
+            Isso vai garantir que você não perca acesso à sua conta!
+        </p>
+
+        <div class="alert">
+            <strong>⚠️ Importante!</strong>
+            Por favor, preencha seus dados REAIS. Isso nos ajuda a:
+            <ul style="margin-top: 8px; margin-left: 20px;">
+                <li>Manter sua conta segura</li>
+                <li>Enviar atualizações importantes</li>
+                <li>Oferecer suporte quando precisar</li>
+            </ul>
+        </div>
+
+        <form id="updateForm">
+            <div class="form-group">
+                <label for="nome">Nome Completo *</label>
+                <input type="text" id="nome" required placeholder="Seu nome completo">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email *</label>
+                <input type="email" id="email" required placeholder="seu@email.com">
+            </div>
+
+            <div class="form-group">
+                <label for="telefone">Telefone (WhatsApp)</label>
+                <input type="tel" id="telefone" placeholder="(00) 00000-0000">
+            </div>
+
+            <div class="form-group">
+                <label for="negocio">Nome do Negócio</label>
+                <input type="text" id="negocio" placeholder="Nome da sua loja/empresa">
+            </div>
+
+            <button type="submit" id="submitBtn">
+                ✅ Atualizar Dados
+            </button>
+        </form>
+
+        <div class="success" id="successMsg">
+            ✅ Dados atualizados com sucesso! Redirecionando...
+        </div>
+
+        <div class="error" id="errorMsg">
+            ❌ Erro ao atualizar dados. Tente novamente.
+        </div>
+
+        <div class="info-box">
+            <strong>Seu ID de Teste:</strong> <span id="userId">-</span><br>
+            <strong>Data de Início:</strong> <span id="startDate">-</span>
+        </div>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const SUPABASE_URL = 'https://okauexrurzdtyaieqnlu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9rYXVleHJ1cnpkdHlhaWVxbmx1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ2NTI4OTMsImV4cCI6MjA1MDIyODg5M30.tU6xEOsLK9fEHMl2FN-6AcC5bC_WnY6g_s28k3iKPUM';
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Pegar dados do localStorage
+        const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+        const userId = authData.userId || localStorage.getItem('lucrocerto_user_id');
+
+        // Mostrar ID atual
+        document.getElementById('userId').textContent = userId || 'Não encontrado';
+        
+        if (authData.trialStartDate) {
+            const date = new Date(authData.trialStartDate);
+            document.getElementById('startDate').textContent = date.toLocaleString('pt-BR');
+        }
+
+        // Preencher campos se já existirem dados
+        if (authData.nome) document.getElementById('nome').value = authData.nome;
+        if (authData.email) document.getElementById('email').value = authData.email;
+        if (authData.negocio) document.getElementById('negocio').value = authData.negocio;
+
+        // Submit do formulário
+        document.getElementById('updateForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const successMsg = document.getElementById('successMsg');
+            const errorMsg = document.getElementById('errorMsg');
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Atualizando...';
+            successMsg.style.display = 'none';
+            errorMsg.style.display = 'none';
+
+            const nome = document.getElementById('nome').value;
+            const email = document.getElementById('email').value;
+            const telefone = document.getElementById('telefone').value;
+            const negocio = document.getElementById('negocio').value;
+
+            try {
+                // Atualizar no Supabase
+                const { data, error } = await supabase
+                    .from('usuarios')
+                    .update({
+                        email: email.toLowerCase(),
+                        nome: nome,
+                        telefone: telefone
+                    })
+                    .eq('id', userId);
+
+                if (error) throw error;
+
+                // Atualizar localStorage
+                const updatedAuth = {
+                    ...authData,
+                    email: email,
+                    nome: nome,
+                    telefone: telefone,
+                    negocio: negocio,
+                    updatedAt: new Date().toISOString()
+                };
+
+                localStorage.setItem('lucrocerto_auth', JSON.stringify(updatedAuth));
+
+                // Sucesso!
+                successMsg.style.display = 'block';
+                console.log('✅ Dados atualizados:', updatedAuth);
+
+                // Redirecionar após 2 segundos
+                setTimeout(() => {
+                    window.location.href = '/app.html';
+                }, 2000);
+
+            } catch (error) {
+                console.error('❌ Erro ao atualizar:', error);
+                errorMsg.style.display = 'block';
+                errorMsg.textContent = `❌ ${error.message || 'Erro ao atualizar dados'}`;
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✅ Atualizar Dados';
+            }
+        });
+    </script>
+</body>
+</html>
