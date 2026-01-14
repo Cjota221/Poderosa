@@ -40,6 +40,8 @@ exports.handler = async (event) => {
 
         const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+        console.log('🔍 Buscando catálogo para storeId:', storeId);
+
         // Decodificar o storeId (pode ser base64, slug ou email)
         let decodedEmail;
         try {
@@ -48,6 +50,7 @@ exports.handler = async (event) => {
         } catch (e) {
             // Se não for base64, usar como está
             decodedEmail = storeId;
+            console.log('📝 StoreId usado direto:', storeId);
         }
 
         // Buscar usuário: 1) por slug exato, 2) por email, 3) por nome aproximado
@@ -56,6 +59,8 @@ exports.handler = async (event) => {
 
         // 1. Tentar buscar por SLUG exato (URLs amigáveis)
         const slugNormalizado = storeId.toLowerCase().replace(/[^a-z0-9-]/g, '');
+        console.log('🔍 Slug normalizado:', slugNormalizado);
+        
         if (slugNormalizado) {
             const resSlug = await supabase
                 .from('usuarios')
@@ -64,9 +69,12 @@ exports.handler = async (event) => {
                 .limit(1)
                 .single();
             
+            console.log('📊 Resultado busca por slug:', resSlug.data ? 'ENCONTRADO' : 'NÃO ENCONTRADO');
+            if (resSlug.error) console.log('❌ Erro busca slug:', resSlug.error.message);
+            
             if (resSlug.data) {
                 usuario = resSlug.data;
-                console.log('✅ Encontrado por slug:', slugNormalizado);
+                console.log('✅ Encontrado por slug:', slugNormalizado, '| Email:', usuario.email);
             }
         }
 
@@ -125,6 +133,12 @@ exports.handler = async (event) => {
         }
         
         console.log('📦 Produtos visíveis no catálogo:', produtos?.length || 0);
+        console.log('📊 Dados do usuário:', {
+            nome: usuario.nome,
+            slug: usuario.slug,
+            tem_logo: !!usuario.logo_catalogo,
+            cor: usuario.cor_catalogo
+        });
 
         // Formatar dados para o frontend
         const store = {
