@@ -3373,37 +3373,6 @@ const LucroCertoApp = (function() {
                 console.warn('⚠️ Supabase não disponível - salvando apenas localmente');
             }
         },
-        
-        // Copiar link
-            document.querySelector('[data-action="copy-catalog-link-page"]')?.addEventListener('click', () => {
-                const input = document.getElementById('catalog-link-input');
-                input.select();
-                document.execCommand('copy');
-                alert('Link copiado! 📋');
-            });
-            
-            // Compartilhar WhatsApp
-            document.querySelector('[data-action="share-catalog-whatsapp-page"]')?.addEventListener('click', () => {
-                const { user } = StateManager.getState();
-                const authData = Storage.get('auth', {});
-                
-                // Usar slug salvo ou gerar um como fallback
-                let slugShare = user.slug || authData.slug || '';
-                
-                if (!slugShare) {
-                    const userEmail = user.email || authData.email || '';
-                    const rawName = (user.businessName || user.nome || (userEmail.split && userEmail.split('@')[0]) || 'minha-loja');
-                    slugShare = String(rawName).toLowerCase()
-                        .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
-                        .replace(/[^a-z0-9]+/g, '-')
-                        .replace(/(^-|-$)/g, '') || 'minha-loja';
-                }
-
-                const catalogUrl = `https://sistemalucrocerto.com/catalogo/${encodeURIComponent(slugShare)}`;
-                const msg = `Olá! 💖 Confira o catálogo da ${user.businessName || 'minha loja'}: ${catalogUrl}`;
-                window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-            });
-        },
 
         // ========== PÁGINA DE CONFIGURAÇÕES ==========
         getConfiguracoesHTML() {

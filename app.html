@@ -109,77 +109,105 @@
     <script>
         // Verificar se o usuário está logado E limpar trial se tiver plano pago
         (function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const isTrialUrl = urlParams.get('trial') === 'true';
-            
-            // Pegar dados do usuário
-            const authDataStr = localStorage.getItem('lucrocerto_auth');
-            let authData = {};
-            if (authDataStr) {
-                try {
-                    authData = JSON.parse(authDataStr);
-                } catch (e) {}
-            }
-            
-            console.log('🔍 Verificando plano do usuário:', authData.plano);
-            console.log('🔍 URL tem ?trial=true:', isTrialUrl);
-            console.log('🔍 Flag trial no localStorage:', localStorage.getItem('lucrocerto_trial'));
-            
-            // 🎯 VERIFICAR SE PRECISA ATUALIZAR DADOS (trials com email temporário)
-            const userId = authData.userId || localStorage.getItem('lucrocerto_user_id');
-            const needsUpdate = userId === 'trial_1767404409888' || userId === 'trial_1767437190538';
-            
-            if (needsUpdate && !sessionStorage.getItem('update_dados_dismissed')) {
-                // Mostrar popup pedindo para atualizar dados
-                setTimeout(() => {
-                    if (confirm('👋 Olá! Vimos que você está usando o sistema mas ainda não completou seu cadastro.\n\n📧 Para garantir que você não perca acesso aos seus produtos, atualize seus dados agora!\n\nLeva só 2 minutos. Deseja atualizar?')) {
-                        window.location.href = '/atualizar-dados.html';
-                    } else {
-                        sessionStorage.setItem('update_dados_dismissed', 'true');
-                    }
-                }, 2000);
-            }
-            
-            // Lógica do Trial - PRIORIDADE: Plano PAGO
-            if (isTrialUrl) {
-                // URL tem ?trial=true → ativar modo trial
-                localStorage.setItem('lucrocerto_trial', 'true');
-                localStorage.setItem('lucrocerto_logged', 'true'); // ✅ Marcar como logado para trial
-                console.log('🧪 Modo TRIAL ativado via URL');
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const isTrialUrl = urlParams.get('trial') === 'true';
                 
-                // ⚠️ NÃO criar trial fake aqui - deve vir do cadastro
-                if (!authData.email || !authData.userId) {
-                    console.error('❌ Trial sem dados - redirecionando para criar conta');
-                    window.location.href = '/?trial=true';
-                    return;
+                // Pegar dados do usuário
+                const authDataStr = localStorage.getItem('lucrocerto_auth');
+                let authData = {};
+                if (authDataStr) {
+                    try {
+                        authData = JSON.parse(authDataStr);
+                    } catch (e) {
+                        console.error('❌ Erro ao parsear auth data:', e);
+                    }
                 }
-                console.log('✅ Trial com userId:', authData.userId);
-            } else if (authData.plano && authData.plano !== 'trial') {
-                // ✅ USUÁRIO TEM PLANO PAGO → FORÇAR REMOÇÃO DO TRIAL
-                localStorage.removeItem('lucrocerto_trial');
-                localStorage.removeItem('lucrocerto_trial_start');
-                console.log('✅✅✅ FLAG TRIAL REMOVIDA - Plano ativo:', authData.plano);
-                console.log('✅ Banner de trial NÃO deve aparecer!');
-            } else if (!authData.plano || authData.plano === 'trial') {
-                // Usuário em trial ou sem plano
-                if (!isTrialUrl) {
+                
+                console.log('🔍 Auth Check - Iniciando verificação');
+                console.log('🔍 Plano:', authData.plano);
+                console.log('🔍 URL tem ?trial=true:', isTrialUrl);
+                console.log('🔍 Flag trial:', localStorage.getItem('lucrocerto_trial'));
+                console.log('🔍 Flag logged:', localStorage.getItem('lucrocerto_logged'));
+                
+                // 🎯 VERIFICAR SE PRECISA ATUALIZAR DADOS (trials com email temporário)
+                const userId = authData.userId || localStorage.getItem('lucrocerto_user_id');
+                const needsUpdate = userId === 'trial_1767404409888' || userId === 'trial_1767437190538';
+                
+                if (needsUpdate && !sessionStorage.getItem('update_dados_dismissed')) {
+                    // Mostrar popup pedindo para atualizar dados
+                    setTimeout(() => {
+                        if (confirm('👋 Olá! Vimos que você está usando o sistema mas ainda não completou seu cadastro.\n\n📧 Para garantir que você não perca acesso aos seus produtos, atualize seus dados agora!\n\nLeva só 2 minutos. Deseja atualizar?')) {
+                            window.location.href = '/atualizar-dados.html';
+                        } else {
+                            sessionStorage.setItem('update_dados_dismissed', 'true');
+                        }
+                    }, 2000);
+                }
+                
+                // Lógica do Trial - PRIORIDADE: Plano PAGO
+                if (isTrialUrl) {
+                    // URL tem ?trial=true → ativar modo trial
                     localStorage.setItem('lucrocerto_trial', 'true');
-                    console.log('🧪 Plano trial detectado');
+                    localStorage.setItem('lucrocerto_logged', 'true'); // ✅ Marcar como logado para trial
+                    console.log('🧪 Modo TRIAL ativado via URL');
+                    
+                    // ⚠️ NÃO criar trial fake aqui - deve vir do cadastro
+                    if (!authData.email || !authData.userId) {
+                        console.error('❌ Trial sem dados - redirecionando para criar conta');
+                        window.location.href = '/?trial=true';
+                        return;
+                    }
+                    console.log('✅ Trial com userId:', authData.userId);
+                } else if (authData.plano && authData.plano !== 'trial') {
+                    // ✅ USUÁRIO TEM PLANO PAGO → FORÇAR REMOÇÃO DO TRIAL
+                    localStorage.removeItem('lucrocerto_trial');
+                    localStorage.removeItem('lucrocerto_trial_start');
+                    console.log('✅✅✅ FLAG TRIAL REMOVIDA - Plano ativo:', authData.plano);
+                    console.log('✅ Banner de trial NÃO deve aparecer!');
+                } else if (!authData.plano || authData.plano === 'trial') {
+                    // Usuário em trial ou sem plano
+                    if (!isTrialUrl) {
+                        localStorage.setItem('lucrocerto_trial', 'true');
+                        console.log('🧪 Plano trial detectado');
+                    }
                 }
-            }
-            
-            // Verificar login (permitir trial)
-            const isLogged = localStorage.getItem('lucrocerto_logged');
-            const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
-            
-            if (!isLogged || isLogged !== 'true') {
-                // Se não está logado E não é trial, redirecionar para login
-                if (!isTrial && !isTrialUrl) {
-                    console.log('❌ Não logado e não é trial - redirecionando para login');
-                    window.location.href = '/login';
+                
+                // Verificar login (permitir trial)
+                const isLogged = localStorage.getItem('lucrocerto_logged');
+                const isTrial = localStorage.getItem('lucrocerto_trial') === 'true';
+                
+                console.log('🔍 Verificação final - isLogged:', isLogged, 'isTrial:', isTrial);
+                
+                if (!isLogged || isLogged !== 'true') {
+                    // Se não está logado E não é trial, redirecionar para login
+                    if (!isTrial && !isTrialUrl) {
+                        console.log('❌ Não logado e não é trial - redirecionando para login');
+                        window.location.href = '/login';
+                        return;
+                    } else {
+                        console.log('✅ Acesso permitido em modo trial');
+                    }
                 } else {
-                    console.log('✅ Acesso permitido em modo trial');
+                    console.log('✅ Usuário logado - acesso permitido');
                 }
+            } catch (error) {
+                console.error('❌ ERRO CRÍTICO no Auth Check:', error);
+                console.error('Stack:', error.stack);
+                // Em caso de erro crítico, mostrar mensagem
+                document.body.innerHTML = `
+                    <div style="padding: 40px; text-align: center; font-family: Arial;">
+                        <h1 style="color: #E91E63;">Erro ao Carregar</h1>
+                        <p>Ocorreu um erro ao verificar sua autenticação.</p>
+                        <p style="color: #666;">${error.message}</p>
+                        <button onclick="localStorage.clear(); window.location.href='/login'" 
+                                style="background: #E91E63; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin-top: 20px;">
+                            Limpar Dados e Fazer Login
+                        </button>
+                        <br><br>
+                        <a href="/debug-app.html" style="color: #666; text-decoration: underline;">Página de Debug</a>
+                    </div>
+                `;
             }
         })();
         

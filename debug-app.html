@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug App - Lucro Certo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .debug-box {
+            background: white;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 { color: #E91E63; }
+        .error { color: red; }
+        .success { color: green; }
+        .warning { color: orange; }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #E91E63;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug App - Lucro Certo</h1>
+    
+    <div class="debug-box">
+        <h2>Estado do LocalStorage</h2>
+        <div id="localStorage-status"></div>
+        <button onclick="showLocalStorage()">Atualizar</button>
+        <button onclick="clearAppData()">Limpar Dados App</button>
+    </div>
+    
+    <div class="debug-box">
+        <h2>Autenticação</h2>
+        <div id="auth-status"></div>
+    </div>
+    
+    <div class="debug-box">
+        <h2>Supabase Connection</h2>
+        <div id="supabase-status"></div>
+        <button onclick="testSupabase()">Testar Supabase</button>
+    </div>
+    
+    <div class="debug-box">
+        <h2>Erros do Console</h2>
+        <div id="console-errors"></div>
+    </div>
+    
+    <div class="debug-box">
+        <h2>Ações</h2>
+        <button onclick="window.location.href='app.html'">Abrir App</button>
+        <button onclick="window.location.href='login.html'">Ir para Login</button>
+        <button onclick="forceLogout()">Forçar Logout</button>
+    </div>
+
+    <script>
+        const errors = [];
+        const originalError = console.error;
+        console.error = function(...args) {
+            errors.push(args.join(' '));
+            updateErrors();
+            originalError.apply(console, args);
+        };
+
+        function updateErrors() {
+            const div = document.getElementById('console-errors');
+            if (errors.length === 0) {
+                div.innerHTML = '<p class="success">Nenhum erro detectado</p>';
+            } else {
+                div.innerHTML = '<pre class="error">' + errors.join('\n') + '</pre>';
+            }
+        }
+
+        function showLocalStorage() {
+            const div = document.getElementById('localStorage-status');
+            const keys = Object.keys(localStorage).filter(k => k.startsWith('lucrocerto_'));
+            
+            if (keys.length === 0) {
+                div.innerHTML = '<p class="warning">Nenhuma chave do app encontrada</p>';
+                return;
+            }
+            
+            let html = '<table style="width:100%; border-collapse: collapse;">';
+            html += '<tr><th style="border:1px solid #ddd; padding:8px; text-align:left;">Chave</th><th style="border:1px solid #ddd; padding:8px; text-align:left;">Valor</th></tr>';
+            
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                const shortKey = key.replace('lucrocerto_', '');
+                let displayValue = value;
+                
+                try {
+                    const parsed = JSON.parse(value);
+                    displayValue = JSON.stringify(parsed, null, 2).substring(0, 200);
+                    if (JSON.stringify(parsed).length > 200) displayValue += '...';
+                } catch(e) {
+                    displayValue = value.substring(0, 200);
+                }
+                
+                html += `<tr><td style="border:1px solid #ddd; padding:8px;"><strong>${shortKey}</strong></td><td style="border:1px solid #ddd; padding:8px;"><pre style="margin:0;">${displayValue}</pre></td></tr>`;
+            });
+            
+            html += '</table>';
+            html += `<p style="margin-top: 10px;">Total: ${keys.length} chaves</p>`;
+            div.innerHTML = html;
+        }
+
+        function checkAuth() {
+            const div = document.getElementById('auth-status');
+            const auth = localStorage.getItem('lucrocerto_auth');
+            const userId = localStorage.getItem('lucrocerto_user_id');
+            
+            if (!auth || !userId) {
+                div.innerHTML = '<p class="error">❌ Usuário NÃO autenticado</p>';
+                div.innerHTML += '<p>Você precisa fazer login primeiro</p>';
+                div.innerHTML += '<button onclick="window.location.href=\'login.html\'">Ir para Login</button>';
+                return false;
+            }
+            
+            try {
+                const authData = JSON.parse(auth);
+                div.innerHTML = '<p class="success">✅ Usuário autenticado</p>';
+                div.innerHTML += '<pre>' + JSON.stringify(authData, null, 2) + '</pre>';
+                div.innerHTML += '<p><strong>User ID:</strong> ' + userId + '</p>';
+                return true;
+            } catch(e) {
+                div.innerHTML = '<p class="error">❌ Dados de autenticação corrompidos</p>';
+                div.innerHTML += '<p>' + e.message + '</p>';
+                return false;
+            }
+        }
+
+        async function testSupabase() {
+            const div = document.getElementById('supabase-status');
+            div.innerHTML = '<p>🔄 Testando conexão...</p>';
+            
+            // Carregar supabase.js se não estiver carregado
+            if (!window.supabase) {
+                try {
+                    await loadScript('./public/js/supabase.js');
+                } catch(e) {
+                    div.innerHTML = '<p class="error">❌ Erro ao carregar supabase.js: ' + e.message + '</p>';
+                    return;
+                }
+            }
+            
+            if (!window.supabase) {
+                div.innerHTML = '<p class="error">❌ Supabase client não disponível</p>';
+                return;
+            }
+            
+            try {
+                const result = await supabase.select('usuarios', { limit: 1 });
+                if (result.error) {
+                    div.innerHTML = '<p class="error">❌ Erro ao conectar: ' + result.error.message + '</p>';
+                } else {
+                    div.innerHTML = '<p class="success">✅ Conexão OK!</p>';
+                    div.innerHTML += '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                }
+            } catch(e) {
+                div.innerHTML = '<p class="error">❌ Erro: ' + e.message + '</p>';
+            }
+        }
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        function clearAppData() {
+            if (!confirm('Isso vai limpar TODOS os dados do app. Continuar?')) return;
+            
+            Object.keys(localStorage)
+                .filter(k => k.startsWith('lucrocerto_'))
+                .forEach(k => localStorage.removeItem(k));
+            
+            alert('Dados limpos! Atualizando...');
+            location.reload();
+        }
+
+        function forceLogout() {
+            clearAppData();
+            window.location.href = 'login.html';
+        }
+
+        // Init
+        showLocalStorage();
+        checkAuth();
+        updateErrors();
+        
+        // Check se supabase.js está disponível
+        const supabaseDiv = document.getElementById('supabase-status');
+        if (window.supabase) {
+            supabaseDiv.innerHTML = '<p class="success">✅ Supabase client carregado</p>';
+        } else {
+            supabaseDiv.innerHTML = '<p class="warning">⚠️ Supabase client não carregado</p>';
+        }
+    </script>
+</body>
+</html>
