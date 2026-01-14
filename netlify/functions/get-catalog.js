@@ -112,17 +112,19 @@ exports.handler = async (event) => {
             };
         }
 
-        // Buscar produtos do usuário
+        // Buscar produtos do usuário (APENAS visíveis no catálogo)
         const { data: produtos, error: prodError } = await supabase
             .from('produtos')
             .select('*')
-            .eq('usuario_id', usuario.id);
+            .eq('usuario_id', usuario.id)
+            .eq('visivel_catalogo', true)
+            .eq('ativo', true);
 
         if (prodError) {
             console.error('❌ Erro ao buscar produtos:', prodError);
         }
         
-        console.log('📦 Produtos encontrados:', produtos?.length || 0);
+        console.log('📦 Produtos visíveis no catálogo:', produtos?.length || 0);
 
         // Formatar dados para o frontend
         const store = {
@@ -134,9 +136,9 @@ exports.handler = async (event) => {
             foto_perfil: usuario.foto_perfil,
             catalogLogo: usuario.logo_catalogo,
             logo_catalogo: usuario.logo_catalogo,
-            catalogColor: 'pink', // Default, você pode adicionar no banco depois
-            slug: usuario.slug || null, // Adicionar slug
-            email: usuario.email // Adicionar email como fallback
+            catalogColor: usuario.cor_catalogo || usuario.catalog_color || 'pink', // Cor do catálogo
+            slug: usuario.slug || null,
+            email: usuario.email
         };
 
         const products = (produtos || []).map(p => ({
