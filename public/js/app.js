@@ -193,16 +193,25 @@ const LucroCertoApp = (function() {
         getState() { return this.state; },
         
         setState(newState) {
-            this.state = { ...this.state, ...newState };
+            // 🆕 Adicionar timestamp e source para versionamento
+            const stateWithMeta = {
+                ...this.state,
+                ...newState,
+                _version: Date.now(),
+                _source: this.isLoadingFromSupabase ? 'supabase' : 'local'
+            };
+            
+            this.state = stateWithMeta;
             console.log('State Updated:', this.state);
             this.notifySubscribers();
             DataManager.save('appState', this.state);
             
             // 🔥 CRÍTICO: NÃO sincronizar durante carregamento inicial!
-            if (!this.isLoadingFromSupabase) {
+            // E não sincronizar dados que vieram do Supabase
+            if (!this.isLoadingFromSupabase && newState._source !== 'supabase') {
                 this.syncToSupabase(newState);
             } else {
-                console.log('⏸️ Sincronização pausada (carregando do Supabase)');
+                console.log('⏸️ Sincronização pausada (carregando do Supabase ou dados já sincronizados)');
             }
         },
         
@@ -5944,16 +5953,28 @@ const LucroCertoApp = (function() {
                     paymentMethod: s.metodo_pagamento,
                     date: s.data_venda,
                     notes: s.notas
-                }))
+                })),
+                _version: Date.now(),
+                _source: 'supabase'
             };
             
-            // Salvar no localStorage para não perder
+            // 🆕 MELHORADO: Mesclar baseado em timestamp
             const currentState = DataManager.load('appState') || {};
+            
+            // Se dados locais são mais recentes, avisar no console mas não sobrescrever
+            if (currentState._version && currentState._version > supabaseData._version) {
+                console.log('⚠️ Dados locais são mais recentes - mantendo local');
+                return; // Não sobrescrever
+            }
+            
+            // Dados do Supabase são mais recentes ou não temos versão local
             const mergedState = {
                 ...currentState,
                 products: supabaseData.products.length > 0 ? supabaseData.products : currentState.products || [],
                 clients: supabaseData.clients.length > 0 ? supabaseData.clients : currentState.clients || [],
                 sales: supabaseData.sales.length > 0 ? supabaseData.sales : currentState.sales || [],
+                _version: supabaseData._version,
+                _source: 'supabase',
                 user: userResult.data?.[0] ? {
                     name: currentState.user?.name || userResult.data[0].nome || 'Empreendedora',
                     businessName: userResult.data[0].nome,
