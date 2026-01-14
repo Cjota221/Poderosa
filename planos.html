@@ -605,7 +605,15 @@
                 const banner = document.getElementById('current-plan-banner');
                 banner.style.display = 'flex';
                 
-                const planName = plansConfig[userCurrentPlan]?.name || userCurrentPlan;
+                // Mapear nomes de planos
+                const planNames = {
+                    'trial': 'Trial (7 dias grátis)',
+                    'starter': 'Starter',
+                    'pro': 'Profissional',
+                    'premium': 'Premium'
+                };
+                
+                const planName = planNames[userCurrentPlan] || plansConfig[userCurrentPlan]?.name || 'Trial';
                 document.getElementById('current-plan-name').textContent = planName;
                 
                 if (authData.expiry) {
