@@ -72,6 +72,31 @@ const LucroCertoApp = (function() {
     //==================================
     const DataRecovery = {
         fixCorruptedStorage() {
+            // 🧹 LIMPEZA: Remover chaves duplicadas primeiro
+            try {
+                console.log('🧹 Limpando chaves duplicadas...');
+                const keysToRemove = [];
+                
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    // Detectar chaves com prefixo duplicado
+                    if (key && key.startsWith('lucrocerto_lucrocerto_')) {
+                        keysToRemove.push(key);
+                    }
+                }
+                
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                    console.log('🗑️ Removida chave duplicada:', key);
+                });
+                
+                if (keysToRemove.length > 0) {
+                    console.log(`✅ ${keysToRemove.length} chaves duplicadas removidas!`);
+                }
+            } catch (e) {
+                console.error('Erro ao limpar duplicatas:', e);
+            }
+            
             console.log('🔧 Verificando integridade do localStorage...');
             const backup = {};
             let corruptedCount = 0;
@@ -428,9 +453,10 @@ const LucroCertoApp = (function() {
             Storage.set(key, { data: data, version: '1.4' });
             
             // TAMBÉM salva com ID da loja (para o catálogo encontrar)
+            // ⚠️ NÃO adicionar prefixo lucrocerto_ aqui - Storage.set já adiciona
             const userId = Storage.get('user_id');
             if (userId) {
-                const storeKey = `lucrocerto_loja_${userId}`;
+                const storeKey = `loja_${userId}`;
                 Storage.set(storeKey, { data: data, version: '1.4' });
             }
         },
@@ -5679,16 +5705,7 @@ const LucroCertoApp = (function() {
                     paymentMethod: s.metodo_pagamento,
                     date: s.data_venda,
                     notes: s.notas
-                })),
-                user: userResult.data?.[0] ? {
-                    name: currentState.user?.name || userResult.data[0].nome || 'Empreendedora',
-                    businessName: userResult.data[0].nome,
-                    email: userResult.data[0].email,
-                    phone: userResult.data[0].telefone,
-                    profilePhoto: userResult.data[0].foto_perfil,
-                    catalogLogo: userResult.data[0].logo_catalogo,
-                    plan: userResult.data[0].plano_atual
-                } : {}
+                }))
             };
             
             // Salvar no localStorage para não perder
@@ -5698,7 +5715,15 @@ const LucroCertoApp = (function() {
                 products: supabaseData.products.length > 0 ? supabaseData.products : currentState.products || [],
                 clients: supabaseData.clients.length > 0 ? supabaseData.clients : currentState.clients || [],
                 sales: supabaseData.sales.length > 0 ? supabaseData.sales : currentState.sales || [],
-                user: { ...currentState.user, ...supabaseData.user }
+                user: userResult.data?.[0] ? {
+                    name: currentState.user?.name || userResult.data[0].nome || 'Empreendedora',
+                    businessName: userResult.data[0].nome,
+                    email: userResult.data[0].email,
+                    phone: userResult.data[0].telefone,
+                    profilePhoto: userResult.data[0].foto_perfil,
+                    catalogLogo: userResult.data[0].logo_catalogo,
+                    plan: userResult.data[0].plano_atual
+                } : { ...currentState.user }
             };
             DataManager.save('appState', mergedState);
             console.log('✅ Dados carregados do Supabase e salvos localmente!');
