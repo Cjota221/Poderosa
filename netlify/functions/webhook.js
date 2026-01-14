@@ -2,6 +2,7 @@
 // Recebe notificações de pagamento do Mercado Pago
 const mercadopago = require('mercadopago');
 const { createClient } = require('@supabase/supabase-js');
+const crypto = require('crypto');
 
 // Configuração do Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -14,11 +15,70 @@ function getMPClient() {
     });
 }
 
+// 🔐 VALIDAÇÃO DE ASSINATURA DO MERCADO PAGO
+function validateMercadoPagoSignature(xSignature, xRequestId, dataId) {
+    try {
+        if (!xSignature || !xRequestId) {
+            console.log('⚠️ Headers de assinatura não encontrados');
+            return false;
+        }
+
+        // Secret do Mercado Pago (obter no dashboard)
+        const secret = process.env.MERCADO_PAGO_WEBHOOK_SECRET;
+        
+        if (!secret) {
+            console.warn('⚠️ MERCADO_PAGO_WEBHOOK_SECRET não configurado - VALIDAÇÃO DESABILITADA');
+            // Em desenvolvimento, permitir sem validação
+            return process.env.NODE_ENV === 'development';
+        }
+
+        // Formato esperado: ts=timestamp,v1=hash
+        const parts = xSignature.split(',');
+        let ts, hash;
+        
+        parts.forEach(part => {
+            const [key, value] = part.split('=');
+            if (key === 'ts') ts = value;
+            if (key === 'v1') hash = value;
+        });
+
+        if (!ts || !hash) {
+            console.log('❌ Formato de assinatura inválido');
+            return false;
+        }
+
+        // Criar string de manifesto: id + requestId + ts
+        const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+        
+        // Gerar HMAC SHA256
+        const hmac = crypto.createHmac('sha256', secret);
+        hmac.update(manifest);
+        const expectedHash = hmac.digest('hex');
+
+        // Comparar hashes
+        const isValid = crypto.timingSafeEqual(
+            Buffer.from(hash),
+            Buffer.from(expectedHash)
+        );
+
+        if (!isValid) {
+            console.log('❌ Assinatura inválida');
+            console.log('   Expected:', expectedHash);
+            console.log('   Received:', hash);
+        }
+
+        return isValid;
+    } catch (error) {
+        console.error('❌ Erro ao validar assinatura:', error);
+        return false;
+    }
+}
+
 exports.handler = async (event, context) => {
     // CORS headers
     const headers = {
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
+        'Access-Control-Allow-Headers': 'Content-Type, x-signature, x-request-id',
         'Content-Type': 'application/json'
     };
 
@@ -44,6 +104,23 @@ exports.handler = async (event, context) => {
         const { type, data, action } = body;
 
         console.log('🔔 Webhook recebido:', JSON.stringify({ type, action, data }, null, 2));
+
+        // 🔐 VALIDAR ASSINATURA DO MERCADO PAGO
+        const xSignature = event.headers['x-signature'] || event.headers['X-Signature'];
+        const xRequestId = event.headers['x-request-id'] || event.headers['X-Request-Id'];
+        
+        const isValid = validateMercadoPagoSignature(xSignature, xRequestId, data?.id);
+        
+        if (!isValid) {
+            console.log('❌ Webhook rejeitado - Assinatura inválida');
+            return {
+                statusCode: 401,
+                headers,
+                body: JSON.stringify({ error: 'Invalid signature' })
+            };
+        }
+
+        console.log('✅ Assinatura validada com sucesso');
 
         // Tipos de notificação do Mercado Pago
         if (type === 'payment' && data?.id) {

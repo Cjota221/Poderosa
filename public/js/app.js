@@ -302,15 +302,58 @@ const LucroCertoApp = (function() {
         },
         
         async syncProducts(userId, products) {
+            if (!products || products.length === 0) return;
+            
+            try {
+                console.log(`☁️ Sincronizando ${products.length} produtos em batch...`);
+                
+                // Preparar dados para upsert
+                const productsData = products.map(product => ({
+                    id: product.id,
+                    usuario_id: userId,
+                    nome: product.name,
+                    descricao: product.description || '',
+                    categoria: product.category || 'Geral',
+                    custo_base: product.baseCost,
+                    preco_venda: product.finalPrice,
+                    margem_lucro: product.profitMargin,
+                    tipo_variacao: product.variationType,
+                    variacoes: product.variations || [],
+                    estoque: product.stock || {},
+                    imagens: product.images || [],
+                    imagem_url: product.imageUrl || product.images?.[0] || '',
+                    imagens_variacoes: product.variationImages || {},
+                    ativo: true,
+                    visivel_catalogo: true
+                }));
+                
+                // ✅ UPSERT EM BATCH - 1 query para todos os produtos
+                const result = await supabase.upsert('produtos', productsData);
+                
+                if (result.error) {
+                    console.error('❌ Erro ao fazer upsert de produtos:', result.error);
+                    // Fallback: tentar um por um
+                    console.log('⚠️ Tentando sync individual como fallback...');
+                    await this.syncProductsIndividual(userId, products);
+                } else {
+                    console.log(`✅ ${products.length} produtos sincronizados com sucesso!`);
+                }
+            } catch (error) {
+                console.error('❌ ERRO ao sincronizar produtos em batch:', error);
+                // Fallback
+                await this.syncProductsIndividual(userId, products);
+            }
+        },
+        
+        // Fallback: sync individual (caso upsert falhe)
+        async syncProductsIndividual(userId, products) {
+            let success = 0;
+            let errors = 0;
+            
             for (const product of products) {
                 try {
-                    // Verificar se já existe
-                    const existing = await supabase.select('produtos', { 
-                        filters: { usuario_id: userId, id: product.id },
-                        limit: 1
-                    });
-                    
                     const productData = {
+                        id: product.id,
                         usuario_id: userId,
                         nome: product.name,
                         descricao: product.description || '',
@@ -328,29 +371,20 @@ const LucroCertoApp = (function() {
                         visivel_catalogo: true
                     };
                     
-                    if (existing.data && existing.data.length > 0) {
-                        // Atualizar
-                        const updateResult = await supabase.update('produtos', existing.data[0].id, productData);
-                        if (updateResult.error) {
-                            console.error('❌ Erro ao atualizar produto:', product.name, updateResult.error);
-                        } else {
-                            console.log('✅ Produto atualizado no Supabase:', product.name);
-                        }
+                    const result = await supabase.upsert('produtos', [productData]);
+                    if (result.error) {
+                        errors++;
+                        console.error('❌ Erro:', product.name, result.error.message);
                     } else {
-                        // Inserir
-                        productData.id = product.id;
-                        const insertResult = await supabase.insert('produtos', productData);
-                        if (insertResult.error) {
-                            console.error('❌ Erro ao inserir produto:', product.name, insertResult.error);
-                        } else {
-                            console.log('✅ Produto criado no Supabase:', product.name, 'ID:', insertResult.data?.id);
-                        }
+                        success++;
                     }
                 } catch (error) {
-                    console.error('❌ ERRO CRÍTICO ao sincronizar produto:', product.name, error);
-                    console.error('📋 Stack trace:', error.stack);
+                    errors++;
+                    console.error('❌ Erro:', product.name, error.message);
                 }
             }
+            
+            console.log(`✅ Sync individual: ${success} ok, ${errors} erros`);
         },
         
         async syncClients(userId, clients) {
@@ -6150,9 +6184,9 @@ const LucroCertoApp = (function() {
             console.log('📅 Expiração:', endDate.toLocaleDateString('pt-BR'));
         }
 
-        // ⚠️ SE TRIAL EXPIROU - MOSTRAR MODAL DE BLOQUEIO
+        // ⚠️ SE TRIAL EXPIROU - BLOQUEAR COMPLETAMENTE O APP
         if (daysLeft === 0) {
-            showTrialExpiredModal();
+            blockAppAndShowExpiredModal();
             return; // Não criar banner, só modal
         }
         
@@ -6546,12 +6580,69 @@ const LucroCertoApp = (function() {
     });
 
     //==================================
-    // 8. TRIAL EXPIRED MODAL
+    // 8. TRIAL EXPIRED - BLOQUEIO COMPLETO
     //==================================
-    function showTrialExpiredModal() {
+    function blockAppAndShowExpiredModal() {
+        console.log('🚫 BLOQUEANDO APP - Trial expirado');
+        
         // Remover modal anterior se existir
         const existingModal = document.getElementById('trial-expired-modal');
         if (existingModal) existingModal.remove();
+
+        // 🔒 BLOQUEAR TODA A NAVEGAÇÃO
+        // Interceptar cliques antes de qualquer outro handler
+        document.addEventListener('click', (e) => {
+            // Permitir apenas links para checkout
+            if (!e.target.closest('a[href*="checkout"]') && 
+                !e.target.closest('[onclick*="checkout"]')) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                
+                // Vibrar se disponível
+                if (navigator.vibrate) navigator.vibrate(200);
+                
+                // Mostrar alerta
+                const alert = document.createElement('div');
+                alert.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: #ef4444;
+                    color: white;
+                    padding: 20px 30px;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    z-index: 10001;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                    animation: shake 0.5s;
+                `;
+                alert.textContent = '⚠️ Seu trial expirou! Assine para continuar.';
+                document.body.appendChild(alert);
+                
+                setTimeout(() => alert.remove(), 2000);
+            }
+        }, true); // true = fase de captura (antes de outros handlers)
+
+        // 🔒 BLOQUEAR TECLAS
+        document.addEventListener('keydown', (e) => {
+            // Permitir apenas Ctrl+C, Ctrl+V básicos
+            if (!e.ctrlKey && !e.metaKey) {
+                if (e.key !== 'Tab' && e.key !== 'Enter' && e.key !== 'Escape') {
+                    e.preventDefault();
+                }
+            }
+        }, true);
+
+        // 🔒 DESABILITAR FORMULÁRIOS
+        document.querySelectorAll('input, textarea, select, button').forEach(el => {
+            if (!el.closest('a[href*="checkout"]')) {
+                el.disabled = true;
+                el.style.opacity = '0.5';
+                el.style.cursor = 'not-allowed';
+            }
+        });
 
         const modal = document.createElement('div');
         modal.id = 'trial-expired-modal';
@@ -6561,13 +6652,13 @@ const LucroCertoApp = (function() {
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            z-index: 9999;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
         `;
 
         modal.innerHTML = `
@@ -6652,21 +6743,33 @@ const LucroCertoApp = (function() {
                     font-size: 16px;
                     margin-bottom: 12px;
                     transition: transform 0.2s;
-                " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                    box-shadow: 0 8px 20px rgba(233, 30, 99, 0.4);
+                " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
                     🚀 Assinar Agora - A partir de R$ 34,90/mês
                 </a>
 
-                <a href="/login.html" style="
-                    display: block;
-                    color: #6b7280;
-                    text-decoration: none;
-                    font-size: 14px;
+                <p style="
+                    color: #9ca3af;
+                    font-size: 12px;
                     margin-top: 16px;
-                ">Sair da conta</a>
+                ">🔒 Esta é a única ação disponível até você assinar</p>
             </div>
         `;
 
         document.body.appendChild(modal);
+        
+        // 🔒 PREVENIR FECHAMENTO DO MODAL
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Shake animation
+                const content = modal.querySelector('div');
+                content.style.animation = 'shake 0.5s';
+                setTimeout(() => content.style.animation = '', 500);
+            }
+        });
         
         // Inicializar ícones Lucide
         if (window.lucide) {
