@@ -55,17 +55,21 @@ ON clientes(telefone);
 CREATE INDEX IF NOT EXISTS idx_vendas_usuario_data 
 ON vendas(usuario_id, data_venda DESC);
 
--- Query: Vendas por status
-CREATE INDEX IF NOT EXISTS idx_vendas_status 
-ON vendas(usuario_id, status);
+-- Query: Vendas por status de pagamento
+CREATE INDEX IF NOT EXISTS idx_vendas_status_pagamento 
+ON vendas(usuario_id, status_pagamento);
+
+-- Query: Vendas por status de entrega
+CREATE INDEX IF NOT EXISTS idx_vendas_status_entrega 
+ON vendas(usuario_id, status_entrega);
 
 -- Query: Vendas por cliente
 CREATE INDEX IF NOT EXISTS idx_vendas_cliente 
 ON vendas(cliente_id, data_venda DESC);
 
--- Query: Vendas por método de pagamento
-CREATE INDEX IF NOT EXISTS idx_vendas_pagamento 
-ON vendas(usuario_id, metodo_pagamento);
+-- Query: Vendas por forma de pagamento
+CREATE INDEX IF NOT EXISTS idx_vendas_forma_pagamento 
+ON vendas(usuario_id, forma_pagamento);
 
 -- ============================================
 -- ASSINATURAS
@@ -88,21 +92,25 @@ WHERE status = 'active';
 -- DESPESAS
 -- ============================================
 
--- Query: SELECT * FROM despesas WHERE usuario_id = ? ORDER BY data DESC
-CREATE INDEX IF NOT EXISTS idx_despesas_usuario_data 
-ON despesas(usuario_id, data DESC);
+-- Query: SELECT * FROM despesas WHERE usuario_id = ? ORDER BY data_vencimento DESC
+CREATE INDEX IF NOT EXISTS idx_despesas_usuario_vencimento 
+ON despesas(usuario_id, data_vencimento DESC);
 
 -- Query: Despesas por categoria
 CREATE INDEX IF NOT EXISTS idx_despesas_categoria 
 ON despesas(usuario_id, categoria);
 
+-- Query: Despesas por status
+CREATE INDEX IF NOT EXISTS idx_despesas_status 
+ON despesas(usuario_id, status);
+
 -- ============================================
 -- METAS
 -- ============================================
 
--- Query: SELECT * FROM metas WHERE usuario_id = ? AND ativa = true
-CREATE INDEX IF NOT EXISTS idx_metas_usuario_ativa 
-ON metas(usuario_id, ativa);
+-- Query: SELECT * FROM metas WHERE usuario_id = ? AND status = 'ativa'
+CREATE INDEX IF NOT EXISTS idx_metas_usuario_status 
+ON metas(usuario_id, status);
 
 -- ============================================
 -- VERIFICAR ÍNDICES CRIADOS
