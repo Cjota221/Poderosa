@@ -5,15 +5,21 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
+const { validateSupabaseConfig, logEnvStatus } = require('./utils/validateEnv');
+
+// Validar variáveis de ambiente no startup
+try {
+    const config = validateSupabaseConfig();
+    console.log('✅ Configuração do Supabase validada');
+} catch (error) {
+    console.error('❌ ERRO CRÍTICO:', error.message);
+    logEnvStatus();
+    throw error;
+}
 
 // Configuração Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-    throw new Error('❌ Variáveis de ambiente SUPABASE não configuradas');
-}
-
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Gerar código de 6 dígitos

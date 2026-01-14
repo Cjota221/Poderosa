@@ -3,6 +3,24 @@
 const mercadopago = require('mercadopago');
 const { createClient } = require('@supabase/supabase-js');
 const crypto = require('crypto');
+const { validateSupabaseConfig, validateMercadoPagoConfig, logEnvStatus } = require('./utils/validateEnv');
+
+// Validar variáveis de ambiente no startup
+try {
+    const supabaseConfig = validateSupabaseConfig();
+    const mpConfig = validateMercadoPagoConfig();
+    
+    console.log('✅ Variáveis de ambiente validadas');
+    
+    // Avisar se webhook secret não está configurado
+    if (!mpConfig.webhookSecret) {
+        console.warn('⚠️ MERCADO_PAGO_WEBHOOK_SECRET não configurado - validação de assinatura desabilitada em produção!');
+    }
+} catch (error) {
+    console.error('❌ ERRO CRÍTICO:', error.message);
+    logEnvStatus();
+    throw error; // Impede a function de iniciar
+}
 
 // Configuração do Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
