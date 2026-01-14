@@ -2376,50 +2376,61 @@
             submitBtn.innerHTML = '<span style="display: inline-flex; align-items: center; gap: 8px;"><svg width="20" height="20" viewBox="0 0 24 24" style="animation: spin 1s linear infinite;"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 70"/></svg> Verificando...</span>';
 
             try {
-                // ✅ SOLUÇÃO SIMPLIFICADA: Salvar dados e redirecionar direto para /trial
-                // Salvar dados localmente
-                const trialStart = new Date();
-                const trialEnd = new Date();
-                trialEnd.setDate(trialEnd.getDate() + 7); // 7 dias de trial
-                
+                // 🔥 NOVO FLUXO: Criar trial direto no banco com senha
+                const response = await fetch('/.netlify/functions/start-trial', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email, 
+                        nome, 
+                        negocio,
+                        createAccount: true  // Flag para criar conta completa
+                    })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    // Se email já existe, oferecer login
+                    if (response.status === 409) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                        
+                        if (confirm(`Este email já tem uma conta! Deseja fazer login?`)) {
+                            window.location.href = '/login?email=' + encodeURIComponent(email);
+                        }
+                        return;
+                    }
+                    throw new Error(result.error || 'Erro ao criar trial');
+                }
+
+                // ✅ Trial criado com sucesso no banco
+                // Salvar localmente
                 const authData = {
-                    userId: 'trial_' + Date.now(),
-                    email: email,
-                    nome: nome,
-                    negocio: negocio,
+                    userId: result.userId,
+                    email: result.email,
+                    nome: result.nome,
                     plano: 'trial',
-                    trialStartDate: trialStart.toISOString(),
-                    trialEndDate: trialEnd.toISOString(), // 🎯 NOVO: Salvar data de expiração
+                    trialStartDate: result.trialStartDate,
+                    trialEndDate: result.trialEndDate,
                     createdAt: new Date().toISOString()
                 };
 
                 localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
-                localStorage.setItem('lucrocerto_user_id', authData.userId);
+                localStorage.setItem('lucrocerto_user_id', result.userId);
                 localStorage.setItem('lucrocerto_trial', 'true');
-                localStorage.setItem('lucrocerto_trial_start', authData.trialStartDate);
-                localStorage.setItem('lucrocerto_trial_end', authData.trialEndDate); // 🎯 NOVO
+                localStorage.setItem('lucrocerto_trial_start', result.trialStartDate);
+                localStorage.setItem('lucrocerto_trial_end', result.trialEndDate);
                 localStorage.setItem('lucrocerto_logged', 'true');
                 
-                console.log('🧪 Trial criado:', {
-                    email,
-                    inicio: trialStart.toLocaleDateString('pt-BR'),
-                    expiracao: trialEnd.toLocaleDateString('pt-BR'),
-                    diasRestantes: 7
+                console.log('✅ Trial criado no banco:', {
+                    userId: result.userId,
+                    email: result.email,
+                    diasRestantes: result.daysLeft
                 });
 
-                // Salvar no banco em background (não bloqueia o usuário)
-                fetch('/.netlify/functions/start-trial', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, nome, negocio })
-                }).then(res => {
-                    console.log('✅ Trial salvo no banco:', res.ok);
-                }).catch(err => {
-                    console.warn('⚠️ Erro ao salvar no banco (não crítico):', err);
-                });
-
-                // Redirecionar IMEDIATAMENTE (não espera API)
-                window.location.href = '/trial';
+                // Redirecionar para cadastro completar dados (senha, telefone)
+                window.location.href = '/cadastro?trial=true&email=' + encodeURIComponent(email);
 
             } catch (error) {
                 console.error('Erro:', error);

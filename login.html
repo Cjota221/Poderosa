@@ -539,6 +539,22 @@
 
                 const result = await response.json();
 
+                // 🚨 DETECTAR TRIAL ANTIGO REMOVIDO
+                if (response.status === 404 || (result.error && result.error.includes('não encontrado'))) {
+                    // Trial foi deletado - pedir para refazer cadastro
+                    showError('⚠️ Seu período de teste expirou. Por favor, faça um novo cadastro para continuar usando o sistema.');
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i data-lucide="log-in"></i> Entrar';
+                    lucide.createIcons();
+                    
+                    setTimeout(() => {
+                        if (confirm('Seu trial expirou! Deseja criar uma conta completa agora?')) {
+                            window.location.href = '/cadastro?email=' + encodeURIComponent(email);
+                        }
+                    }, 1500);
+                    return;
+                }
+
                 if (!response.ok) {
                     // Verificar se precisa completar cadastro
                     if (result.redirect) {
