@@ -1496,16 +1496,10 @@
         }
     </style>
 
-    <!-- Auto-redirect se já estiver logado -->
+    <!-- Auto-redirect REMOVIDO para evitar loops e dar controle ao usuário -->
     <script>
-        // Verificar se usuário já está logado
-        (function() {
-            const isLogged = localStorage.getItem('lucrocerto_logged');
-            if (isLogged === 'true') {
-                // Se já está logado, redireciona direto para o sistema
-                window.location.href = '/app';
-            }
-        })();
+        // NÃO redirecionar automaticamente - deixar usuário ver a landing page
+        // Se quiser entrar no app, clica no botão "Entrar" no header
     </script>
 </head>
 <body>
@@ -2430,7 +2424,7 @@
                 });
 
                 // ✅ Redirecionar direto para o sistema
-                window.location.href = '/app.html';
+                window.location.href = '/app?welcome=true';
 
             } catch (error) {
                 console.error('Erro:', error);
