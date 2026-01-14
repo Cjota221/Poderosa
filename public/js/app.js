@@ -3552,6 +3552,7 @@ const LucroCertoApp = (function() {
         // ========== PÁGINA DE CONFIGURAÇÕES ==========
         getConfiguracoesHTML() {
             const { user } = StateManager.getState();
+            const authData = Storage.get('auth', {});
             const profilePhoto = user.profilePhoto || '';
             
             return `
