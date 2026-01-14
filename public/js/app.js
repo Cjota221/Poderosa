@@ -3642,12 +3642,14 @@ const LucroCertoApp = (function() {
                     <i data-lucide="check" style="width: 18px; height: 18px;"></i> Salvar Configurações
                 </button>
                 
-                <div class="card" style="margin-top: 30px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border: 2px solid var(--primary-light);">
-                    <h3><i data-lucide="crown" style="width: 20px; height: 20px; vertical-align: middle; color: var(--primary);"></i> Meu Plano</h3>
-                    <div id="plan-info-section">
-                        <!-- Será preenchido dinamicamente -->
+                ${authData.plano !== 'trial' ? `
+                    <div class="card" style="margin-top: 30px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border: 2px solid var(--primary-light);">
+                        <h3><i data-lucide="crown" style="width: 20px; height: 20px; vertical-align: middle; color: var(--primary);"></i> Meu Plano</h3>
+                        <div id="plan-info-section">
+                            <!-- Será preenchido dinamicamente -->
+                        </div>
                     </div>
-                </div>
+                ` : ''}
                 
                 <div class="card" style="margin-top: 20px; background: var(--light-gray);">
                     <h3><i data-lucide="link" style="width: 20px; height: 20px; vertical-align: middle;"></i> Acesso Rápido</h3>
