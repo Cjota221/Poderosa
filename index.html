@@ -2429,8 +2429,8 @@
                     diasRestantes: result.daysLeft
                 });
 
-                // Redirecionar para cadastro completar dados (senha, telefone)
-                window.location.href = '/cadastro?trial=true&email=' + encodeURIComponent(email);
+                // ✅ Redirecionar direto para o sistema
+                window.location.href = '/app.html';
 
             } catch (error) {
                 console.error('Erro:', error);
