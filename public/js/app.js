@@ -3111,6 +3111,15 @@ const LucroCertoApp = (function() {
                     .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
                     .replace(/[^a-z0-9]+/g, '-')
                     .replace(/(^-|-$)/g, '') || 'minha-loja';
+                
+                // 💾 AUTO-SALVAR slug no banco se não existir
+                this.saveCatalogSettings({ slug }).catch(err => {
+                    console.warn('⚠️ Erro ao auto-salvar slug:', err);
+                });
+                
+                // Atualizar estado local
+                const updatedUser = { ...user, slug };
+                StateManager.setState({ user: updatedUser });
             }
 
             // Link do catálogo em formato amigável: /catalogo/<slug>
