@@ -3244,10 +3244,117 @@ const LucroCertoApp = (function() {
             // Seleção de cor
             const colorPalette = document.getElementById('catalog-color-palette');
             if (colorPalette) {
-                colorPalette.addEventListener('click', (e) => {
+                colorPalette.addEventListener('click', async (e) => {
                     const colorBtn = e.target.closest('.color-option');
                     if (colorBtn) {
                         const color = colorBtn.dataset.color;
+                        
+                        // Remover seleção anterior
+                        document.querySelectorAll('.color-option').forEach(btn => btn.classList.remove('selected'));
+                        colorBtn.classList.add('selected');
+                        
+                        // Salvar no estado E no banco
+                        const user = { ...StateManager.getState().user, catalogColor: color };
+                        StateManager.setState({ user });
+                        
+                        // 💾 SALVAR NO SUPABASE
+                        await this.saveCatalogSettings({ cor_catalogo: color });
+                    }
+                });
+            }
+            
+            // Botão "Salvar Catálogo"
+            const saveCatalogBtn = document.getElementById('save-catalog-btn');
+            if (saveCatalogBtn) {
+                saveCatalogBtn.addEventListener('click', async () => {
+                    const btn = saveCatalogBtn;
+                    const originalText = btn.innerHTML;
+                    
+                    try {
+                        btn.disabled = true;
+                        btn.innerHTML = '<i data-lucide="loader" class="spin"></i> Salvando...';
+                        lucide.createIcons();
+                        
+                        const { user } = StateManager.getState();
+                        const authData = Storage.get('auth', {});
+                        
+                        // Gerar slug se não existir
+                        let slug = user.slug || authData.slug || '';
+                        if (!slug) {
+                            const rawName = user.businessName || user.nome || 'minha-loja';
+                            slug = String(rawName).toLowerCase()
+                                .normalize('NFKD').replace(/[\u0300-\u036f]/g, '')
+                                .replace(/[^a-z0-9]+/g, '-')
+                                .replace(/(^-|-$)/g, '');
+                        }
+                        
+                        // Dados para salvar
+                        const catalogData = {
+                            slug: slug,
+                            logo_catalogo: user.catalogLogo || null,
+                            cor_catalogo: user.catalogColor || 'pink'
+                        };
+                        
+                        // 💾 SALVAR NO SUPABASE
+                        await this.saveCatalogSettings(catalogData);
+                        
+                        // Atualizar estado com slug
+                        const updatedUser = { ...user, slug };
+                        StateManager.setState({ user: updatedUser });
+                        
+                        // Feedback sucesso
+                        btn.innerHTML = '<i data-lucide="check"></i> Salvo!';
+                        btn.classList.add('success');
+                        lucide.createIcons();
+                        
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.classList.remove('success');
+                            btn.disabled = false;
+                            lucide.createIcons();
+                        }, 2000);
+                        
+                    } catch (error) {
+                        console.error('Erro ao salvar:', error);
+                        btn.innerHTML = '<i data-lucide="x"></i> Erro!';
+                        btn.classList.add('error');
+                        lucide.createIcons();
+                        
+                        setTimeout(() => {
+                            btn.innerHTML = originalText;
+                            btn.classList.remove('error');
+                            btn.disabled = false;
+                            lucide.createIcons();
+                        }, 2000);
+                    }
+                });
+            }
+        },
+        
+        async saveCatalogSettings(data) {
+            const authData = Storage.get('auth', {});
+            const userId = authData.userId || Storage.get('user_id');
+            
+            if (!userId) {
+                throw new Error('Usuário não encontrado');
+            }
+            
+            console.log('💾 Salvando configurações do catálogo:', data);
+            
+            // Salvar no Supabase
+            if (window.supabase) {
+                const result = await supabase.update('usuarios', userId, data);
+                
+                if (result.error) {
+                    console.error('Erro ao salvar no Supabase:', result.error);
+                    throw result.error;
+                }
+                
+                console.log('✅ Configurações salvas no banco!');
+            } else {
+                console.warn('⚠️ Supabase não disponível - salvando apenas localmente');
+            }
+        },
                         const user = { ...StateManager.getState().user, catalogColor: color };
                         StateManager.setState({ user });
                         
