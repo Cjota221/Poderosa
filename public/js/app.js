@@ -3364,29 +3364,8 @@ const LucroCertoApp = (function() {
                 console.warn('⚠️ Supabase não disponível - salvando apenas localmente');
             }
         },
-                        const user = { ...StateManager.getState().user, catalogColor: color };
-                        StateManager.setState({ user });
-                        
-                        // Atualiza visual
-                        colorPalette.querySelectorAll('.color-option').forEach(btn => {
-                            btn.classList.remove('active');
-                            btn.innerHTML = '';
-                        });
-                        colorBtn.classList.add('active');
-                        colorBtn.innerHTML = '<i data-lucide="check"></i>';
-                        lucide.createIcons({ nodes: [colorBtn.querySelector('[data-lucide]')] });
-                        
-                        // Atualiza preview
-                        const previewHeader = document.querySelector('.catalog-preview-header');
-                        const colors = { pink: '#E91E63', blue: '#2196F3', green: '#4CAF50', purple: '#9C27B0', orange: '#FF9800' };
-                        if (previewHeader) {
-                            previewHeader.style.background = colors[color];
-                        }
-                    }
-                });
-            }
-            
-            // Copiar link
+        
+        // Copiar link
             document.querySelector('[data-action="copy-catalog-link-page"]')?.addEventListener('click', () => {
                 const input = document.getElementById('catalog-link-input');
                 input.select();
