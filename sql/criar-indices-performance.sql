@@ -162,14 +162,16 @@ ON metas(usuario_id, status);
 
 -- Ver todos os índices das tabelas principais
 SELECT 
-    schemaname,
-    tablename,
-    indexname,
-    indexdef
-FROM pg_indexes
-WHERE schemaname = 'public'
-    AND tablename IN ('produtos', 'clientes', 'vendas', 'assinaturas', 'despesas', 'metas', 'usuarios')
-ORDER BY tablename, indexname;
+    t.table_schema,
+    t.table_name,
+    i.indexname,
+    i.indexdef
+FROM information_schema.tables t
+LEFT JOIN pg_indexes i ON i.tablename = t.table_name AND i.schemaname = t.table_schema
+WHERE t.table_schema = 'public'
+    AND t.table_name IN ('produtos', 'clientes', 'vendas', 'assinaturas', 'despesas', 'metas', 'usuarios')
+    AND i.indexname IS NOT NULL
+ORDER BY t.table_name, i.indexname;
 
 -- ============================================
 -- ANÁLISE DE PERFORMANCE (OPCIONAL)
