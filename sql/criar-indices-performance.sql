@@ -59,17 +59,33 @@ ON vendas(usuario_id, data_venda DESC);
 CREATE INDEX IF NOT EXISTS idx_vendas_status_pagamento 
 ON vendas(usuario_id, status_pagamento);
 
--- Query: Vendas por status de entrega
-CREATE INDEX IF NOT EXISTS idx_vendas_status_entrega 
-ON vendas(usuario_id, status_entrega);
-
 -- Query: Vendas por cliente
 CREATE INDEX IF NOT EXISTS idx_vendas_cliente 
 ON vendas(cliente_id, data_venda DESC);
 
--- Query: Vendas por forma de pagamento
-CREATE INDEX IF NOT EXISTS idx_vendas_forma_pagamento 
-ON vendas(usuario_id, forma_pagamento);
+-- Query: Vendas por forma de pagamento (se coluna existir)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'vendas' AND column_name = 'forma_pagamento'
+    ) THEN
+        CREATE INDEX IF NOT EXISTS idx_vendas_forma_pagamento 
+        ON vendas(usuario_id, forma_pagamento);
+    END IF;
+END $$;
+
+-- Query: Vendas por status de entrega (se coluna existir)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'vendas' AND column_name = 'status_entrega'
+    ) THEN
+        CREATE INDEX IF NOT EXISTS idx_vendas_status_entrega 
+        ON vendas(usuario_id, status_entrega);
+    END IF;
+END $$;
 
 -- ============================================
 -- ASSINATURAS
@@ -92,17 +108,45 @@ WHERE status = 'active';
 -- DESPESAS
 -- ============================================
 
--- Query: SELECT * FROM despesas WHERE usuario_id = ? ORDER BY data_vencimento DESC
-CREATE INDEX IF NOT EXISTS idx_despesas_usuario_vencimento 
-ON despesas(usuario_id, data_vencimento DESC);
+-- Query: SELECT * FROM despesas WHERE usuario_id = ?
+CREATE INDEX IF NOT EXISTS idx_despesas_usuario 
+ON despesas(usuario_id);
 
--- Query: Despesas por categoria
-CREATE INDEX IF NOT EXISTS idx_despesas_categoria 
-ON despesas(usuario_id, categoria);
+-- Query: Despesas por categoria (se coluna existir)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'despesas' AND column_name = 'categoria'
+    ) THEN
+        CREATE INDEX IF NOT EXISTS idx_despesas_categoria 
+        ON despesas(usuario_id, categoria);
+    END IF;
+END $$;
 
--- Query: Despesas por status
-CREATE INDEX IF NOT EXISTS idx_despesas_status 
-ON despesas(usuario_id, status);
+-- Query: Despesas por status (se coluna existir)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'despesas' AND column_name = 'status'
+    ) THEN
+        CREATE INDEX IF NOT EXISTS idx_despesas_status 
+        ON despesas(usuario_id, status);
+    END IF;
+END $$;
+
+-- Query: Despesas por data de vencimento (se coluna existir)
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'despesas' AND column_name = 'data_vencimento'
+    ) THEN
+        CREATE INDEX IF NOT EXISTS idx_despesas_usuario_vencimento 
+        ON despesas(usuario_id, data_vencimento DESC);
+    END IF;
+END $$;
 
 -- ============================================
 -- METAS
