@@ -23,8 +23,7 @@ SELECT
     preco_venda,
     ativo,
     visivel_catalogo,
-    imagem_url,
-    tipo_variacao
+    imagem_url
 FROM produtos 
 WHERE usuario_id = (
     SELECT id FROM usuarios WHERE email = 'comercial@cjotarasteirinhas.com'
