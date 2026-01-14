@@ -330,16 +330,25 @@ const LucroCertoApp = (function() {
                     
                     if (existing.data && existing.data.length > 0) {
                         // Atualizar
-                        await supabase.update('produtos', existing.data[0].id, productData);
-                        console.log('✅ Produto atualizado:', product.name);
+                        const updateResult = await supabase.update('produtos', existing.data[0].id, productData);
+                        if (updateResult.error) {
+                            console.error('❌ Erro ao atualizar produto:', product.name, updateResult.error);
+                        } else {
+                            console.log('✅ Produto atualizado no Supabase:', product.name);
+                        }
                     } else {
                         // Inserir
                         productData.id = product.id;
-                        await supabase.insert('produtos', productData);
-                        console.log('✅ Produto criado:', product.name);
+                        const insertResult = await supabase.insert('produtos', productData);
+                        if (insertResult.error) {
+                            console.error('❌ Erro ao inserir produto:', product.name, insertResult.error);
+                        } else {
+                            console.log('✅ Produto criado no Supabase:', product.name, 'ID:', insertResult.data?.id);
+                        }
                     }
                 } catch (error) {
-                    console.error('❌ Erro ao sincronizar produto:', product.name, error);
+                    console.error('❌ ERRO CRÍTICO ao sincronizar produto:', product.name, error);
+                    console.error('📋 Stack trace:', error.stack);
                 }
             }
         },
