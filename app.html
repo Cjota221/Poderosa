@@ -147,18 +147,13 @@
                 localStorage.setItem('lucrocerto_logged', 'true'); // ✅ Marcar como logado para trial
                 console.log('🧪 Modo TRIAL ativado via URL');
                 
-                // Criar auth data mínimo para trial
-                if (!authData.email) {
-                    const trialAuth = {
-                        email: 'trial@lucrocerto.com',
-                        nome: 'Usuária Trial',
-                        plano: 'trial',
-                        userId: 'trial_' + Date.now()
-                    };
-                    localStorage.setItem('lucrocerto_auth', JSON.stringify(trialAuth));
-                    localStorage.setItem('lucrocerto_user_id', trialAuth.userId);
-                    console.log('✅ Conta trial criada automaticamente');
+                // ⚠️ NÃO criar trial fake aqui - deve vir do cadastro
+                if (!authData.email || !authData.userId) {
+                    console.error('❌ Trial sem dados - redirecionando para criar conta');
+                    window.location.href = '/?trial=true';
+                    return;
                 }
+                console.log('✅ Trial com userId:', authData.userId);
             } else if (authData.plano && authData.plano !== 'trial') {
                 // ✅ USUÁRIO TEM PLANO PAGO → FORÇAR REMOÇÃO DO TRIAL
                 localStorage.removeItem('lucrocerto_trial');

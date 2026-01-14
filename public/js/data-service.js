@@ -10,6 +10,21 @@ class DataService {
         this.isSyncing = false;
     }
 
+    // Obter chave de localStorage específica do usuário
+    getUserStorageKey(baseKey = 'appState') {
+        const authData = localStorage.getItem('lucrocerto_auth');
+        if (authData) {
+            try {
+                const auth = JSON.parse(authData);
+                const userId = auth.userId || 'default';
+                return `${baseKey}_${userId}`;
+            } catch (e) {
+                console.error('Erro ao ler userId:', e);
+            }
+        }
+        return baseKey; // Fallback para chave genérica
+    }
+
     // Inicializar serviço
     async init() {
         // Verificar se tem usuário logado no Supabase
@@ -21,7 +36,11 @@ class DataService {
 
     // Verificar se deve usar Supabase
     shouldUseCloud() {
-        return this.useSupabase && supabase.isAuthenticated();
+        // ✅ Todos usam Supabase (incluindo trials) se tiverem userId válido
+        const user = supabase.getUser();
+        const hasValidUserId = user && user.id && !user.id.startsWith('trial_temp');
+        
+        return hasValidUserId && supabase.isAuthenticated();
     }
 
     // ==========================================
@@ -30,23 +49,33 @@ class DataService {
 
     async getProducts() {
         if (this.shouldUseCloud()) {
+            const user = supabase.getUser();
+            console.log('📦 Buscando produtos do Supabase para userId:', user?.id);
+            
             const result = await supabase.select('produtos', {
-                filters: { usuario_id: supabase.getUser().id },
+                filters: { usuario_id: user.id },
                 orderBy: 'created_at',
                 ascending: false
             });
+            
+            console.log('📦 Produtos encontrados:', result.data?.length || 0);
             return result.data || [];
         }
         
-        // Fallback localStorage
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        // Fallback localStorage (isolado por usuário)
+        console.log('📦 Buscando produtos do localStorage');
+        const storageKey = this.getUserStorageKey();
+        const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
         return state.products || [];
     }
 
     async saveProduct(product) {
         if (this.shouldUseCloud()) {
+            const user = supabase.getUser();
+            console.log('💾 Salvando produto no Supabase para userId:', user?.id);
+            
             const productData = {
-                usuario_id: supabase.getUser().id,
+                usuario_id: user.id,
                 nome: product.name,
                 descricao: product.description || '',
                 preco_custo: product.cost || 0,
@@ -62,12 +91,15 @@ class DataService {
                 return await supabase.update('produtos', product.id, productData);
             } else {
                 // Insert
-                return await supabase.insert('produtos', productData);
+                const result = await supabase.insert('produtos', productData);
+                console.log('✅ Produto criado no Supabase:', result.data);
+                return result;
             }
         }
         
-        // Fallback localStorage
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        // Fallback localStorage (isolado por usuário)
+        const storageKey = this.getUserStorageKey();
+        const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
         const products = state.products || [];
         
         if (product.id) {
@@ -81,7 +113,7 @@ class DataService {
         }
         
         state.products = products;
-        localStorage.setItem('appState', JSON.stringify(state));
+        localStorage.setItem(storageKey, JSON.stringify(state));
         return { success: true, data: product };
     }
 
@@ -90,10 +122,11 @@ class DataService {
             return await supabase.delete('produtos', productId);
         }
         
-        // Fallback localStorage
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        // Fallback localStorage (isolado por usuário)
+        const storageKey = this.getUserStorageKey();
+        const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
         state.products = (state.products || []).filter(p => p.id !== productId);
-        localStorage.setItem('appState', JSON.stringify(state));
+        localStorage.setItem(storageKey, JSON.stringify(state));
         return { success: true };
     }
 
@@ -111,7 +144,8 @@ class DataService {
             return result.data || [];
         }
         
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        const storageKey = this.getUserStorageKey();
+        const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
         return state.clients || [];
     }
 
@@ -133,7 +167,8 @@ class DataService {
             }
         }
         
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        const storageKey = this.getUserStorageKey();
+        const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
         const clients = state.clients || [];
         
         if (client.id) {
@@ -147,7 +182,7 @@ class DataService {
         }
         
         state.clients = clients;
-        localStorage.setItem('appState', JSON.stringify(state));
+        localStorage.setItem(storageKey, JSON.stringify(state));
         return { success: true, data: client };
     }
 
@@ -156,9 +191,10 @@ class DataService {
             return await supabase.delete('clientes', clientId);
         }
         
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        const storageKey = this.getUserStorageKey();
+        const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
         state.clients = (state.clients || []).filter(c => c.id !== clientId);
-        localStorage.setItem('appState', JSON.stringify(state));
+        localStorage.setItem(storageKey, JSON.stringify(state));
         return { success: true };
     }
 
@@ -186,7 +222,7 @@ class DataService {
             return sales;
         }
         
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        const state = JSON.parse(localStorage.getItem(this.getUserStorageKey()) || '{}');
         return state.sales || [];
     }
 
@@ -222,7 +258,7 @@ class DataService {
             return saleResult;
         }
         
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        const state = JSON.parse(localStorage.getItem(this.getUserStorageKey()) || '{}');
         const sales = state.sales || [];
         
         sale.id = sale.id || 'local_' + Date.now();
@@ -230,7 +266,7 @@ class DataService {
         sales.unshift(sale);
         
         state.sales = sales;
-        localStorage.setItem('appState', JSON.stringify(state));
+        localStorage.setItem(this.getUserStorageKey(), JSON.stringify(state));
         return { success: true, data: sale };
     }
 
@@ -239,9 +275,9 @@ class DataService {
             return await supabase.delete('vendas', saleId);
         }
         
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        const state = JSON.parse(localStorage.getItem(this.getUserStorageKey()) || '{}');
         state.sales = (state.sales || []).filter(s => s.id !== saleId);
-        localStorage.setItem('appState', JSON.stringify(state));
+        localStorage.setItem(this.getUserStorageKey(), JSON.stringify(state));
         return { success: true };
     }
 
@@ -259,7 +295,7 @@ class DataService {
             return result.data || [];
         }
         
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        const state = JSON.parse(localStorage.getItem(this.getUserStorageKey()) || '{}');
         return state.expenses || [];
     }
 
@@ -281,7 +317,7 @@ class DataService {
             }
         }
         
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        const state = JSON.parse(localStorage.getItem(this.getUserStorageKey()) || '{}');
         const expenses = state.expenses || [];
         
         if (expense.id) {
@@ -295,7 +331,7 @@ class DataService {
         }
         
         state.expenses = expenses;
-        localStorage.setItem('appState', JSON.stringify(state));
+        localStorage.setItem(this.getUserStorageKey(), JSON.stringify(state));
         return { success: true, data: expense };
     }
 
@@ -431,7 +467,7 @@ class DataService {
         console.log('📤 Enviando dados para o Supabase...');
         
         // Pegar dados do localStorage e enviar para o cloud
-        const state = JSON.parse(localStorage.getItem('appState') || '{}');
+        const state = JSON.parse(localStorage.getItem(this.getUserStorageKey()) || '{}');
         
         // Sincronizar produtos locais
         for (const product of (state.products || [])) {

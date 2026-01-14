@@ -160,11 +160,31 @@ class SupabaseClient {
 
     // Verificar se está logado
     isAuthenticated() {
-        return !!this.authToken && !!this.user;
+        // Verificar sessão Supabase OU localStorage
+        if (this.authToken && this.user) {
+            return true;
+        }
+        
+        // Fallback: verificar localStorage
+        const isLogged = localStorage.getItem('lucrocerto_logged') === 'true';
+        const authData = localStorage.getItem('lucrocerto_auth');
+        return isLogged && !!authData;
     }
 
     // Obter usuário atual
     getUser() {
+        // Se não tem sessão Supabase, usar localStorage
+        if (!this.user) {
+            const authData = localStorage.getItem('lucrocerto_auth');
+            if (authData) {
+                try {
+                    const auth = JSON.parse(authData);
+                    return { id: auth.userId, email: auth.email, nome: auth.nome };
+                } catch (e) {
+                    console.error('Erro ao ler auth do localStorage:', e);
+                }
+            }
+        }
         return this.user;
     }
 
