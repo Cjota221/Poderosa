@@ -162,6 +162,7 @@ ON metas(usuario_id, status);
 
 -- Ver todos os índices das tabelas principais
 SELECT 
+    schemaname,
     tablename,
     indexname,
     indexdef
