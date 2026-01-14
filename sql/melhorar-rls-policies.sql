@@ -28,13 +28,13 @@ DROP POLICY IF EXISTS "Service role tem acesso total a app_state" ON app_state;
 -- Usuários podem ler apenas seus próprios dados
 CREATE POLICY "usuarios_select_proprios_dados" ON usuarios
     FOR SELECT
-    USING (id = auth.uid());
+    USING (id::text = auth.uid()::text);
 
 -- Usuários podem atualizar apenas seus próprios dados
 CREATE POLICY "usuarios_update_proprios_dados" ON usuarios
     FOR UPDATE
-    USING (id = auth.uid())
-    WITH CHECK (id = auth.uid());
+    USING (id::text = auth.uid()::text)
+    WITH CHECK (id::text = auth.uid()::text);
 
 -- Service role pode criar usuários (trials)
 CREATE POLICY "service_role_insert_usuarios" ON usuarios
@@ -54,23 +54,23 @@ CREATE POLICY "service_role_update_usuarios" ON usuarios
 -- Usuários veem apenas seus produtos
 CREATE POLICY "produtos_select_proprio_usuario" ON produtos
     FOR SELECT
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem inserir produtos
 CREATE POLICY "produtos_insert_proprio_usuario" ON produtos
     FOR INSERT
-    WITH CHECK (usuario_id = auth.uid());
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem atualizar apenas seus produtos
 CREATE POLICY "produtos_update_proprio_usuario" ON produtos
     FOR UPDATE
-    USING (usuario_id = auth.uid())
-    WITH CHECK (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text)
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem deletar apenas seus produtos
 CREATE POLICY "produtos_delete_proprio_usuario" ON produtos
     FOR DELETE
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Service role acesso total (para sync)
 CREATE POLICY "service_role_produtos_full" ON produtos
@@ -85,23 +85,23 @@ CREATE POLICY "service_role_produtos_full" ON produtos
 -- Usuários veem apenas seus clientes
 CREATE POLICY "clientes_select_proprio_usuario" ON clientes
     FOR SELECT
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem inserir clientes
 CREATE POLICY "clientes_insert_proprio_usuario" ON clientes
     FOR INSERT
-    WITH CHECK (usuario_id = auth.uid());
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem atualizar apenas seus clientes
 CREATE POLICY "clientes_update_proprio_usuario" ON clientes
     FOR UPDATE
-    USING (usuario_id = auth.uid())
-    WITH CHECK (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text)
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem deletar apenas seus clientes
 CREATE POLICY "clientes_delete_proprio_usuario" ON clientes
     FOR DELETE
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Service role acesso total
 CREATE POLICY "service_role_clientes_full" ON clientes
@@ -116,23 +116,23 @@ CREATE POLICY "service_role_clientes_full" ON clientes
 -- Usuários veem apenas suas vendas
 CREATE POLICY "vendas_select_proprio_usuario" ON vendas
     FOR SELECT
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem inserir vendas
 CREATE POLICY "vendas_insert_proprio_usuario" ON vendas
     FOR INSERT
-    WITH CHECK (usuario_id = auth.uid());
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem atualizar apenas suas vendas
 CREATE POLICY "vendas_update_proprio_usuario" ON vendas
     FOR UPDATE
-    USING (usuario_id = auth.uid())
-    WITH CHECK (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text)
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem deletar apenas suas vendas
 CREATE POLICY "vendas_delete_proprio_usuario" ON vendas
     FOR DELETE
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Service role acesso total
 CREATE POLICY "service_role_vendas_full" ON vendas
@@ -147,23 +147,23 @@ CREATE POLICY "service_role_vendas_full" ON vendas
 -- Usuários veem apenas suas despesas
 CREATE POLICY "despesas_select_proprio_usuario" ON despesas
     FOR SELECT
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem inserir despesas
 CREATE POLICY "despesas_insert_proprio_usuario" ON despesas
     FOR INSERT
-    WITH CHECK (usuario_id = auth.uid());
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem atualizar apenas suas despesas
 CREATE POLICY "despesas_update_proprio_usuario" ON despesas
     FOR UPDATE
-    USING (usuario_id = auth.uid())
-    WITH CHECK (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text)
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem deletar apenas suas despesas
 CREATE POLICY "despesas_delete_proprio_usuario" ON despesas
     FOR DELETE
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Service role acesso total
 CREATE POLICY "service_role_despesas_full" ON despesas
@@ -178,12 +178,12 @@ CREATE POLICY "service_role_despesas_full" ON despesas
 -- Usuários veem apenas suas transações
 CREATE POLICY "transacoes_select_proprio_usuario" ON transacoes
     FOR SELECT
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem inserir transações
 CREATE POLICY "transacoes_insert_proprio_usuario" ON transacoes
     FOR INSERT
-    WITH CHECK (usuario_id = auth.uid());
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Service role acesso total
 CREATE POLICY "service_role_transacoes_full" ON transacoes
@@ -198,23 +198,23 @@ CREATE POLICY "service_role_transacoes_full" ON transacoes
 -- Usuários veem apenas suas metas
 CREATE POLICY "metas_select_proprio_usuario" ON metas
     FOR SELECT
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem inserir metas
 CREATE POLICY "metas_insert_proprio_usuario" ON metas
     FOR INSERT
-    WITH CHECK (usuario_id = auth.uid());
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem atualizar apenas suas metas
 CREATE POLICY "metas_update_proprio_usuario" ON metas
     FOR UPDATE
-    USING (usuario_id = auth.uid())
-    WITH CHECK (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text)
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem deletar apenas suas metas
 CREATE POLICY "metas_delete_proprio_usuario" ON metas
     FOR DELETE
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Service role acesso total
 CREATE POLICY "service_role_metas_full" ON metas
@@ -229,7 +229,7 @@ CREATE POLICY "service_role_metas_full" ON metas
 -- Usuários veem apenas suas conquistas
 CREATE POLICY "conquistas_select_proprio_usuario" ON conquistas
     FOR SELECT
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Service role pode criar conquistas
 CREATE POLICY "service_role_conquistas_full" ON conquistas
@@ -244,17 +244,17 @@ CREATE POLICY "service_role_conquistas_full" ON conquistas
 -- Usuários veem apenas seu estado
 CREATE POLICY "app_state_select_proprio_usuario" ON app_state
     FOR SELECT
-    USING (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text);
 
 -- Usuários podem inserir/atualizar seu estado
 CREATE POLICY "app_state_insert_proprio_usuario" ON app_state
     FOR INSERT
-    WITH CHECK (usuario_id = auth.uid());
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 CREATE POLICY "app_state_update_proprio_usuario" ON app_state
     FOR UPDATE
-    USING (usuario_id = auth.uid())
-    WITH CHECK (usuario_id = auth.uid());
+    USING (usuario_id::text = auth.uid()::text)
+    WITH CHECK (usuario_id::text = auth.uid()::text);
 
 -- Service role acesso total
 CREATE POLICY "service_role_app_state_full" ON app_state
