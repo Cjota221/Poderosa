@@ -9,7 +9,7 @@ WHERE table_name = 'produtos'
 ORDER BY ordinal_position;
 
 -- 2️⃣ Verificar seu usuário e ID
-SELECT id, email, nome, created_at, plano_tipo
+SELECT id, email, nome, created_at
 FROM usuarios
 WHERE email = 'carolineazevedo075@gmail.com';
 

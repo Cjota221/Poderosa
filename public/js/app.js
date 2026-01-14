@@ -936,11 +936,143 @@ const LucroCertoApp = (function() {
             const authData = Storage.get('auth', {});
             const subscriptionStatus = authData.subscriptionStatus || 'none';
             const subscription = authData.subscription || null;
+            const isTrial = Storage.get('trial') === 'true' || Storage.get('trial') === true || authData.plano === 'trial';
             
             let subscriptionAlert = '';
             
+            // 🧪 CARD DE TRIAL - Mostrar dias restantes
+            if (isTrial && authData.plano === 'trial') {
+                const daysLeft = authData.daysLeft || 7;
+                
+                let trialColor, trialIcon, trialMessage, trialUrgency;
+                
+                if (daysLeft >= 5) {
+                    // 7-5 dias: Verde/Roxo - tudo tranquilo
+                    trialColor = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                    trialIcon = 'sparkles';
+                    trialMessage = '🎉 Você está testando gratuitamente!';
+                    trialUrgency = 'Aproveite para explorar todas as funcionalidades.';
+                } else if (daysLeft >= 3) {
+                    // 4-3 dias: Azul - aviso leve
+                    trialColor = 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
+                    trialIcon = 'clock';
+                    trialMessage = '⏰ Seu teste está na metade!';
+                    trialUrgency = 'Não esqueça de escolher seu plano.';
+                } else if (daysLeft === 2) {
+                    // 2 dias: Amarelo - atenção
+                    trialColor = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+                    trialIcon = 'alert-circle';
+                    trialMessage = '⚠️ Seu teste expira em breve!';
+                    trialUrgency = 'Garanta seu acesso escolhendo um plano agora.';
+                } else if (daysLeft === 1) {
+                    // 1 dia: Laranja - urgente
+                    trialColor = 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)';
+                    trialIcon = 'alert-triangle';
+                    trialMessage = '🔥 ÚLTIMO DIA de teste grátis!';
+                    trialUrgency = 'Assine hoje para não perder o acesso!';
+                } else {
+                    // 0 dias: Vermelho - expirado
+                    trialColor = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+                    trialIcon = 'x-circle';
+                    trialMessage = '🚫 Seu teste expirou!';
+                    trialUrgency = 'Assine agora para continuar usando.';
+                }
+                
+                subscriptionAlert = `
+                    <div class="trial-dashboard-card" style="
+                        background: ${trialColor};
+                        color: white;
+                        padding: 24px;
+                        border-radius: 16px;
+                        margin-bottom: 24px;
+                        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+                        position: relative;
+                        overflow: hidden;
+                    ">
+                        <!-- Decoração de fundo -->
+                        <div style="
+                            position: absolute;
+                            top: -50px;
+                            right: -50px;
+                            width: 200px;
+                            height: 200px;
+                            background: rgba(255,255,255,0.1);
+                            border-radius: 50%;
+                        "></div>
+                        
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; position: relative;">
+                            <div style="flex: 1;">
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                    <i data-lucide="${trialIcon}" style="width: 28px; height: 28px;"></i>
+                                    <h3 style="margin: 0; font-size: 20px; font-weight: 700;">${trialMessage}</h3>
+                                </div>
+                                <p style="margin: 0 0 8px 0; font-size: 14px; opacity: 0.95;">
+                                    ${trialUrgency}
+                                </p>
+                                <p style="margin: 0; font-size: 12px; opacity: 0.85;">
+                                    💾 Seus dados estão salvos e seguros
+                                </p>
+                            </div>
+                            
+                            <div style="text-align: center; min-width: 120px;">
+                                <div style="
+                                    background: rgba(255,255,255,0.25);
+                                    backdrop-filter: blur(10px);
+                                    border-radius: 16px;
+                                    padding: 20px;
+                                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                                ">
+                                    <div style="font-size: 48px; font-weight: 900; line-height: 1; margin-bottom: 8px;">
+                                        ${daysLeft}
+                                    </div>
+                                    <div style="font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                                        ${daysLeft === 1 ? 'DIA' : 'DIAS'}
+                                    </div>
+                                    <div style="font-size: 11px; opacity: 0.9; margin-top: 4px;">
+                                        restante${daysLeft !== 1 ? 's' : ''}
+                                    </div>
+                                </div>
+                                
+                                ${daysLeft > 0 ? `
+                                    <a href="/checkout?source=trial_dashboard" style="
+                                        display: block;
+                                        margin-top: 16px;
+                                        background: white;
+                                        color: #667eea;
+                                        padding: 12px 20px;
+                                        border-radius: 12px;
+                                        text-decoration: none;
+                                        font-weight: 700;
+                                        font-size: 13px;
+                                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                                        transition: transform 0.2s;
+                                    " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                        🚀 Assinar Agora
+                                    </a>
+                                ` : `
+                                    <a href="/checkout?source=trial_expired" style="
+                                        display: block;
+                                        margin-top: 16px;
+                                        background: white;
+                                        color: #ef4444;
+                                        padding: 12px 20px;
+                                        border-radius: 12px;
+                                        text-decoration: none;
+                                        font-weight: 700;
+                                        font-size: 13px;
+                                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                                        animation: pulse 2s infinite;
+                                    ">
+                                        💳 Escolher Plano
+                                    </a>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
             // AVISO: Assinatura expirando em breve (3 dias ou menos)
-            if (subscriptionStatus === 'expiring_soon' && subscription) {
+            else if (subscriptionStatus === 'expiring_soon' && subscription) {
                 const diasRestantes = subscription.dias_restantes || 0;
                 subscriptionAlert = `
                     <div class="subscription-alert warning" style="background: linear-gradient(135deg, #FFF3CD, #FFE082); border-left: 4px solid #FFC107; padding: 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);">
