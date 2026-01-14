@@ -1077,7 +1077,7 @@ const LucroCertoApp = (function() {
                                 </div>
                                 
                                 ${daysLeft > 0 ? `
-                                    <a href="/checkout?source=trial_dashboard" style="
+                                    <a href="/planos.html" style="
                                         display: block;
                                         margin-top: 16px;
                                         background: white;
@@ -1093,7 +1093,7 @@ const LucroCertoApp = (function() {
                                         🚀 Assinar Agora
                                     </a>
                                 ` : `
-                                    <a href="/checkout?source=trial_expired" style="
+                                    <a href="/planos.html" style="
                                         display: block;
                                         margin-top: 16px;
                                         background: white;
@@ -6256,7 +6256,7 @@ const LucroCertoApp = (function() {
             trialBanner.innerHTML = `
                 <div class="trial-banner-content">
                     <span><i data-lucide="${bannerIcon}"></i> ${bannerMessage}</span>
-                    <a href="/checkout?source=trial_banner" class="trial-upgrade-btn">Assinar Agora</a>
+                    <a href="/planos.html" class="trial-upgrade-btn">Assinar Agora</a>
                 </div>
             `;
             trialBanner.style.cssText = `
