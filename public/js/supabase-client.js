@@ -195,6 +195,25 @@ class SupabaseClient {
     // SELECT
     async select(table, options = {}) {
         try {
+            // 🚨 LOG CRÍTICO: Detectar queries sem usuario_id
+            if (['produtos', 'clientes', 'vendas', 'despesas'].includes(table)) {
+                if (!options.filters || !options.filters.usuario_id) {
+                    console.error(`🚨 QUERY SEM usuario_id na tabela ${table}!`, options);
+                    console.trace('Stack trace:');
+                    
+                    // 🔒 FORÇAR usuario_id do localStorage
+                    const user = this.getUser();
+                    if (user && user.id) {
+                        console.warn(`🔒 Forçando usuario_id = ${user.id}`);
+                        options.filters = options.filters || {};
+                        options.filters.usuario_id = user.id;
+                    } else {
+                        console.error('❌ Não há usuário logado! Bloqueando query.');
+                        return { data: [], error: 'Usuário não logado' };
+                    }
+                }
+            }
+            
             let url = `${this.url}/rest/v1/${table}?`;
             
             // Select columns
