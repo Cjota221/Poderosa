@@ -3749,44 +3749,81 @@ const LucroCertoApp = (function() {
             // Simular data de vencimento (30 dias a partir do cadastro ou hoje para demo)
             const createdAt = authData.createdAt ? new Date(authData.createdAt) : new Date();
             const expiryDate = new Date(createdAt);
-            expiryDate.setDate(expiryDate.getDate() + 30);
+            expiryDate.setDate(expiryDate.getDate() + (plano === 'trial' ? 7 : 30));
             
             const today = new Date();
             const daysUntilExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
             
-            planSection.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-                    <div style="width: 50px; height: 50px; background: var(--primary-gradient); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                        <i data-lucide="crown" style="width: 24px; height: 24px; color: white;"></i>
+            // Verificar se é trial
+            const isTrial = plano === 'trial';
+            
+            if (isTrial) {
+                // INTERFACE PARA TRIAL
+                planSection.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="zap" style="width: 24px; height: 24px; color: white;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0; color: var(--dark-gray);">Trial Gratuito</h4>
+                            <p style="margin: 4px 0 0; color: var(--elegant-gray); font-size: 14px;">
+                                ${daysUntilExpiry > 0 ? `Restam ${daysUntilExpiry} dias` : 'Período expirado'}
+                            </p>
+                        </div>
+                        <span class="plan-badge" style="background: ${daysUntilExpiry <= 2 ? '#FFF3CD' : '#E3F2FD'}; color: ${daysUntilExpiry <= 2 ? '#856404' : '#1565C0'}; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                            ${daysUntilExpiry <= 0 ? 'Expirado' : 'Teste Grátis'}
+                        </span>
                     </div>
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0; color: var(--dark-gray);">Plano ${planName}</h4>
-                        <p style="margin: 4px 0 0; color: var(--elegant-gray); font-size: 14px;">
-                            R$ ${price.toFixed(2).replace('.', ',')}/mês ${billing === 'annual' ? '(anual)' : ''}
+                    
+                    <div style="background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%); padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; border-left: 3px solid #667eea;">
+                        <p style="margin: 0; font-size: 14px; color: var(--dark-gray);">
+                            <i data-lucide="gift" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px; color: #667eea;"></i>
+                            <strong>Experimente todas as funcionalidades PRO</strong> sem compromisso!
                         </p>
                     </div>
-                    <span class="plan-badge" style="background: ${daysUntilExpiry <= 3 ? '#FFF3CD' : '#D4EDDA'}; color: ${daysUntilExpiry <= 3 ? '#856404' : '#155724'}; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
-                        ${daysUntilExpiry <= 0 ? 'Vencido' : 'Ativo'}
-                    </span>
-                </div>
-                
-                <div style="background: var(--light-gray); padding: 12px 16px; border-radius: 10px; margin-bottom: 16px;">
-                    <p style="margin: 0; font-size: 14px; color: var(--elegant-gray);">
-                        <i data-lucide="calendar" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px;"></i>
-                        Próxima cobrança: <strong>${expiryDate.toLocaleDateString('pt-BR')}</strong>
-                        ${daysUntilExpiry <= 3 && daysUntilExpiry > 0 ? '<span style="color: #E91E63; margin-left: 8px;">(' + daysUntilExpiry + ' dias restantes)</span>' : ''}
-                    </p>
-                </div>
-                
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <a href="./planos" class="btn btn-secondary" style="flex: 1; text-decoration: none; text-align: center;">
-                        <i data-lucide="arrow-up-circle" style="width: 16px; height: 16px;"></i> Mudar Plano
-                    </a>
-                    <a href="./planos" class="btn btn-primary" style="flex: 1; text-decoration: none; text-align: center;">
-                        <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i> Renovar
-                    </a>
-                </div>
-            `;
+                    
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <a href="./planos" class="btn btn-primary" style="flex: 1; text-decoration: none; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
+                            <i data-lucide="rocket" style="width: 16px; height: 16px;"></i> Assinar Agora
+                        </a>
+                    </div>
+                `;
+            } else {
+                // INTERFACE PARA PLANO PAGO
+                planSection.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                        <div style="width: 50px; height: 50px; background: var(--primary-gradient); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="crown" style="width: 24px; height: 24px; color: white;"></i>
+                        </div>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0; color: var(--dark-gray);">Plano ${planName}</h4>
+                            <p style="margin: 4px 0 0; color: var(--elegant-gray); font-size: 14px;">
+                                R$ ${price.toFixed(2).replace('.', ',')}/mês ${billing === 'annual' ? '(anual)' : ''}
+                            </p>
+                        </div>
+                        <span class="plan-badge" style="background: ${daysUntilExpiry <= 3 ? '#FFF3CD' : '#D4EDDA'}; color: ${daysUntilExpiry <= 3 ? '#856404' : '#155724'}; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                            ${daysUntilExpiry <= 0 ? 'Vencido' : 'Ativo'}
+                        </span>
+                    </div>
+                    
+                    <div style="background: var(--light-gray); padding: 12px 16px; border-radius: 10px; margin-bottom: 16px;">
+                        <p style="margin: 0; font-size: 14px; color: var(--elegant-gray);">
+                            <i data-lucide="calendar" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 6px;"></i>
+                            Próxima cobrança: <strong>${expiryDate.toLocaleDateString('pt-BR')}</strong>
+                            ${daysUntilExpiry <= 3 && daysUntilExpiry > 0 ? '<span style="color: #E91E63; margin-left: 8px;">(' + daysUntilExpiry + ' dias restantes)</span>' : ''}
+                        </p>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <a href="./planos" class="btn btn-secondary" style="flex: 1; text-decoration: none; text-align: center;">
+                            <i data-lucide="arrow-up-circle" style="width: 16px; height: 16px;"></i> Mudar Plano
+                        </a>
+                        <a href="./planos" class="btn btn-primary" style="flex: 1; text-decoration: none; text-align: center;">
+                            <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i> Renovar
+                        </a>
+                    </div>
+                `;
+            }
             
             setTimeout(() => {
                 lucide.createIcons({ nodes: [...planSection.querySelectorAll('[data-lucide]')] });
