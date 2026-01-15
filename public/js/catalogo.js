@@ -654,27 +654,6 @@
         }
     }
 
-    // Função para atualizar informações de estoque
-            btn.addEventListener('click', () => {
-                container.querySelectorAll('[data-var1]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                selectedVar1 = btn.dataset.var1;
-                selectedVar2 = null; // Resetar tamanho
-                quantity = 1;
-                document.getElementById('qty-value').textContent = '1';
-                
-                // Mostrar grupo de tamanhos
-                document.getElementById('var2-group').style.display = 'block';
-                
-                // Trocar foto quando selecionar a cor
-                updateProductPhoto(selectedVar1);
-                
-                // Atualizar tamanhos disponíveis para essa cor
-                updateVar2Options();
-            });
-        });
-    }
-
     function updateStockInfo() {
         const stockInfo = document.getElementById('stock-info');
         const stockText = document.getElementById('stock-text');
