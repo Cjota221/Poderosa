@@ -3,7 +3,18 @@ const LucroCertoApp = (function() {
     'use strict';
 
     //==================================
-    // 0. STORAGE WRAPPER SEGURO
+    // 0. UUID GENERATOR (para compatibilidade com Supabase)
+    //==================================
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    //==================================
+    // 1. STORAGE WRAPPER SEGURO
     //==================================
     const Storage = {
         set(key, value) {
@@ -2709,7 +2720,7 @@ const LucroCertoApp = (function() {
                 const description = hasDescription ? (document.getElementById('product-description')?.value.trim() || '') : '';
                 
                 const productData = {
-                    id: editingProductId || `prod_${Date.now()}`,
+                    id: editingProductId || generateUUID(),
                     name: productName,
                     baseCost: productCost,
                     profitMargin: profitMargin,
@@ -5676,7 +5687,7 @@ const LucroCertoApp = (function() {
     const ProductManager = {
          getNewProductTemplate() {
             return { 
-                id: `prod_${Date.now()}`, 
+                id: generateUUID(), 
                 name: '', 
                 baseCost: 0, 
                 finalPrice: 0, 
