@@ -4250,11 +4250,11 @@ const LucroCertoApp = (function() {
                                 </div>
                                 <div class="sale-details">
                                     ${s.clientName ? `<span class="sale-client"><i data-lucide="user"></i> ${s.clientName}</span>` : ''}
-                                    <span class="sale-items">${s.items.length} ${s.items.length === 1 ? 'item' : 'itens'}</span>
+                                    <span class="sale-items">${(s.items || s.products || []).length} ${(s.items || s.products || []).length === 1 ? 'item' : 'itens'}</span>
                                     <span class="sale-payment"><i data-lucide="credit-card"></i> ${s.paymentMethod || 'Não informado'}</span>
                                 </div>
                                 <div class="sale-products">
-                                    ${s.items.map(item => `<span class="sale-product-tag">${item.quantity}x ${item.productName}</span>`).join('')}
+                                    ${(s.items || s.products || []).map(item => `<span class="sale-product-tag">${item.quantity || item.quantidade || 0}x ${item.productName || item.product_name || 'Produto'}</span>`).join('')}
                                 </div>
                             </div>
                         `;
@@ -5164,7 +5164,7 @@ const LucroCertoApp = (function() {
                 };
                 
                 // PRIMEIRO: Salvar venda no Supabase imediatamente
-                const saveResult = await SupabaseClient.saveSaleToSupabase(sale);
+                const saveResult = await StateManager.saveSaleToSupabase(sale);
                 
                 if (saveResult.success) {
                     console.log('✅ Venda salva no Supabase com sucesso!');
@@ -6085,6 +6085,27 @@ const LucroCertoApp = (function() {
             });
             console.log('💰 Vendas do banco:', salesResult.data?.length || 0);
             
+            // Buscar itens das vendas para cada venda
+            const salesWithItems = [];
+            if (salesResult.data && salesResult.data.length > 0) {
+                for (const sale of salesResult.data) {
+                    const itemsResult = await supabase.select('itens_venda', {
+                        filters: { venda_id: sale.id }
+                    });
+                    
+                    salesWithItems.push({
+                        ...sale,
+                        items: (itemsResult.data || []).map(item => ({
+                            productId: item.produto_id,
+                            productName: item.produto_nome,
+                            quantity: item.quantidade,
+                            price: parseFloat(item.preco_unitario),
+                            total: parseFloat(item.subtotal)
+                        }))
+                    });
+                }
+            }
+            
             // Buscar dados do usuário
             const userResult = await supabase.select('usuarios', { 
                 filters: { id: dbUserId },
@@ -6120,15 +6141,17 @@ const LucroCertoApp = (function() {
                     notes: c.notas,
                     tags: c.tags || []
                 })),
-                sales: (salesResult.data || []).map(s => ({
+                sales: salesWithItems.map(s => ({
                     id: s.id,
                     clientId: s.cliente_id,
-                    products: s.produtos || [],
-                    total: parseFloat(s.valor_total),
-                    status: s.status,
-                    paymentMethod: s.metodo_pagamento,
+                    clientName: s.cliente_nome || 'Cliente',
+                    items: s.items || [],
+                    products: s.items || [], // Compatibilidade dupla
+                    total: parseFloat(s.valor_final || s.valor_total),
+                    status: s.status_pagamento || 'concluida',
+                    paymentMethod: s.forma_pagamento || 'não informado',
                     date: s.data_venda,
-                    notes: s.notas
+                    notes: s.observacoes || ''
                 })),
                 _version: Date.now(),
                 _source: 'supabase'
