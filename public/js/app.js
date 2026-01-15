@@ -3428,6 +3428,12 @@ const LucroCertoApp = (function() {
                     </div>
                 </div>
                 
+                <!-- Botão Salvar Alterações -->
+                <button class="btn btn-primary btn-full" id="save-catalog-btn" style="margin: 20px 0;">
+                    <i data-lucide="save" style="width: 18px; height: 18px;"></i> 
+                    Salvar Alterações
+                </button>
+                
                 <!-- Dicas -->
                 <div class="card tip-card">
                     <h3><i data-lucide="lightbulb"></i> Dicas para vender mais</h3>
