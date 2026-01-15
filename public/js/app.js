@@ -5058,7 +5058,7 @@ const LucroCertoApp = (function() {
             }
             
             // Finalizar venda
-            document.querySelector('[data-action="finish-sale"]')?.addEventListener('click', () => {
+            document.querySelector('[data-action="finish-sale"]')?.addEventListener('click', async () => {
                 if (saleItems.length === 0) {
                     alert('❌ Adicione pelo menos um produto à venda');
                     return;
@@ -5144,7 +5144,7 @@ const LucroCertoApp = (function() {
                 // Se é cliente novo (não selecionou do dropdown), cadastra
                 if (!clientId && clientName) {
                     const newClient = {
-                        id: `cli_${Date.now()}`,
+                        id: generateUUID(), // 🎯 USAR UUID em vez de timestamp
                         name: clientName,
                         phone: clientPhone,
                         email: '',
