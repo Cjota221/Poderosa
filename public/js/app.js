@@ -1156,7 +1156,33 @@ const LucroCertoApp = (function() {
             
             // 🧪 CARD DE TRIAL - Mostrar dias restantes
             if (isTrial && authData.plano === 'trial') {
-                const daysLeft = authData.daysLeft || 7;
+                // 🎯 CALCULAR DIAS RESTANTES DINAMICAMENTE
+                let daysLeft = 7;
+                const trialEndDate = Storage.get('trial_end');
+                const trialStartDate = Storage.get('trial_start');
+                
+                if (trialEndDate) {
+                    // Usar data de expiração do banco
+                    const endDate = new Date(trialEndDate);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas dias
+                    const diffTime = endDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    daysLeft = Math.max(0, diffDays);
+                } else if (trialStartDate) {
+                    // Fallback: calcular baseado no início
+                    const startDate = new Date(trialStartDate);
+                    startDate.setHours(0, 0, 0, 0);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const diffTime = today - startDate;
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    daysLeft = Math.max(0, 7 - diffDays);
+                } else if (authData.daysLeft !== undefined) {
+                    daysLeft = authData.daysLeft;
+                }
+                
+                console.log('📊 Dashboard - Dias restantes do trial:', daysLeft);
                 
                 let trialColor, trialIcon, trialMessage, trialUrgency;
                 
@@ -6051,7 +6077,19 @@ const LucroCertoApp = (function() {
         if (isTrialAccess) {
             console.log('🧪 Acesso via trial detectado - ativando modo trial');
             Storage.set('trial', 'true');
-            Storage.set('trial_start', new Date().toISOString());
+            
+            // Só salvar datas se ainda não existirem (evita resetar trial)
+            if (!Storage.get('trial_start')) {
+                const startDate = new Date();
+                const endDate = new Date();
+                endDate.setDate(endDate.getDate() + 7);
+                
+                Storage.set('trial_start', startDate.toISOString());
+                Storage.set('trial_end', endDate.toISOString());
+                console.log('📅 Trial iniciado em:', startDate.toLocaleDateString('pt-BR'));
+                console.log('📅 Trial expira em:', endDate.toLocaleDateString('pt-BR'));
+            }
+            
             // Limpar parâmetro da URL
             window.history.replaceState({}, document.title, window.location.pathname);
         }
