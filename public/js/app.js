@@ -428,6 +428,11 @@ const LucroCertoApp = (function() {
         async syncClients(userId, clients) {
             for (const client of clients) {
                 try {
+                    // ⚠️ VALIDAR UUID: Pular clientes com IDs antigos  
+                    if (!client.id || !client.id.includes('-') || client.id.startsWith('cli_')) {
+                        console.log('⚠️ Pulando cliente com ID inválido:', client.id);
+                        continue;
+                    }
                     const existing = await supabase.select('clientes', { 
                         filters: { usuario_id: userId, id: client.id },
                         limit: 1
@@ -462,6 +467,12 @@ const LucroCertoApp = (function() {
         async syncSales(userId, sales) {
             for (const sale of sales) {
                 try {
+                    // ⚠️ VALIDAR UUID: Pular vendas com IDs antigos
+                    if (!sale.id || !sale.id.includes('-') || sale.id.startsWith('sale_')) {
+                        console.log('⚠️ Pulando venda com ID inválido:', sale.id);
+                        continue;
+                    }
+                    
                     const existing = await supabase.select('vendas', { 
                         filters: { usuario_id: userId, id: sale.id },
                         limit: 1
