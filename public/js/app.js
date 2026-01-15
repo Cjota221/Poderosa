@@ -3704,8 +3704,20 @@ const LucroCertoApp = (function() {
                             cor_catalogo: user.catalogColor || 'pink'
                         };
                         
+                        console.log('🎨 Salvando catálogo com dados:', {
+                            slug: catalogData.slug,
+                            cor: catalogData.cor_catalogo,
+                            temLogo: !!catalogData.logo_catalogo,
+                            logoTamanho: catalogData.logo_catalogo ? catalogData.logo_catalogo.length : 0
+                        });
+                        console.log('👤 Estado do usuário:', {
+                            catalogLogo: user.catalogLogo ? 'TEM (' + user.catalogLogo.substring(0, 50) + '...)' : 'NÃO TEM',
+                            catalogColor: user.catalogColor
+                        });
+                        
                         // 💾 SALVAR NO SUPABASE
-                        await this.saveCatalogSettings(catalogData);
+                        const saveResult = await this.saveCatalogSettings(catalogData);
+                        console.log('💾 Resultado do salvamento:', saveResult);
                         
                         // Atualizar estado com slug
                         const updatedUser = { ...user, slug };
@@ -3744,7 +3756,13 @@ const LucroCertoApp = (function() {
             const authData = Storage.get('auth', {});
             let userId = authData.userId || Storage.get('user_id');
             
-            console.log('💾 Salvando configurações do catálogo:', data);
+            console.log('💾 [saveCatalogSettings] Iniciando salvamento...');
+            console.log('💾 [saveCatalogSettings] Dados recebidos:', {
+                slug: data.slug,
+                cor: data.cor_catalogo,
+                temLogo: !!data.logo_catalogo,
+                logoTamanho: data.logo_catalogo ? data.logo_catalogo.length : 0
+            });
             console.log('📧 Email do usuário:', authData.email);
             console.log('🆔 User ID inicial:', userId);
             
@@ -3763,22 +3781,27 @@ const LucroCertoApp = (function() {
                         if (userResult.data && userResult.data.length > 0) {
                             userId = userResult.data[0].id;
                             console.log('✅ ID encontrado pelo email:', userId);
+                        } else {
+                            console.error('❌ Usuário NÃO encontrado pelo email:', authData.email);
+                            return { success: false, error: 'Usuário não encontrado' };
                         }
                     }
                     
                     if (!userId) {
-                        throw new Error('ID do usuário não encontrado');
+                        console.error('❌ Nenhum userId disponível!');
+                        return { success: false, error: 'ID do usuário não encontrado' };
                     }
                     
-                    console.log('💾 Atualizando usuário:', userId, 'com dados:', data);
+                    console.log('💾 Atualizando usuário:', userId);
+                    console.log('💾 Dados para update:', JSON.stringify(data).substring(0, 200));
                     
                     const result = await supabase.update('usuarios', userId, data);
                     
                     console.log('📊 Resultado do update:', result);
                     
-                    if (result.error) {
+                    if (!result.success || result.error) {
                         console.error('❌ Erro ao salvar no Supabase:', result.error);
-                        throw new Error(result.error);
+                        return { success: false, error: result.error };
                     }
                     
                     // Verificar se realmente salvou
@@ -3787,15 +3810,34 @@ const LucroCertoApp = (function() {
                         limit: 1
                     });
                     
-                    console.log('🔍 Verificação após salvar:', verificacao.data?.[0]);
-                    console.log('✅ Configurações salvas no banco!');
+                    const dadosSalvos = verificacao.data?.[0];
+                    console.log('🔍 Verificação após salvar:', {
+                        slug: dadosSalvos?.slug,
+                        cor: dadosSalvos?.cor_catalogo,
+                        temLogo: !!dadosSalvos?.logo_catalogo
+                    });
+                    
+                    if (dadosSalvos?.cor_catalogo === data.cor_catalogo) {
+                        console.log('✅ COR salva corretamente!');
+                    } else {
+                        console.error('❌ COR NÃO foi salva! Esperado:', data.cor_catalogo, 'Recebido:', dadosSalvos?.cor_catalogo);
+                    }
+                    
+                    if (!!data.logo_catalogo === !!dadosSalvos?.logo_catalogo) {
+                        console.log('✅ LOGO salvo corretamente!');
+                    } else {
+                        console.error('❌ LOGO NÃO foi salvo!');
+                    }
+                    
+                    return { success: true, data: dadosSalvos };
                     
                 } catch (error) {
                     console.error('❌ Erro no saveCatalogSettings:', error);
-                    throw error;
+                    return { success: false, error: error.message };
                 }
             } else {
                 console.warn('⚠️ Supabase não disponível - salvando apenas localmente');
+                return { success: false, error: 'Supabase não disponível' };
             }
         },
 
