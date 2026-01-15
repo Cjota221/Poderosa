@@ -242,12 +242,18 @@ class SupabaseClient {
                 url += `limit=${options.limit}&`;
             }
 
+            console.log(`[Supabase] SELECT ${table} URL:`, url);
+
             const response = await fetch(url, {
                 method: 'GET',
                 headers: this.getHeaders()
             });
 
+            console.log(`[Supabase] SELECT ${table} status:`, response.status);
+
             const data = await response.json();
+            
+            console.log(`[Supabase] SELECT ${table} result:`, data.length || 0, 'registros');
             
             if (data.error) {
                 throw new Error(data.message || 'Erro ao buscar dados');
