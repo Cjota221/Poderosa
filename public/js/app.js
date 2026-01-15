@@ -546,58 +546,27 @@ const LucroCertoApp = (function() {
                 
                 // Buscar userId pelo email
                 const userResult = await supabase.select('usuarios', {
-                    filters: { email: authData.email },
+                    filters: { email: authData.email.toLowerCase() },
                     limit: 1
                 });
                 
                 if (!userResult.data || userResult.data.length === 0) {
-                    console.log('⚠️ Usuário não encontrado no banco, salvando apenas local');
-                    return { success: false, local: true };
+                    console.log('⚠️ Usuário não encontrado, usando ID direto do Storage');
+                    const directUserId = Storage.get('user_id') || '7fd505a4-7313-43c9-baef-3fc82117bf8d';
+                    return await this.saveSaleDirectly(sale, directUserId);
                 }
                 
                 const userId = userResult.data[0].id;
+                console.log(`[saveSaleToSupabase] Usuário encontrado com ID: ${userId}. Chamando saveSaleDirectly.`);
                 
-                // Salvar dados da venda principal
-                const saleData = {
-                    id: sale.id,
-                    usuario_id: userId,
-                    cliente_id: sale.clientId || null,
-                    data_venda: sale.date,
-                    valor_total: sale.subtotal || sale.total,
-                    valor_desconto: sale.discount || 0,
-                    valor_final: sale.total,
-                    custo_total: 0,
-                    lucro_total: sale.total,
-                    numero_venda: Date.now(),
-                    forma_pagamento: sale.paymentMethod || 'dinheiro',
-                    status_pagamento: sale.status || 'concluida',
-                    observacoes: sale.notes || ''
-                };
-                
-                const saleResult = await supabase.insert('vendas', saleData);
-                
-                if (saleResult.success && sale.products) {
-                    // Salvar itens da venda
-                    for (const product of sale.products) {
-                        const itemData = {
-                            venda_id: sale.id,
-                            produto_id: product.product_id || null,
-                            produto_nome: product.product_name || 'Produto',
-                            quantidade: product.quantity || 1,
-                            preco_unitario: product.price || 0,
-                            subtotal: product.total || (product.price * product.quantity)
-                        };
-                        
-                        await supabase.insert('itens_venda', itemData);
-                    }
-                }
-                
-                console.log('✅ Venda salva no Supabase:', sale.id);
-                return { success: true, data: saleResult.data };
+                // Agora que temos o userId, usamos a função centralizada para salvar.
+                return await this.saveSaleDirectly(sale, userId);
                 
             } catch (error) {
                 console.error('❌ Erro ao salvar venda no Supabase:', error);
-                return { success: false, error: error.message };
+                // Fallback para salvar localmente em caso de erro inesperado na lógica principal
+                DataManager.save('sales', StateManager.getState().sales);
+                return { success: false, error: error.message, local: true };
             }
         },
         
@@ -3670,24 +3639,58 @@ const LucroCertoApp = (function() {
         
         async saveCatalogSettings(data) {
             const authData = Storage.get('auth', {});
-            const userId = authData.userId || Storage.get('user_id');
-            
-            if (!userId) {
-                throw new Error('Usuário não encontrado');
-            }
+            let userId = authData.userId || Storage.get('user_id');
             
             console.log('💾 Salvando configurações do catálogo:', data);
+            console.log('📧 Email do usuário:', authData.email);
+            console.log('🆔 User ID inicial:', userId);
             
             // Salvar no Supabase
             if (window.supabase) {
-                const result = await supabase.update('usuarios', userId, data);
-                
-                if (result.error) {
-                    console.error('Erro ao salvar no Supabase:', result.error);
-                    throw result.error;
+                try {
+                    // 🔑 Buscar ID correto pelo email (mais confiável)
+                    if (authData.email) {
+                        const userResult = await supabase.select('usuarios', {
+                            filters: { email: authData.email.toLowerCase() },
+                            limit: 1
+                        });
+                        
+                        console.log('🔍 Resultado busca por email:', userResult);
+                        
+                        if (userResult.data && userResult.data.length > 0) {
+                            userId = userResult.data[0].id;
+                            console.log('✅ ID encontrado pelo email:', userId);
+                        }
+                    }
+                    
+                    if (!userId) {
+                        throw new Error('ID do usuário não encontrado');
+                    }
+                    
+                    console.log('💾 Atualizando usuário:', userId, 'com dados:', data);
+                    
+                    const result = await supabase.update('usuarios', userId, data);
+                    
+                    console.log('📊 Resultado do update:', result);
+                    
+                    if (result.error) {
+                        console.error('❌ Erro ao salvar no Supabase:', result.error);
+                        throw new Error(result.error);
+                    }
+                    
+                    // Verificar se realmente salvou
+                    const verificacao = await supabase.select('usuarios', {
+                        filters: { id: userId },
+                        limit: 1
+                    });
+                    
+                    console.log('🔍 Verificação após salvar:', verificacao.data?.[0]);
+                    console.log('✅ Configurações salvas no banco!');
+                    
+                } catch (error) {
+                    console.error('❌ Erro no saveCatalogSettings:', error);
+                    throw error;
                 }
-                
-                console.log('✅ Configurações salvas no banco!');
             } else {
                 console.warn('⚠️ Supabase não disponível - salvando apenas localmente');
             }
