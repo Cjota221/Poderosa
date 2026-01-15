@@ -535,6 +535,70 @@ const LucroCertoApp = (function() {
             }
         },
         
+        // Função que realmente salva a venda no banco
+        async saveSaleDirectly(sale, userId) {
+            console.log('[saveSaleDirectly] Iniciando salvamento:', { saleId: sale.id, userId });
+            
+            try {
+                // Preparar dados da venda
+                const saleData = {
+                    id: sale.id,
+                    usuario_id: userId,
+                    cliente_id: sale.clientId || null,
+                    data_venda: sale.date || new Date().toISOString(),
+                    valor_total: sale.subtotal || sale.total || 0,
+                    valor_desconto: sale.discount || 0,
+                    valor_final: sale.total || 0,
+                    custo_total: 0,
+                    lucro_total: sale.total || 0,
+                    numero_venda: sale.numero || Date.now(),
+                    forma_pagamento: sale.paymentMethod || 'dinheiro',
+                    status_pagamento: sale.status || 'concluida',
+                    observacoes: sale.notes || ''
+                };
+                
+                console.log('[saveSaleDirectly] Dados da venda:', saleData);
+                
+                // Inserir venda
+                const saleResult = await supabase.insert('vendas', saleData);
+                console.log('[saveSaleDirectly] Resultado insert venda:', saleResult);
+                
+                if (!saleResult.success) {
+                    console.error('[saveSaleDirectly] Erro ao inserir venda:', saleResult.error);
+                    return { success: false, error: saleResult.error };
+                }
+                
+                // Salvar itens da venda
+                const items = sale.items || sale.products || [];
+                console.log('[saveSaleDirectly] Itens para salvar:', items.length);
+                
+                for (const item of items) {
+                    const itemData = {
+                        venda_id: sale.id,
+                        produto_id: item.product_id || item.productId || null,
+                        produto_nome: item.product_name || item.name || 'Produto',
+                        quantidade: item.quantity || 1,
+                        preco_unitario: item.price || 0,
+                        subtotal: item.total || (item.price * item.quantity) || 0
+                    };
+                    
+                    console.log('[saveSaleDirectly] Inserindo item:', itemData);
+                    const itemResult = await supabase.insert('itens_venda', itemData);
+                    
+                    if (!itemResult.success) {
+                        console.error('[saveSaleDirectly] Erro ao inserir item:', itemResult.error);
+                    }
+                }
+                
+                console.log('[saveSaleDirectly] ✅ Venda salva com sucesso!');
+                return { success: true, data: saleResult.data };
+                
+            } catch (error) {
+                console.error('[saveSaleDirectly] ❌ Erro:', error);
+                return { success: false, error: error.message };
+            }
+        },
+        
         // Nova função para salvar venda individual corretamente
         async saveSaleToSupabase(sale) {
             try {
