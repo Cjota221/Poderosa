@@ -327,6 +327,33 @@ class SupabaseClient {
             return { success: false, error: error.message };
         }
     }
+
+    // UPSERT (insert ou update)
+    async upsert(table, data) {
+        try {
+            const dataArray = Array.isArray(data) ? data : [data];
+            
+            const response = await fetch(`${this.url}/rest/v1/${table}`, {
+                method: 'POST',
+                headers: {
+                    ...this.getHeaders(),
+                    'Prefer': 'resolution=merge-duplicates,return=representation'
+                },
+                body: JSON.stringify(dataArray)
+            });
+
+            const result = await response.json();
+            
+            if (response.status >= 400) {
+                throw new Error(result.message || 'Erro ao fazer upsert');
+            }
+
+            return { success: true, data: result };
+        } catch (error) {
+            console.error(`Erro ao fazer upsert em ${table}:`, error);
+            return { success: false, error: error.message };
+        }
+    }
 }
 
 // Instância global

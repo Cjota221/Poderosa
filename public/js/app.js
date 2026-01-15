@@ -337,11 +337,9 @@ const LucroCertoApp = (function() {
                 }));
                 
                 // ✅ UPSERT EM BATCH - 1 query para todos os produtos
-                const { data, error } = await supabase
-                    .from('produtos')
-                    .upsert(productsData);
+                const { success, data, error } = await supabase.upsert('produtos', productsData);
                 
-                if (error) {
+                if (!success || error) {
                     console.error('❌ Erro ao fazer upsert de produtos:', error);
                     // Fallback: tentar um por um
                     console.log('⚠️ Tentando sync individual como fallback...');
@@ -382,10 +380,8 @@ const LucroCertoApp = (function() {
                         visivel_catalogo: true
                     };
                     
-                    const { data, error } = await supabase
-                        .from('produtos')
-                        .upsert([productData]);
-                    if (error) {
+                    const { success, data, error } = await supabase.upsert('produtos', [productData]);
+                    if (!success || error) {
                         errors++;
                         console.error('❌ Erro:', product.name, error.message);
                     } else {
