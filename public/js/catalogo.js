@@ -251,6 +251,9 @@
                         <h3 class="product-card-name">${product.name}</h3>
                         ${variations ? `<p class="product-card-variations">${variations}</p>` : ''}
                         <p class="product-card-price">R$ ${product.finalPrice.toFixed(2)}</p>
+                        <button class="btn-ver-produto" onclick="window.catalogApp.openProductModal('${product.id}')">
+                            <i data-lucide="eye" style="width:16px;height:16px;"></i> Ver Produto
+                        </button>
                     </div>
                 </div>
             `;
@@ -1102,4 +1105,11 @@
     } else {
         init();
     }
+
+    // ==================================
+    // EXPORTAR FUNÇÕES GLOBAIS
+    // ==================================
+    window.catalogApp = {
+        openProductModal
+    };
 })();

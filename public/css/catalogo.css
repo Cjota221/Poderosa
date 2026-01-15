@@ -273,6 +273,7 @@ body {
     font-size: 18px;
     font-weight: 700;
     color: var(--primary);
+    margin-bottom: 12px;
 }
 
 .product-card-old-price {
@@ -281,6 +282,35 @@ body {
     text-decoration: line-through;
     margin-left: 6px;
 }
+
+/* Botão Ver Produto */
+.btn-ver-produto {
+    width: 100%;
+    padding: 10px 16px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-ver-produto:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-ver-produto:active {
+    transform: translateY(0);
+}
+
 
 /* ==========================================
    ESTADO VAZIO
