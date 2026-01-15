@@ -552,102 +552,107 @@
     }
 
     function renderCombinedVariations(container) {
-        const var1 = currentProduct.variations[0];
-        const var2 = currentProduct.variations[1];
-        const variationImages = currentProduct.variationImages || {};
-        const productImages = currentProduct.images || (currentProduct.imageUrl ? [currentProduct.imageUrl] : []);
+        const var1 = currentProduct.variations[0]; // COR
+        const var2 = currentProduct.variations[1]; // TAMANHO
         
-        let selectedVar1 = null;
-        let selectedVar2 = null;
+        let selectedVar1 = null; // Cor selecionada
+        let selectedVar2 = null; // Tamanho selecionado
         
-        // Função para verificar se uma cor tem pelo menos um tamanho disponível
-        const hasAnyStockForVar1 = (opt1) => {
-            return var2.options.some(opt2 => {
-                const key = `${opt1}-${opt2}`;
-                return (currentProduct.stock[key] || 0) > 0;
+        // HTML com layout limpo e separado
+        container.innerHTML = `
+            <div class="variation-section">
+                <label class="variation-label">${var1.name.toUpperCase()}</label>
+                <div class="variation-buttons" id="var1-options"></div>
+            </div>
+            
+            <div class="variation-section" id="var2-section" style="display: none;">
+                <label class="variation-label">${var2.name.toUpperCase()}</label>
+                <div class="variation-buttons" id="var2-options"></div>
+            </div>
+        `;
+        
+        // Renderizar opções da primeira variação (COR)
+        const var1Container = document.getElementById('var1-options');
+        var1Container.innerHTML = var1.options.map(opt1 => {
+            const key1 = getOptionKey(opt1);
+            const label1 = getOptionLabel(opt1);
+            
+            // Verificar se tem estoque em algum tamanho
+            const hasStock = var2.options.some(opt2 => {
+                const key2 = getOptionKey(opt2);
+                return (currentProduct.stock[`${key1}-${key2}`] || 0) > 0;
             });
-        };
+            
+            return `
+                <button class="variation-option ${!hasStock ? 'disabled' : ''}" 
+                        data-var1="${key1}"
+                        ${!hasStock ? 'disabled' : ''}>
+                    ${label1}
+                </button>
+            `;
+        }).join('');
         
-        // Função para atualizar os tamanhos disponíveis baseado na cor selecionada
-        const updateVar2Options = () => {
+        // Eventos da primeira variação (COR)
+        var1Container.querySelectorAll('[data-var1]:not(.disabled)').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Marcar cor selecionada
+                var1Container.querySelectorAll('[data-var1]').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedVar1 = btn.dataset.var1;
+                selectedVar2 = null;
+                
+                // Mostrar seção de tamanhos
+                document.getElementById('var2-section').style.display = 'block';
+                
+                // Atualizar tamanhos disponíveis
+                renderVar2Options();
+            });
+        });
+        
+        // Função para renderizar tamanhos baseado na cor selecionada
+        function renderVar2Options() {
+            if (!selectedVar1) return;
+            
             const var2Container = document.getElementById('var2-options');
-            if (!var2Container || !selectedVar1) return;
-
             var2Container.innerHTML = var2.options.map(opt2 => {
                 const key2 = getOptionKey(opt2);
-                const key = `${selectedVar1}-${key2}`;
                 const label2 = getOptionLabel(opt2);
-                const stock = currentProduct.stock[key] || 0;
-                const outOfStock = stock === 0;
-
+                const combinedKey = `${selectedVar1}-${key2}`;
+                const stock = currentProduct.stock[combinedKey] || 0;
+                
                 return `
-                    <button class="variation-btn ${outOfStock ? 'out-of-stock' : ''} ${selectedVar2 === key2 ? 'active' : ''}" 
+                    <button class="variation-option ${stock === 0 ? 'disabled' : ''}" 
                             data-var2="${key2}"
-                            ${outOfStock ? 'disabled' : ''}>
-                        ${label2}${stock > 0 && stock <= 3 ? ` (${stock})` : ''}
+                            data-stock="${stock}"
+                            ${stock === 0 ? 'disabled' : ''}>
+                        ${label2}
                     </button>
                 `;
             }).join('');
             
-            // Re-bind eventos
-            var2Container.querySelectorAll('[data-var2]:not(.out-of-stock)').forEach(btn => {
+            // Eventos dos tamanhos
+            var2Container.querySelectorAll('[data-var2]:not(.disabled)').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    var2Container.querySelectorAll('[data-var2]').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
+                    // Marcar tamanho selecionado
+                    var2Container.querySelectorAll('[data-var2]').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
                     selectedVar2 = btn.dataset.var2;
+                    
+                    // Atualizar seleção combinada
+                    selectedVariation = `${selectedVar1}-${selectedVar2}`;
                     quantity = 1;
                     document.getElementById('qty-value').textContent = '1';
-                    updateCombinedSelection();
+                    updateStockInfo();
+                    
+                    // Trocar foto se houver
+                    const variationImages = currentProduct.variationImages || {};
+                    if (variationImages[selectedVar1] !== undefined) {
+                        goToSlide(variationImages[selectedVar1]);
+                    }
                 });
             });
-            
-            // Auto-selecionar primeiro tamanho disponível
-            if (!selectedVar2 || (currentProduct.stock[`${selectedVar1}-${selectedVar2}`] || 0) === 0) {
-                const firstAvailable = var2.options.find(opt2 => (currentProduct.stock[`${selectedVar1}-${getOptionKey(opt2)}`] || 0) > 0);
-                if (firstAvailable) {
-                    selectedVar2 = getOptionKey(firstAvailable);
-                    var2Container.querySelector(`[data-var2="${selectedVar2}"]`)?.classList.add('active');
-                } else {
-                    selectedVar2 = null;
-                }
-            }
-            
-            updateCombinedSelection();
-        };
-        
-        const updateCombinedSelection = () => {
-            if (selectedVar1 && selectedVar2) {
-                selectedVariation = `${selectedVar1}-${selectedVar2}`;
-                updateStockInfo();
-            } else if (selectedVar1) {
-                selectedVariation = null;
-                updateStockInfo();
-            } else {
-                selectedVariation = null;
-                updateStockInfo();
-            }
-        };
-        
-        // Renderizar HTML inicial
-        container.innerHTML = `
-            <div class="variation-group">
-                <p class="variation-group-label">${var1.name}</p>
-                <div class="variation-options-inner" id="var1-options">
-                    ${var1.options.map(opt => {
-                        const key1 = getOptionKey(opt);
-                        const label1 = getOptionLabel(opt);
-                        const hasLinkedPhoto = variationImages[key1] !== undefined && productImages[variationImages[key1]];
-                        const hasStock = hasAnyStockForVar1(key1);
-                        return `
-                            <button class="variation-btn ${!hasStock ? 'out-of-stock' : ''}" 
-                                    data-var1="${key1}" 
-                                    data-photo-idx="${hasLinkedPhoto ? variationImages[key1] : ''}"
-                                    ${!hasStock ? 'disabled' : ''}>
-                                ${label1}
-                            </button>
-                        `;
-                    }).join('')}
-                </div>
+        }
+    }
             </div>
             <div class="variation-group" id="var2-group" style="display: none;">
                 <p class="variation-group-label">${var2.name}</p>
@@ -705,7 +710,6 @@
         if (currentProduct.variationType === 'none') {
             stock = currentProduct.stock.total || 0;
         } else if (selectedVariation) {
-            // Para variações combinadas, a chave usa "-" como separador
             stock = currentProduct.stock[selectedVariation] || 0;
         }
         
@@ -713,22 +717,17 @@
         
         if (!selectedVariation && currentProduct.variationType !== 'none') {
             stockInfo.classList.add('waiting');
-            stockText.textContent = 'Selecione as opções acima';
+            stockText.innerHTML = 'Selecione as opções acima';
             addBtn.disabled = true;
             addBtn.textContent = 'Selecione uma opção';
         } else if (stock === 0) {
             stockInfo.classList.add('out-of-stock');
-            stockText.textContent = 'Produto esgotado';
+            stockText.innerHTML = '<i data-lucide="x-circle"></i> Produto esgotado';
             addBtn.disabled = true;
             addBtn.textContent = 'Esgotado';
-        } else if (stock <= 3) {
-            stockInfo.classList.add('low-stock');
-            stockText.textContent = `Últimas ${stock} unidades!`;
-            addBtn.disabled = false;
-            addBtn.innerHTML = '<i data-lucide="shopping-cart"></i> Adicionar ao Carrinho';
         } else {
             stockInfo.classList.add('in-stock');
-            stockText.textContent = `${stock} disponíveis`;
+            stockText.innerHTML = `<i data-lucide="package"></i> ${stock} disponíveis`;
             addBtn.disabled = false;
             addBtn.innerHTML = '<i data-lucide="shopping-cart"></i> Adicionar ao Carrinho';
         }
