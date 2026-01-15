@@ -470,25 +470,123 @@ const LucroCertoApp = (function() {
                     const saleData = {
                         usuario_id: userId,
                         cliente_id: sale.clientId || null,
-                        produtos: sale.products || [],
-                        valor_total: sale.total,
-                        status: sale.status || 'concluida',
-                        metodo_pagamento: sale.paymentMethod || 'dinheiro',
                         data_venda: sale.date,
-                        notas: sale.notes || ''
+                        valor_total: sale.total,
+                        valor_desconto: sale.discount || 0,
+                        valor_final: sale.total,
+                        custo_total: 0, // Será calculado baseado nos produtos
+                        lucro_total: sale.total, // Será calculado após custo
+                        numero_venda: sale.numero || Date.now(),
+                        forma_pagamento: sale.paymentMethod || 'dinheiro',
+                        status_pagamento: sale.status || 'concluida',
+                        observacoes: sale.notes || ''
                     };
                     
+                    let saleId;
                     if (existing.data && existing.data.length > 0) {
                         await supabase.update('vendas', existing.data[0].id, saleData);
+                        saleId = existing.data[0].id;
                         console.log('✅ Venda atualizada');
                     } else {
                         saleData.id = sale.id;
-                        await supabase.insert('vendas', saleData);
+                        const result = await supabase.insert('vendas', saleData);
+                        saleId = sale.id;
                         console.log('✅ Venda criada');
+                    }
+                    
+                    // Salvar itens da venda na tabela itens_venda
+                    if (sale.products && sale.products.length > 0) {
+                        for (const product of sale.products) {
+                            const itemData = {
+                                venda_id: saleId,
+                                produto_id: product.product_id || null,
+                                produto_nome: product.product_name,
+                                quantidade: product.quantity,
+                                preco_unitario: product.price,
+                                subtotal: product.total
+                            };
+                            
+                            // Verificar se item já existe
+                            const existingItem = await supabase.select('itens_venda', {
+                                filters: { venda_id: saleId, produto_id: product.product_id }
+                            });
+                            
+                            if (existingItem.data && existingItem.data.length > 0) {
+                                await supabase.update('itens_venda', existingItem.data[0].id, itemData);
+                            } else {
+                                await supabase.insert('itens_venda', itemData);
+                            }
+                        }
                     }
                 } catch (error) {
                     console.error('❌ Erro ao sincronizar venda:', error);
                 }
+            }
+        },
+        
+        // Nova função para salvar venda individual corretamente
+        async saveSaleToSupabase(sale) {
+            try {
+                const authData = Storage.get('auth', {});
+                if (!authData?.email) {
+                    console.log('⚠️ Usuário não autenticado, salvando apenas local');
+                    return { success: false, local: true };
+                }
+                
+                // Buscar userId pelo email
+                const userResult = await supabase.select('usuarios', {
+                    filters: { email: authData.email },
+                    limit: 1
+                });
+                
+                if (!userResult.data || userResult.data.length === 0) {
+                    console.log('⚠️ Usuário não encontrado no banco, salvando apenas local');
+                    return { success: false, local: true };
+                }
+                
+                const userId = userResult.data[0].id;
+                
+                // Salvar dados da venda principal
+                const saleData = {
+                    id: sale.id,
+                    usuario_id: userId,
+                    cliente_id: sale.clientId || null,
+                    data_venda: sale.date,
+                    valor_total: sale.subtotal || sale.total,
+                    valor_desconto: sale.discount || 0,
+                    valor_final: sale.total,
+                    custo_total: 0,
+                    lucro_total: sale.total,
+                    numero_venda: Date.now(),
+                    forma_pagamento: sale.paymentMethod || 'dinheiro',
+                    status_pagamento: sale.status || 'concluida',
+                    observacoes: sale.notes || ''
+                };
+                
+                const saleResult = await supabase.insert('vendas', saleData);
+                
+                if (saleResult.success && sale.products) {
+                    // Salvar itens da venda
+                    for (const product of sale.products) {
+                        const itemData = {
+                            venda_id: sale.id,
+                            produto_id: product.product_id || null,
+                            produto_nome: product.product_name || 'Produto',
+                            quantidade: product.quantity || 1,
+                            preco_unitario: product.price || 0,
+                            subtotal: product.total || (product.price * product.quantity)
+                        };
+                        
+                        await supabase.insert('itens_venda', itemData);
+                    }
+                }
+                
+                console.log('✅ Venda salva no Supabase:', sale.id);
+                return { success: true, data: saleResult.data };
+                
+            } catch (error) {
+                console.error('❌ Erro ao salvar venda no Supabase:', error);
+                return { success: false, error: error.message };
             }
         },
         
@@ -5054,7 +5152,16 @@ const LucroCertoApp = (function() {
                     currentRevenue: (user.currentRevenue || 0) + total
                 };
                 
-                // PRIMEIRO: Salvar dados (sincroniza com Supabase)
+                // PRIMEIRO: Salvar venda no Supabase imediatamente
+                const saveResult = await SupabaseClient.saveSaleToSupabase(sale);
+                
+                if (saveResult.success) {
+                    console.log('✅ Venda salva no Supabase com sucesso!');
+                } else {
+                    console.log('⚠️ Venda salva apenas localmente:', saveResult.error || 'Usuário offline');
+                }
+                
+                // SEGUNDO: Salvar dados localmente (sincroniza com Supabase)
                 StateManager.setState({
                     sales: [...(currentSales || []), sale],
                     products: updatedProducts,
