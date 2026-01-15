@@ -346,8 +346,12 @@ const LucroCertoApp = (function() {
                         margem_lucro: product.profitMargin,
                         estoque_atual: estoqueTotal,
                         estoque_minimo: 5,
+                        tipo_variacao: product.variationType || 'none',
+                        variacoes: product.variations || [],
+                        estoque: product.stock || {},
                         imagem_url: product.imageUrl || product.images?.[0] || '',
                         imagens_adicionais: product.images || [],
+                        imagens_variacoes: product.variationImages || {},
                         ativo: true,
                         visivel_catalogo: true
                     };
@@ -395,8 +399,12 @@ const LucroCertoApp = (function() {
                         margem_lucro: product.profitMargin,
                         estoque_atual: estoqueTotal,
                         estoque_minimo: 5,
+                        tipo_variacao: product.variationType || 'none',
+                        variacoes: product.variations || [],
+                        estoque: product.stock || {},
                         imagem_url: product.imageUrl || product.images?.[0] || '',
                         imagens_adicionais: product.images || [],
+                        imagens_variacoes: product.variationImages || {},
                         ativo: true,
                         visivel_catalogo: true
                     };
