@@ -316,25 +316,31 @@ const LucroCertoApp = (function() {
             try {
                 console.log(`☁️ Sincronizando ${products.length} produtos em batch...`);
                 
-                // Preparar dados para upsert
-                const productsData = products.map(product => ({
-                    id: product.id,
-                    usuario_id: userId,
-                    nome: product.name,
-                    descricao: product.description || '',
-                    categoria: product.category || 'Geral',
-                    custo_base: product.baseCost,
-                    preco_venda: product.finalPrice,
-                    margem_lucro: product.profitMargin,
-                    tipo_variacao: product.variationType,
-                    variacoes: product.variations || [],
-                    estoque: product.stock || {},
-                    imagens: product.images || [],
-                    imagem_url: product.imageUrl || product.images?.[0] || '',
-                    imagens_variacoes: product.variationImages || {},
-                    ativo: true,
-                    visivel_catalogo: true
-                }));
+                // Preparar dados para upsert - MAPEAMENTO CORRETO DO SCHEMA
+                const productsData = products.map(product => {
+                    // Calcular estoque total de todas as variações
+                    let estoqueTotal = 0;
+                    if (product.stock && typeof product.stock === 'object') {
+                        estoqueTotal = Object.values(product.stock).reduce((sum, val) => sum + (parseInt(val) || 0), 0);
+                    }
+                    
+                    return {
+                        id: product.id,
+                        usuario_id: userId,
+                        nome: product.name,
+                        descricao: product.description || '',
+                        categoria: product.category || 'Geral',
+                        preco_custo: product.baseCost,
+                        preco_venda: product.finalPrice,
+                        margem_lucro: product.profitMargin,
+                        estoque_atual: estoqueTotal,
+                        estoque_minimo: 5,
+                        imagem_url: product.imageUrl || product.images?.[0] || '',
+                        imagens_adicionais: product.images || [],
+                        ativo: true,
+                        visivel_catalogo: true
+                    };
+                });
                 
                 // ✅ UPSERT EM BATCH - 1 query para todos os produtos
                 const { success, data, error } = await supabase.upsert('produtos', productsData);
@@ -361,21 +367,25 @@ const LucroCertoApp = (function() {
             
             for (const product of products) {
                 try {
+                    // Calcular estoque total
+                    let estoqueTotal = 0;
+                    if (product.stock && typeof product.stock === 'object') {
+                        estoqueTotal = Object.values(product.stock).reduce((sum, val) => sum + (parseInt(val) || 0), 0);
+                    }
+                    
                     const productData = {
                         id: product.id,
                         usuario_id: userId,
                         nome: product.name,
                         descricao: product.description || '',
                         categoria: product.category || 'Geral',
-                        custo_base: product.baseCost,
+                        preco_custo: product.baseCost,
                         preco_venda: product.finalPrice,
                         margem_lucro: product.profitMargin,
-                        tipo_variacao: product.variationType,
-                        variacoes: product.variations || [],
-                        estoque: product.stock || {},
-                        imagens: product.images || [],
+                        estoque_atual: estoqueTotal,
+                        estoque_minimo: 5,
                         imagem_url: product.imageUrl || product.images?.[0] || '',
-                        imagens_variacoes: product.variationImages || {},
+                        imagens_adicionais: product.images || [],
                         ativo: true,
                         visivel_catalogo: true
                     };
