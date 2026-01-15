@@ -4976,18 +4976,27 @@ const LucroCertoApp = (function() {
                 const total = subtotal + shipping - discount;
                 
                 const sale = {
-                    id: `sale_${Date.now()}`,
+                    id: generateUUID(),
                     date: new Date().toISOString(),
                     clientId: clientId || null,
                     clientName: clientName,
                     clientPhone: clientPhone,
-                    items: saleItems,
+                    products: saleItems.map(item => ({
+                        product_id: item.productId,
+                        product_name: item.productName,
+                        variation: item.variation,
+                        variation_key: item.variationKey,
+                        price: item.price,
+                        quantity: item.quantity,
+                        total: item.price * item.quantity
+                    })),
                     paymentMethod: paymentMethod,
                     shipping: shipping,
                     discount: discount,
                     subtotal: subtotal,
                     total: Math.max(0, total),
-                    notes: notes
+                    notes: notes,
+                    status: 'concluida'
                 };
                 
                 // Atualiza estoque dos produtos
