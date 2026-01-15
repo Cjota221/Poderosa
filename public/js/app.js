@@ -540,18 +540,24 @@ const LucroCertoApp = (function() {
             console.log('[saveSaleDirectly] Iniciando salvamento:', { saleId: sale.id, userId });
             
             try {
+                // Validar cliente_id - deve ser UUID válido ou null
+                let clienteId = null;
+                if (sale.clientId && sale.clientId.includes('-') && !sale.clientId.startsWith('cli_')) {
+                    clienteId = sale.clientId;
+                }
+                
                 // Preparar dados da venda
                 const saleData = {
                     id: sale.id,
                     usuario_id: userId,
-                    cliente_id: sale.clientId || null,
+                    cliente_id: clienteId,
                     data_venda: sale.date || new Date().toISOString(),
                     valor_total: sale.subtotal || sale.total || 0,
                     valor_desconto: sale.discount || 0,
                     valor_final: sale.total || 0,
                     custo_total: 0,
                     lucro_total: sale.total || 0,
-                    numero_venda: sale.numero || Date.now(),
+                    numero_venda: String(sale.numero || Date.now()),
                     forma_pagamento: sale.paymentMethod || 'dinheiro',
                     status_pagamento: sale.status || 'concluida',
                     observacoes: sale.notes || ''
@@ -573,9 +579,15 @@ const LucroCertoApp = (function() {
                 console.log('[saveSaleDirectly] Itens para salvar:', items.length);
                 
                 for (const item of items) {
+                    // Validar produto_id - deve ser UUID válido ou null
+                    let produtoId = item.product_id || item.productId || null;
+                    if (produtoId && (!produtoId.includes('-') || produtoId.startsWith('prod_'))) {
+                        produtoId = null; // ID inválido, usar null
+                    }
+                    
                     const itemData = {
                         venda_id: sale.id,
-                        produto_id: item.product_id || item.productId || null,
+                        produto_id: produtoId,
                         produto_nome: item.product_name || item.name || 'Produto',
                         quantidade: item.quantity || 1,
                         preco_unitario: item.price || 0,
