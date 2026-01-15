@@ -223,10 +223,11 @@ class SupabaseClient {
                 url += 'select=*&';
             }
 
-            // Filtros
+            // Filtros - IMPORTANTE: Codificar valores para URL
             if (options.filters) {
                 for (const [key, value] of Object.entries(options.filters)) {
-                    url += `${key}=eq.${value}&`;
+                    const encodedValue = encodeURIComponent(value);
+                    url += `${key}=eq.${encodedValue}&`;
                 }
             }
 
