@@ -1164,10 +1164,11 @@ const LucroCertoApp = (function() {
                 if (trialEndDate) {
                     // Usar data de expiração do banco
                     const endDate = new Date(trialEndDate);
+                    endDate.setHours(0, 0, 0, 0); // Zerar horas
                     const today = new Date();
                     today.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas dias
                     const diffTime = endDate - today;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
                     daysLeft = Math.max(0, diffDays);
                 } else if (trialStartDate) {
                     // Fallback: calcular baseado no início
@@ -6478,9 +6479,11 @@ const LucroCertoApp = (function() {
         if (trialEndDate) {
             // USAR DATA DE EXPIRAÇÃO DO BANCO (mais confiável)
             const endDate = new Date(trialEndDate);
+            endDate.setHours(0, 0, 0, 0); // Zerar horas
             const today = new Date();
+            today.setHours(0, 0, 0, 0); // Zerar horas
             const diffTime = endDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
             daysLeft = Math.max(0, diffDays);
             
             console.log('📅 Data expiração trial:', endDate.toLocaleDateString('pt-BR'));
@@ -6488,9 +6491,11 @@ const LucroCertoApp = (function() {
         } else if (trialStartDate) {
             // FALLBACK: Calcular baseado na data de início (se não tiver expiração)
             const startDate = new Date(trialStartDate);
+            startDate.setHours(0, 0, 0, 0);
             const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const diffTime = today - startDate;
-            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
             daysLeft = Math.max(0, 7 - diffDays);
             
             console.log('📅 Data início trial:', startDate.toLocaleDateString('pt-BR'));
