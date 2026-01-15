@@ -287,6 +287,8 @@ class SupabaseClient {
     // UPDATE
     async update(table, id, data) {
         try {
+            console.log(`[Supabase] UPDATE ${table} id=${id}:`, data);
+            
             const response = await fetch(`${this.url}/rest/v1/${table}?id=eq.${id}`, {
                 method: 'PATCH',
                 headers: {
@@ -296,10 +298,19 @@ class SupabaseClient {
                 body: JSON.stringify(data)
             });
 
-            const result = await response.json();
+            console.log(`[Supabase] UPDATE response status: ${response.status}`);
             
-            if (result.error) {
-                throw new Error(result.message || 'Erro ao atualizar');
+            const result = await response.json();
+            console.log(`[Supabase] UPDATE result:`, result);
+            
+            // Se retornou array vazio, pode ser que o ID não existe
+            if (Array.isArray(result) && result.length === 0) {
+                console.warn(`[Supabase] Nenhum registro atualizado - ID pode não existir: ${id}`);
+                return { success: false, error: 'Nenhum registro encontrado para atualizar' };
+            }
+            
+            if (result.error || result.message) {
+                throw new Error(result.message || result.error || 'Erro ao atualizar');
             }
 
             return { success: true, data: result[0] || result };
