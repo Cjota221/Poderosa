@@ -941,30 +941,30 @@
         }
         
         // Formatar mensagem
-        let message = `🛒 *NOVO PEDIDO*\n`;
+        let message = `NOVO PEDIDO\n`;
         message += `━━━━━━━━━━━━━━━━━━\n\n`;
-        message += `👤 *Cliente:* ${customerName}\n\n`;
-        message += `📦 *Itens do pedido:*\n`;
+        message += `Cliente: ${customerName}\n\n`;
+        message += `Itens do pedido:\n`;
         
         let total = 0;
         cart.forEach((item, i) => {
             const itemTotal = item.price * item.quantity;
             total += itemTotal;
-            message += `\n${i + 1}. *${item.productName}*`;
+            message += `\n${i + 1}. ${item.productName}`;
             if (item.variationName) {
                 message += ` (${item.variationName})`;
             }
-            message += `\n   Qtd: ${item.quantity} × R$ ${item.price.toFixed(2)} = *R$ ${itemTotal.toFixed(2)}*\n`;
+            message += `\n   Qtd: ${item.quantity} × R$ ${item.price.toFixed(2)} = R$ ${itemTotal.toFixed(2)}\n`;
         });
         
         message += `\n━━━━━━━━━━━━━━━━━━\n`;
-        message += `💰 *TOTAL: R$ ${total.toFixed(2)}*\n`;
+        message += `TOTAL: R$ ${total.toFixed(2)}\n`;
         
         if (customerNotes) {
-            message += `\n📝 *Observações:*\n${customerNotes}\n`;
+            message += `\nObservações:\n${customerNotes}\n`;
         }
         
-        message += `\n✨ Pedido feito pelo catálogo Lucro Certo`;
+        message += `\nPedido feito pelo catálogo Lucro Certo`;
         
         // Limpar número de telefone
         let phone = storeData.phone.replace(/\D/g, '');
