@@ -653,31 +653,8 @@
             });
         }
     }
-            </div>
-            <div class="variation-group" id="var2-group" style="display: none;">
-                <p class="variation-group-label">${var2.name}</p>
-                <div class="variation-options-inner" id="var2-options"></div>
-            </div>
-        `;
-        
-        // Selecionar primeira cor disponível
-        const firstAvailableColor = var1.options.find(opt => hasAnyStockForVar1(opt));
-        if (firstAvailableColor) {
-            selectedVar1 = firstAvailableColor;
-            container.querySelector(`[data-var1="${firstAvailableColor}"]`)?.classList.add('active');
-            
-            // Mostrar grupo de tamanhos
-            document.getElementById('var2-group').style.display = 'block';
-            
-            // Trocar foto
-            updateProductPhoto(selectedVar1);
-            
-            // Atualizar tamanhos disponíveis
-            updateVar2Options();
-        }
-        
-        // Bind eventos - Variação 1 (cor)
-        container.querySelectorAll('[data-var1]:not(.out-of-stock)').forEach(btn => {
+
+    // Função para atualizar informações de estoque
             btn.addEventListener('click', () => {
                 container.querySelectorAll('[data-var1]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
