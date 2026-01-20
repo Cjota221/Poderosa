@@ -1374,11 +1374,19 @@
             table.innerHTML = trials.map(user => {
                 // Calcular dias restantes
                 const assinatura = user.assinaturas?.[0];
-                const dataExpiracao = assinatura?.data_expiracao ? new Date(assinatura.data_expiracao) : null;
+                let dataExpiracao = assinatura?.data_expiracao ? new Date(assinatura.data_expiracao) : null;
                 const hoje = new Date();
-                let diasRestantes = 7;
-                let statusClass = 'success';
-                let statusText = 'Ativo';
+                
+                // Se não tem data_expiracao, calcular baseado em created_at + 7 dias
+                if (!dataExpiracao && user.created_at) {
+                    const dataInicio = new Date(user.created_at);
+                    dataExpiracao = new Date(dataInicio);
+                    dataExpiracao.setDate(dataExpiracao.getDate() + 7);
+                }
+                
+                let diasRestantes = 0;
+                let statusClass = 'danger';
+                let statusText = 'Expirado';
                 
                 if (dataExpiracao) {
                     const diff = dataExpiracao - hoje;
@@ -1390,6 +1398,9 @@
                     } else if (diasRestantes <= 2) {
                         statusClass = 'warning';
                         statusText = 'Expirando';
+                    } else {
+                        statusClass = 'success';
+                        statusText = 'Ativo';
                     }
                 }
                 
