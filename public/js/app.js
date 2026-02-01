@@ -7264,6 +7264,39 @@ const LucroCertoApp = (function() {
             });
             console.log('👤 Dados do usuário:', userResult.data?.[0]?.nome || 'Não encontrado');
             
+            // 🔥 CRÍTICO: Buscar assinatura ATIVA do banco
+            const subscriptionResult = await supabase.select('assinaturas', {
+                filters: { usuario_id: dbUserId, status: 'active' }
+            });
+            
+            const activeSubscription = subscriptionResult.data?.find(s => s.plano !== 'trial') 
+                || subscriptionResult.data?.[0];
+            
+            if (activeSubscription) {
+                console.log('💳 Assinatura ativa encontrada:', activeSubscription.plano);
+                
+                // ATUALIZAR AUTHDATA COM DADOS DO BANCO!
+                const currentAuth = Storage.get('auth', {});
+                currentAuth.plano = activeSubscription.plano;
+                currentAuth.subscriptionStatus = activeSubscription.status;
+                currentAuth.subscription = {
+                    plano: activeSubscription.plano,
+                    status: activeSubscription.status,
+                    dataExpiracao: activeSubscription.data_expiracao
+                };
+                Storage.set('auth', currentAuth);
+                
+                // REMOVER FLAGS DE TRIAL SE TEM PLANO PAGO
+                if (activeSubscription.plano !== 'trial') {
+                    Storage.remove('trial');
+                    Storage.remove('trial_start');
+                    Storage.remove('trial_end');
+                    console.log('✅ Plano PAGO detectado - trial flags removidas!');
+                }
+            } else {
+                console.log('⚠️ Nenhuma assinatura ativa encontrada');
+            }
+            
             // Converter dados do Supabase para formato do app
             const supabaseData = {
                 products: (productsResult.data || []).map(p => ({
