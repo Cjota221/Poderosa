@@ -238,21 +238,47 @@
         const urlParams = new URLSearchParams(window.location.search);
         const paymentId = urlParams.get('payment_id');
         const email = urlParams.get('email');
+        
+        // Pegar dados do localStorage
+        const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
+        
+        // Mostrar nome do plano
+        const planNames = {
+            starter: 'Starter',
+            pro: 'Profissional', 
+            premium: 'Premium',
+            trial: 'Trial'
+        };
+        document.getElementById('plan-name').textContent = planNames[authData.plano] || 'Profissional';
+        
+        // Calcular data de expiração (30 dias a partir de hoje)
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 30);
+        document.getElementById('expiry-date').textContent = expiryDate.toLocaleDateString('pt-BR');
+        
+        // Mostrar valor pago baseado no plano
+        const planPrices = {
+            starter: 19.90,
+            pro: 34.90,
+            premium: 49.90
+        };
+        const valorPago = planPrices[authData.plano] || 34.90;
+        document.getElementById('payment-amount').textContent = `R$ ${valorPago.toFixed(2).replace('.', ',')}`;
+        
+        // Atualizar localStorage com nova data de expiração
+        authData.subscriptionExpiry = expiryDate.toISOString();
+        authData.subscriptionStatus = 'active';
+        localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
 
-        // Buscar dados do pagamento e atualizar assinatura
+        // Buscar dados do pagamento e atualizar assinatura no banco
         if (paymentId && email) {
             updateSubscriptionAfterPayment(paymentId, email);
-        } else {
-            // Se não tem parâmetros, mostrar dados do localStorage
-            const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
-            if (authData.subscription) {
-                const expiryDate = new Date(authData.subscription.data_expiracao);
-                document.getElementById('expiry-date').textContent = expiryDate.toLocaleDateString('pt-BR');
-            }
         }
 
         async function updateSubscriptionAfterPayment(paymentId, email) {
             try {
+                console.log('🔄 Atualizando assinatura no banco...', { paymentId, email });
+                
                 // Chamar função que atualiza a assinatura no banco
                 const response = await fetch('/.netlify/functions/renew-subscription', {
                     method: 'POST',
@@ -261,28 +287,32 @@
                 });
 
                 const data = await response.json();
+                console.log('📋 Resposta da API:', data);
 
                 if (response.ok && data.success) {
-                    // Atualizar localStorage com novos dados
+                    // Atualizar localStorage com novos dados do banco
                     const authData = JSON.parse(localStorage.getItem('lucrocerto_auth') || '{}');
                     authData.subscription = data.subscription;
                     authData.subscriptionStatus = 'active';
                     authData.plano = data.subscription.plano;
+                    authData.subscriptionExpiry = data.subscription.data_expiracao;
                     localStorage.setItem('lucrocerto_auth', JSON.stringify(authData));
 
-                    // Atualizar interface
-                    document.getElementById('plan-name').textContent = 
-                        data.subscription.plano === 'pro' ? 'Profissional' : 
-                        data.subscription.plano === 'premium' ? 'Premium' : 'Starter';
-                    
-                    document.getElementById('payment-amount').textContent = 
-                        `R$ ${data.subscription.valor.toFixed(2).replace('.', ',')}`;
+                    // Atualizar interface com dados do banco
+                    const planNames = { starter: 'Starter', pro: 'Profissional', premium: 'Premium' };
+                    document.getElementById('plan-name').textContent = planNames[data.subscription.plano] || 'Profissional';
+                    document.getElementById('payment-amount').textContent = `R$ ${data.subscription.valor.toFixed(2).replace('.', ',')}`;
                     
                     const expiryDate = new Date(data.subscription.data_expiracao);
                     document.getElementById('expiry-date').textContent = expiryDate.toLocaleDateString('pt-BR');
+                    
+                    console.log('✅ Assinatura atualizada com sucesso!');
+                } else {
+                    console.warn('⚠️ API retornou erro, usando dados locais:', data.message);
                 }
             } catch (error) {
-                console.error('Erro ao atualizar assinatura:', error);
+                console.error('❌ Erro ao atualizar assinatura (usando dados locais):', error);
+                // Já mostramos os dados locais acima, então só logamos o erro
             }
         }
 

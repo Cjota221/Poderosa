@@ -7959,6 +7959,64 @@ const LucroCertoApp = (function() {
     // 8. TRIAL EXPIRED - BLOQUEIO COMPLETO
     //==================================
     function blockAppAndShowExpiredModal() {
+        // 🔍 ANTES DE BLOQUEAR: Verificar se usuário tem plano pago no banco
+        const authData = Storage.get('auth', {});
+        const userId = Storage.get('user_id');
+        const email = authData.email;
+        
+        // Se tem plano pago no localStorage, NÃO bloquear
+        if (authData.plano && authData.plano !== 'trial') {
+            console.log('✅ Usuário tem plano pago:', authData.plano, '- NÃO bloqueando');
+            Storage.remove('trial');
+            Storage.remove('trial_start');
+            return;
+        }
+        
+        // Tentar verificar no banco de dados antes de bloquear
+        if (userId || email) {
+            console.log('🔍 Verificando plano no banco antes de bloquear...');
+            
+            fetch('/.netlify/functions/get-user-plan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, email })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.subscription.plano !== 'trial') {
+                    console.log('✅ BANCO: Usuário tem plano PAGO:', data.subscription.plano);
+                    
+                    // Atualizar localStorage
+                    authData.plano = data.subscription.plano;
+                    Storage.set('auth', authData);
+                    Storage.remove('trial');
+                    Storage.remove('trial_start');
+                    
+                    // Remover modal se existir
+                    const modal = document.getElementById('trial-expired-modal');
+                    if (modal) modal.remove();
+                    
+                    // Recarregar página para aplicar
+                    alert('✅ Seu pagamento foi confirmado! A página será atualizada.');
+                    window.location.reload();
+                } else {
+                    // Realmente é trial expirado - bloquear
+                    realBlockApp();
+                }
+            })
+            .catch(() => {
+                // Offline - mostrar modal mas permitir retry
+                realBlockApp();
+            });
+            
+            return;
+        }
+        
+        // Sem dados de usuário - bloquear
+        realBlockApp();
+    }
+    
+    function realBlockApp() {
         console.log('🚫 BLOQUEANDO APP - Trial expirado');
         
         // Remover modal anterior se existir
