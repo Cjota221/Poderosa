@@ -162,38 +162,55 @@ export function bindProductFormEvents() {
     
     let variationOptions = [];
 
-    // Atualiza cálculo de preço ao vivo
+    // Atualiza cálculo de preço ao vivo com o novo Semáforo Emocional
     const updatePricingUI = () => {
         const productCost = parseFloat(baseCostInput.value) || 0;
         const container = document.getElementById('pricing-calculator-live');
         if (!container) return;
 
         if (productCost === 0) {
-            container.innerHTML = `<p style="color: var(--elegant-gray); font-size: 14px;">Digite o custo do produto para ver o preço sugerido.</p>`;
+            container.innerHTML = `<p style="color: var(--elegant-gray); font-size: 14px;">Digite o custo do produto para ver o Semáforo de Preços 🚦</p>`;
             return;
         }
 
-        const margin = 100;
-        const unitCosts = SmartPricing.getTotalUnitCost(productCost);
-        const { price, profit } = SmartPricing.calculate(productCost, margin);
+        // Usa o novo PricingUI com Semáforo Emocional
+        if (window.PricingUI) {
+            const produto = {
+                nome: document.getElementById('product-name')?.value || 'Produto',
+                custo: productCost
+            };
+            
+            // Pega custos fixos do sistema para calcular meta
+            const custosFixos = window.SmartPricing?.getTotalMonthlyFixedCosts() || 0;
+            
+            PricingUI.renderizar('pricing-calculator-live', produto, {
+                custosFixosMensais: custosFixos,
+                mostrarCenarios: true
+            });
+        } else {
+            // Fallback para o cálculo antigo se PricingUI não existir
+            const margin = 100;
+            const unitCosts = SmartPricing.getTotalUnitCost(productCost);
+            const { price, profit } = SmartPricing.calculate(productCost, margin);
 
-        container.innerHTML = `
-            <div style="background: var(--light-gray); padding: 16px; border-radius: 12px; margin-top: 12px;">
-                <h4 style="font-size: 14px; margin-bottom: 8px; color: var(--dark-gray);">💡 Sugestão de Preço</h4>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-size: 14px;">Custo Total/Unidade:</span>
-                    <strong style="color: var(--alert);">R$ ${unitCosts.total.toFixed(2)}</strong>
+            container.innerHTML = `
+                <div style="background: var(--light-gray); padding: 16px; border-radius: 12px; margin-top: 12px;">
+                    <h4 style="font-size: 14px; margin-bottom: 8px; color: var(--dark-gray);">💡 Sugestão de Preço</h4>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 14px;">Custo Total/Unidade:</span>
+                        <strong style="color: var(--alert);">R$ ${unitCosts.total.toFixed(2)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="font-size: 14px;">Preço Sugerido (100%):</span>
+                        <strong style="color: var(--primary);">R$ ${price.toFixed(2)}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="font-size: 14px;">Lucro por Venda:</span>
+                        <strong style="color: var(--growth);">R$ ${profit.toFixed(2)}</strong>
+                    </div>
                 </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-size: 14px;">Preço Sugerido (100%):</span>
-                    <strong style="color: var(--primary);">R$ ${price.toFixed(2)}</strong>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                    <span style="font-size: 14px;">Lucro por Venda:</span>
-                    <strong style="color: var(--growth);">R$ ${profit.toFixed(2)}</strong>
-                </div>
-            </div>
-        `;
+            `;
+        }
     };
 
     // Atualiza interface de variações

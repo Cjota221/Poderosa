@@ -761,15 +761,14 @@ const LucroCertoApp = (function() {
     // 4. UI RENDERER & ROUTER
     //==================================
     const UIManager = {
-        pages: ['dashboard', 'despesas', 'produtos', 'add-edit-product', 'precificar', 'clientes', 'vendas', 'nova-venda', 'financeiro', 'metas', 'relatorios', 'configuracoes', 'meu-catalogo'],
+        pages: ['dashboard', 'despesas', 'produtos', 'add-edit-product', 'precificar', 'clientes', 'vendas', 'nova-venda', 'financeiro', 'relatorios', 'configuracoes', 'meu-catalogo'],
         
         // Menu completo com todas as páginas na ordem do fluxo de trabalho
         menuItems: [
             { section: 'Gestão do Negócio' },
             { id: 'dashboard', icon: 'layout-dashboard', label: 'Início' },
-            { id: 'despesas', icon: 'receipt', label: 'Despesas/Custos' },
+            { id: 'despesas', icon: 'scale', label: 'Custos Fixos' },
             { id: 'produtos', icon: 'package-search', label: 'Produtos' },
-            { id: 'precificar', icon: 'calculator', label: 'Precificação' },
             { divider: true },
             { section: 'Vendas & Clientes' },
             { id: 'clientes', icon: 'users', label: 'Clientes' },
@@ -779,7 +778,6 @@ const LucroCertoApp = (function() {
             { section: 'Financeiro' },
             { id: 'financeiro', icon: 'wallet', label: 'Contas a Pagar' },
             { id: 'relatorios', icon: 'bar-chart-3', label: 'Relatórios' },
-            { id: 'metas', icon: 'target', label: 'Metas' },
             { divider: true },
             { section: 'Sistema' },
             { id: 'configuracoes', icon: 'settings', label: 'Configurações' },
@@ -1116,7 +1114,6 @@ const LucroCertoApp = (function() {
                 'add-edit-product': () => { container.innerHTML = this.getAddEditProductHTML(); this.bindAddEditProductEvents(); },
                 despesas: () => { container.innerHTML = this.getDespesasHTML(); this.bindDespesasEvents(); },
                 precificar: () => { container.innerHTML = this.getPrecificarHTML(); this.bindPrecificarEvents(); },
-                metas: () => { container.innerHTML = this.getMetasHTML(); },
                 relatorios: () => { container.innerHTML = this.getRelatoriosHTML(); this.bindRelatoriosEvents(); },
                 configuracoes: () => { container.innerHTML = this.getConfiguracoesHTML(); this.bindConfiguracoesEvents(); },
                 clientes: () => { container.innerHTML = this.getClientesHTML(); this.bindClientesEvents(); },
@@ -1136,7 +1133,7 @@ const LucroCertoApp = (function() {
         },
         
         getDashboardHTML() {
-            const { user, sales } = StateManager.getState();
+            const { user, sales, products, costs } = StateManager.getState();
             const now = new Date();
             const hour = now.getHours();
             let saudacao;
@@ -1150,7 +1147,82 @@ const LucroCertoApp = (function() {
             const today = new Date().toDateString();
             const todaySales = (sales || []).filter(s => new Date(s.date).toDateString() === today);
             const todayRevenue = todaySales.reduce((acc, s) => acc + s.total, 0);
-            const todayCount = todaySales.length;
+            
+            // Conta PEÇAS vendidas (não pedidos!)
+            // Suporta tanto s.items quanto s.products (compatibilidade)
+            const todayPieces = todaySales.reduce((acc, s) => {
+                const items = s.items || s.products || [];
+                return acc + items.reduce((sum, item) => sum + (item.quantity || item.quantidade || 1), 0);
+            }, 0);
+            const todayOrders = todaySales.length; // Número de pedidos
+
+            // ═══════════════════════════════════════════════════
+            // CÁLCULO DO PONTO DE EQUILÍBRIO DO MÊS
+            // ═══════════════════════════════════════════════════
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+            
+            // Vendas do mês atual
+            const monthSales = (sales || []).filter(s => {
+                const d = new Date(s.date);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+            
+            // Calcula lucro total do mês (margem de contribuição)
+            let lucroTotalMes = 0;
+            let qtdVendasMes = 0;
+            
+            monthSales.forEach(s => {
+                // Suporta tanto s.items quanto s.products (compatibilidade)
+                const items = s.items || s.products || [];
+                items.forEach(item => {
+                    // Suporta tanto productId quanto product_id
+                    const produtoId = item.productId || item.product_id;
+                    const produto = (products || []).find(p => p.id === produtoId);
+                    const qty = item.quantity || item.quantidade || 1;
+                    const preco = item.unitPrice || item.price || 0;
+                    
+                    if (produto) {
+                        const unitCosts = SmartPricing.getTotalUnitCost(produto.baseCost);
+                        const taxPercentage = SmartPricing.getPercentageCosts();
+                        const taxValue = preco * (taxPercentage / 100);
+                        const lucroPorUnidade = preco - unitCosts.total - taxValue;
+                        lucroTotalMes += lucroPorUnidade * qty;
+                        qtdVendasMes += qty;
+                    } else {
+                        // Mesmo sem produto vinculado, conta as peças
+                        qtdVendasMes += qty;
+                    }
+                });
+            });
+            
+            // Custos fixos do mês
+            const custosFixosMes = SmartPricing.getTotalMonthlyFixedCosts();
+            
+            // Progresso do ponto de equilíbrio
+            const progressoPE = custosFixosMes > 0 ? (lucroTotalMes / custosFixosMes) * 100 : 0;
+            const faltaParaPE = Math.max(0, custosFixosMes - lucroTotalMes);
+            const ultrapassouPE = lucroTotalMes >= custosFixosMes && custosFixosMes > 0;
+            const lucroLiquido = ultrapassouPE ? lucroTotalMes - custosFixosMes : 0;
+            
+            // Estimar quantas peças ainda precisa vender
+            let margemMedia = 0;
+            let pecasFaltando = 0;
+            if ((products || []).length > 0 && qtdVendasMes > 0) {
+                margemMedia = lucroTotalMes / qtdVendasMes;
+                pecasFaltando = margemMedia > 0 ? Math.ceil(faltaParaPE / margemMedia) : 0;
+            } else if ((products || []).length > 0) {
+                // Se não tem vendas, usa margem média dos produtos
+                let somaMargens = 0;
+                (products || []).forEach(p => {
+                    const unitCosts = SmartPricing.getTotalUnitCost(p.baseCost);
+                    const taxPercentage = SmartPricing.getPercentageCosts();
+                    const taxValue = p.finalPrice * (taxPercentage / 100);
+                    somaMargens += p.finalPrice - unitCosts.total - taxValue;
+                });
+                margemMedia = somaMargens / products.length;
+                pecasFaltando = margemMedia > 0 ? Math.ceil(faltaParaPE / margemMedia) : 0;
+            }
 
             // Foto do perfil
             const profilePhoto = user.profilePhoto || '';
@@ -1397,10 +1469,10 @@ const LucroCertoApp = (function() {
                 <!-- Resumo do Dia -->
                 <div class="day-summary">
                     <div class="day-summary-item">
-                        <i data-lucide="shopping-bag" style="color: var(--primary);"></i>
+                        <i data-lucide="package" style="color: var(--primary);"></i>
                         <div>
-                            <span class="day-summary-value">${todayCount}</span>
-                            <span class="day-summary-label">Vendas Hoje</span>
+                            <span class="day-summary-value">${todayPieces}</span>
+                            <span class="day-summary-label">Peças Vendidas</span>
                         </div>
                     </div>
                     <div class="day-summary-item">
@@ -1411,6 +1483,99 @@ const LucroCertoApp = (function() {
                         </div>
                     </div>
                 </div>
+                
+                <!-- ═══════════════════════════════════════════════════ -->
+                <!-- CARD PONTO DE EQUILÍBRIO DO MÊS -->
+                <!-- ═══════════════════════════════════════════════════ -->
+                ${custosFixosMes > 0 ? `
+                <div class="card" style="background: ${ultrapassouPE 
+                    ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)' 
+                    : progressoPE >= 70 
+                        ? 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)'
+                        : progressoPE >= 40
+                            ? 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'
+                            : 'linear-gradient(135deg, #8B5CF6 0%, #6D28D9 100%)'
+                }; color: white; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                        <div style="width: 48px; height: 48px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i data-lucide="${ultrapassouPE ? 'trophy' : 'target'}" style="width: 24px; height: 24px;"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; font-size: 16px; opacity: 0.9;">Ponto de Equilíbrio do Mês</h3>
+                            <p style="margin: 0; font-size: 13px; opacity: 0.8;">${ultrapassouPE ? '🎉 Você já passou!' : '📊 Progresso das suas vendas'}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Barra de Progresso -->
+                    <div style="background: rgba(255,255,255,0.2); border-radius: 10px; height: 20px; overflow: hidden; margin-bottom: 12px;">
+                        <div style="
+                            width: ${Math.min(100, progressoPE)}%;
+                            height: 100%;
+                            background: ${ultrapassouPE ? '#FCD34D' : 'white'};
+                            border-radius: 10px;
+                            transition: width 0.5s ease;
+                            display: flex;
+                            align-items: center;
+                            justify-content: flex-end;
+                            padding-right: 8px;
+                        ">
+                            ${progressoPE >= 15 ? `<span style="font-size: 11px; font-weight: 700; color: ${ultrapassouPE ? '#059669' : '#6D28D9'};">${progressoPE.toFixed(0)}%</span>` : ''}
+                        </div>
+                    </div>
+                    
+                    <!-- Números -->
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                        <div>
+                            <span style="font-size: 12px; opacity: 0.8;">Lucro acumulado</span>
+                            <p style="margin: 0; font-size: 20px; font-weight: 700;">R$ ${lucroTotalMes.toFixed(2)}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-size: 12px; opacity: 0.8;">Custos fixos</span>
+                            <p style="margin: 0; font-size: 20px; font-weight: 700;">R$ ${custosFixosMes.toFixed(2)}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Mensagem de Status -->
+                    ${ultrapassouPE ? `
+                        <div style="background: rgba(255,255,255,0.15); border-radius: 10px; padding: 12px; text-align: center;">
+                            <p style="margin: 0; font-size: 15px;">
+                                🎊 <strong>Parabéns!</strong> Você já tem <strong>R$ ${lucroLiquido.toFixed(2)}</strong> de lucro líquido este mês!
+                            </p>
+                        </div>
+                    ` : `
+                        <div style="background: rgba(255,255,255,0.15); border-radius: 10px; padding: 12px; text-align: center;">
+                            <p style="margin: 0 0 4px 0; font-size: 15px;">
+                                ${progressoPE >= 70 
+                                    ? '🔥 Quase lá!' 
+                                    : progressoPE >= 40 
+                                        ? '💪 Bom progresso!' 
+                                        : '🚀 Vamos acelerar!'}
+                                Falta <strong>R$ ${faltaParaPE.toFixed(2)}</strong>
+                            </p>
+                            ${pecasFaltando > 0 ? `
+                                <p style="margin: 0; font-size: 13px; opacity: 0.9;">
+                                    ≈ <strong>${pecasFaltando} ${pecasFaltando === 1 ? 'peça' : 'peças'}</strong> para cobrir os custos fixos
+                                </p>
+                            ` : ''}
+                        </div>
+                    `}
+                </div>
+                ` : `
+                <!-- Sem custos fixos cadastrados -->
+                <div class="card" style="background: linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%); border: 2px dashed #9CA3AF; margin-bottom: 20px;">
+                    <div style="text-align: center; padding: 16px;">
+                        <i data-lucide="calculator" style="width: 40px; height: 40px; color: #6B7280; margin-bottom: 12px;"></i>
+                        <h3 style="margin: 0 0 8px 0; color: #374151;">Configure seu Ponto de Equilíbrio</h3>
+                        <p style="margin: 0 0 16px 0; color: #6B7280; font-size: 14px;">
+                            Cadastre seus custos fixos para acompanhar quanto precisa vender por mês
+                        </p>
+                        <button class="btn btn-primary" data-action="navigate" data-route="despesas">
+                            <i data-lucide="plus" style="width: 16px; height: 16px; margin-right: 6px;"></i>
+                            Cadastrar Custos Fixos
+                        </button>
+                    </div>
+                </div>
+                `}
                 
                 <div class="grid-desktop-2">
                     <div class="card">
@@ -1439,7 +1604,7 @@ const LucroCertoApp = (function() {
                     <a href="#" class="action-button" data-action="navigate" data-route="nova-venda"> <i data-lucide="plus-circle"></i> <span>Nova Venda</span> </a>
                     <a href="#" class="action-button" data-action="add-new-product"> <i data-lucide="package-plus"></i> <span>Novo Produto</span> </a>
                     <a href="#" class="action-button" data-action="navigate" data-route="clientes"> <i data-lucide="user-plus"></i> <span>Clientes</span> </a>
-                    <a href="#" class="action-button" data-action="navigate" data-route="precificar"> <i data-lucide="calculator"></i> <span>Precificar</span> </a>
+                    <a href="#" class="action-button" data-action="navigate" data-route="despesas"> <i data-lucide="scale"></i> <span>Custos Fixos</span> </a>
                 </div>
             `;
         },
@@ -1466,7 +1631,15 @@ const LucroCertoApp = (function() {
                 const stockStatus = totalStock === 0 ? 'out' : totalStock <= 5 ? 'low' : 'ok';
                 const stockStatusColor = stockStatus === 'out' ? 'var(--alert)' : stockStatus === 'low' ? 'var(--warning)' : 'var(--growth)';
                 const stockStatusText = stockStatus === 'out' ? '❌ Sem estoque' : stockStatus === 'low' ? '⚠️ Estoque baixo' : '✅ Em estoque';
-                const profit = p.finalPrice - (SmartPricing.getTotalUnitCost(p.baseCost).total);
+                
+                // Calcula lucro real (descontando taxas)
+                const unitCosts = SmartPricing.getTotalUnitCost(p.baseCost);
+                const taxPercentage = SmartPricing.getPercentageCosts();
+                const taxValue = p.finalPrice * (taxPercentage / 100);
+                const profit = p.finalPrice - unitCosts.total - taxValue;
+                
+                // Margem de contribuição real (lucro / preço)
+                const margemReal = p.finalPrice > 0 ? ((profit / p.finalPrice) * 100).toFixed(0) : 0;
                 
                 // Variações display
                 let variationsText = '';
@@ -1507,7 +1680,7 @@ const LucroCertoApp = (function() {
                     
                     <div class="product-status-bar" style="background: ${stockStatusColor}15;">
                         <span style="color: ${stockStatusColor}; font-size: 13px;">${stockStatusText}</span>
-                        <span style="color: var(--elegant-gray); font-size: 12px;">Margem: ${p.profitMargin || 100}%</span>
+                        <span style="color: var(--elegant-gray); font-size: 12px;">Margem: ${margemReal}%</span>
                     </div>
                     
                     <div class="product-actions">
@@ -1892,6 +2065,20 @@ const LucroCertoApp = (function() {
             
             // Garantir que images seja sempre um array
             const productImages = product.images || (product.imageUrl ? [product.imageUrl] : []);
+            
+            // ═══════════════════════════════════════════════════════════
+            // SISTEMA DE MARGEM PADRÃO DO NEGÓCIO
+            // O primeiro produto define a margem padrão para todos os outros
+            // ═══════════════════════════════════════════════════════════
+            const margemPadraoSalva = Storage.get('margem_padrao_negocio');
+            const isPrimeiroProduto = products.length === 0 && !editingProductId;
+            
+            // Se está editando, usa a margem do produto
+            // Se é novo e tem margem padrão salva, usa ela
+            // Senão usa 67 como padrão inicial
+            const margemInicial = editingProductId ? (product.profitMargin || 67) 
+                                : (margemPadraoSalva || 67);
+            
             const hasDescription = product.description && product.description.trim() !== '';
 
             return `
@@ -1961,6 +2148,30 @@ const LucroCertoApp = (function() {
                     <!-- PRECIFICAÇÃO INTELIGENTE -->
                     <div class="card">
                         <h3><i data-lucide="calculator" style="width: 20px; height: 20px; vertical-align: middle;"></i> Precificação Inteligente</h3>
+                        
+                        ${isPrimeiroProduto ? `
+                        <div style="background: linear-gradient(135deg, #FFF3E0, #FFECB3); padding: 16px; border-radius: 12px; margin-bottom: 16px; border-left: 4px solid #FF9800;">
+                            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                                <span style="font-size: 24px;">⭐</span>
+                                <div>
+                                    <strong style="color: #E65100; font-size: 14px;">Este é seu primeiro produto!</strong>
+                                    <p style="color: #E65100; font-size: 13px; margin: 6px 0 0 0;">
+                                        A margem que você definir aqui será usada como <strong>padrão</strong> para os próximos produtos. 
+                                        Escolha com carinho! 💛
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        ` : margemPadraoSalva ? `
+                        <div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 20px;">💡</span>
+                            <span style="color: #1565C0; font-size: 13px;">
+                                Usando sua margem padrão de <strong>${margemPadraoSalva}%</strong> de markup. 
+                                <span style="opacity: 0.8;">Você pode ajustar abaixo se quiser.</span>
+                            </span>
+                        </div>
+                        ` : ''}
+                        
                         <div class="form-group">
                             <label for="product-base-cost">💰 Quanto você pagou no produto? <span class="required">*</span></label>
                             <input type="number" step="0.01" min="0" id="product-base-cost" class="form-input" placeholder="Ex: 25.50" value="${product.baseCost || ''}" required>
@@ -1987,7 +2198,7 @@ const LucroCertoApp = (function() {
                                     <span style="font-size: 13px; color: var(--dark-gray); font-weight: 600;">Ajustar preço (opcional):</span>
                                     <span id="current-price-display" style="font-size: 18px; font-weight: 700; color: var(--primary);">R$ --</span>
                                 </div>
-                                <input type="range" id="profit-margin" min="20" max="150" value="67" step="5" class="slider" style="width: 100%;">
+                                <input type="range" id="profit-margin" min="20" max="150" value="${margemInicial}" step="5" class="slider" style="width: 100%;" data-is-primeiro-produto="${isPrimeiroProduto}">
                                 <div style="display: flex; justify-content: space-between; margin-top: 8px;">
                                     <div style="text-align: center;">
                                         <div style="font-size: 24px;">💀</div>
@@ -2211,15 +2422,19 @@ const LucroCertoApp = (function() {
                     return;
                 }
 
-                const unitCosts = SmartPricing.getTotalUnitCost(productCost);
+                const unitCosts = SmartPricing.getDirectUnitCost(productCost);
+                const taxPercentage = SmartPricing.getPercentageCosts();
                 
-                // SUGESTÃO AUTOMÁTICA: 67% de margem (1.67x o custo total)
+                // SUGESTÃO AUTOMÁTICA: 67% de margem sobre custo direto
                 const suggestedMargin = 67;
                 const suggestedCalc = SmartPricing.calculate(productCost, suggestedMargin);
                 
                 // PREÇO ATUAL (do slider)
                 const currentCalc = SmartPricing.calculate(productCost, margin);
                 const profitPercentageOfPrice = ((currentCalc.profit / currentCalc.price) * 100).toFixed(1);
+                
+                // CALCULA BREAK-EVEN AUTOMATICAMENTE (OUTPUT!)
+                const breakEven = SmartPricing.calculateBreakEven(currentCalc.price, productCost);
 
                 // Atualizar sugestão
                 if (suggestedPriceEl) {
@@ -2227,8 +2442,8 @@ const LucroCertoApp = (function() {
                 }
                 if (suggestionReasonEl) {
                     suggestionReasonEl.innerHTML = `
-                        Baseado no seu custo de <strong>R$ ${unitCosts.total.toFixed(2)}</strong> (produto + despesas), 
-                        este preço te dá um lucro de <strong>R$ ${suggestedCalc.profit.toFixed(2)}</strong> por venda.
+                        Com este preço, você lucra <strong>R$ ${suggestedCalc.profit.toFixed(2)}</strong> por venda.
+                        ${breakEven.isViable ? `<br><small style="color: var(--success);">📊 ${breakEven.message}</small>` : ''}
                     `;
                 }
 
@@ -2305,26 +2520,30 @@ const LucroCertoApp = (function() {
                                 </span>
                                 <span class="pricing-value">R$ ${productCost.toFixed(2)}</span>
                             </div>
-                            <div class="pricing-row">
-                                <span class="pricing-label">
-                                    <i data-lucide="plus" style="width: 16px; height: 16px;"></i>
-                                    Despesas Fixas (por unidade)
-                                </span>
-                                <span class="pricing-value">R$ ${unitCosts.fixed.toFixed(2)}</span>
-                            </div>
+                            ${unitCosts.packagingCosts > 0 ? `
                             <div class="pricing-row">
                                 <span class="pricing-label">
                                     <i data-lucide="package" style="width: 16px; height: 16px;"></i>
-                                    Despesas Variáveis
+                                    Embalagem/Etiqueta
                                 </span>
-                                <span class="pricing-value">R$ ${unitCosts.variable.toFixed(2)}</span>
+                                <span class="pricing-value">R$ ${unitCosts.packagingCosts.toFixed(2)}</span>
                             </div>
+                            ` : ''}
                             <div class="pricing-row total">
                                 <span class="pricing-label">
-                                    <strong>Custo Total por Unidade</strong>
+                                    <strong>Custo Direto Total</strong>
                                 </span>
                                 <span class="pricing-value"><strong style="color: var(--alert);">R$ ${unitCosts.total.toFixed(2)}</strong></span>
                             </div>
+                            ${taxPercentage > 0 ? `
+                            <div class="pricing-row" style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-color);">
+                                <span class="pricing-label">
+                                    <i data-lucide="percent" style="width: 16px; height: 16px;"></i>
+                                    Taxas sobre venda (${taxPercentage}%)
+                                </span>
+                                <span class="pricing-value">- R$ ${currentCalc.taxValue.toFixed(2)}</span>
+                            </div>
+                            ` : ''}
                         </div>
 
                         <div class="pricing-result">
@@ -2335,15 +2554,45 @@ const LucroCertoApp = (function() {
                                     <strong style="color: white; font-size: 24px;">R$ ${currentCalc.price.toFixed(2)}</strong>
                                 </div>
                             </div>
-                            <div class="result-item" style="background: linear-gradient(135deg, ${currentCalc.profit < 0 ? '#EF5350' : 'var(--success-light)'}, ${currentCalc.profit < 0 ? '#C62828' : 'var(--success)'});">
+                            <div class="result-item" style="background: linear-gradient(135deg, ${currentCalc.profit < 0 ? '#EF5350' : '#10B981'}, ${currentCalc.profit < 0 ? '#C62828' : '#059669'});">
                                 <i data-lucide="dollar-sign" style="width: 24px; height: 24px; color: white;"></i>
                                 <div>
-                                    <small style="color: rgba(255,255,255,0.9); font-size: 12px;">Seu Lucro</small>
+                                    <small style="color: rgba(255,255,255,0.9); font-size: 12px;">Margem de Contribuição <span class="help-tooltip" onclick="this.classList.toggle('active')" style="cursor: pointer; background: rgba(255,255,255,0.3); border-radius: 50%; padding: 2px 6px; font-size: 10px;">?</span></small>
                                     <strong style="color: white; font-size: 24px;">R$ ${currentCalc.profit.toFixed(2)}</strong>
                                     <small style="color: rgba(255,255,255,0.9); font-size: 11px;">${currentCalc.profit >= 0 ? profitPercentageOfPrice + '% do preço' : 'PREJUÍZO'}</small>
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- EXPLICAÇÃO DA MARGEM DE CONTRIBUIÇÃO -->
+                        <div id="margem-explicacao" style="background: #FFF9C4; border: 2px solid #FBC02D; border-radius: 12px; padding: 16px; margin-top: 12px;">
+                            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                                <span style="font-size: 24px;">💡</span>
+                                <div>
+                                    <strong style="color: #F57F17; font-size: 14px;">O que é Margem de Contribuição?</strong>
+                                    <p style="color: #5D4037; font-size: 13px; margin: 8px 0 0 0; line-height: 1.5;">
+                                        É quanto <strong>sobra de cada venda</strong> para pagar seus custos fixos (aluguel, internet, etc) e gerar lucro.
+                                        <br><br>
+                                        <strong>Exemplo:</strong> Se você vende por R$ 100 e o custo do produto foi R$ 40, sobram R$ 60 (60% de margem).
+                                        <br><br>
+                                        👉 <strong>Quanto maior a margem, mais rápido você paga as contas e começa a lucrar!</strong>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${breakEven.isViable ? `
+                        <div style="background: linear-gradient(135deg, #E3F2FD, #BBDEFB); padding: 16px; border-radius: 12px; margin-top: 16px; text-align: center;">
+                            <i data-lucide="target" style="width: 24px; height: 24px; color: #1565C0;"></i>
+                            <p style="margin: 8px 0 0 0; color: #1565C0; font-weight: 600;">
+                                📊 Ponto de Equilíbrio: <strong>${breakEven.breakEvenUnits} peças/mês</strong>
+                            </p>
+                            <small style="color: #1976D2;">
+                                Vendendo ${breakEven.breakEvenUnits} peças você paga R$ ${breakEven.totalFixedCosts.toFixed(2)} de custos fixos. 
+                                A partir daí, é lucro líquido!
+                            </small>
+                        </div>
+                        ` : ''}
                     </div>
                 `;
                 setTimeout(() => lucide.createIcons({ nodes: [container] }), 0);
@@ -3017,6 +3266,14 @@ const LucroCertoApp = (function() {
                     
                     updatedProducts = [...state.products, productData];
                     AchievementSystem.checkAndAward('primeiro_produto');
+                    
+                    // ═══════════════════════════════════════════════════════════
+                    // SALVAR MARGEM DO PRIMEIRO PRODUTO COMO PADRÃO DO NEGÓCIO
+                    // ═══════════════════════════════════════════════════════════
+                    if (state.products.length === 0) {
+                        Storage.set('margem_padrao_negocio', profitMargin);
+                        console.log('⭐ Margem padrão do negócio definida:', profitMargin + '%');
+                    }
                 }
 
                 console.log('✅ Produto pronto para salvar:', productData);
@@ -3053,13 +3310,18 @@ const LucroCertoApp = (function() {
         },
 
         getDespesasHTML() {
-            const { costs, user, bills } = StateManager.getState();
+            const { costs, user, bills, products } = StateManager.getState();
             
             // Custos fixos manuais (cadastrados aqui)
             const manualFixedCosts = costs.fixed || [];
             
             // Custos vindos do Financeiro (contas recorrentes marcadas como custo do negócio)
             const billsAsFixedCosts = (bills || []).filter(b => b.recurring && b.isBusinessCost);
+            
+            // Total combinado de custos fixos
+            const manualTotal = manualFixedCosts.reduce((acc, c) => acc + c.value, 0);
+            const billsTotal = billsAsFixedCosts.reduce((acc, b) => acc + b.amount, 0);
+            const totalFixedCosts = manualTotal + billsTotal + (costs.shipping || 0);
             
             // HTML dos custos manuais
             const manualCostsHTML = manualFixedCosts.map((c, index) => `
@@ -3087,11 +3349,6 @@ const LucroCertoApp = (function() {
                 </div>
             `).join('');
             
-            // Total combinado
-            const manualTotal = manualFixedCosts.reduce((acc, c) => acc + c.value, 0);
-            const billsTotal = billsAsFixedCosts.reduce((acc, b) => acc + b.amount, 0);
-            const totalFixedCosts = manualTotal + billsTotal;
-            
             const variableCostsHTML = (costs.variable || []).map((c, index) => `
                 <div class="cost-list-item">
                     <div class="cost-item-info">
@@ -3107,29 +3364,42 @@ const LucroCertoApp = (function() {
                 </div>
             `).join('');
             
+            // Verifica se tem produtos cadastrados para pré-preencher
+            const hasProducts = products && products.length > 0;
+            const avgCost = hasProducts ? products.reduce((acc, p) => acc + (p.baseCost || 0), 0) / products.length : 0;
+            const avgPrice = hasProducts ? products.reduce((acc, p) => acc + (p.finalPrice || 0), 0) / products.length : 0;
+            
+            // Opções de produtos para o select
+            const productOptionsHTML = hasProducts ? products.map(p => 
+                `<option value="${p.id}" data-custo="${p.baseCost || 0}" data-preco="${p.finalPrice || 0}">
+                    ${p.name} (Custo: R$ ${(p.baseCost || 0).toFixed(2)} | Venda: R$ ${(p.finalPrice || 0).toFixed(2)})
+                </option>`
+            ).join('') : '';
+            
             return `
-                <h2>Gestão de Despesas</h2>
-                <p class="sub-header">A base para uma precificação lucrativa começa aqui.</p>
+                <h2>Custos Fixos</h2>
+                <p class="sub-header">Cadastre seus custos mensais para calcular o preço certo.</p>
                 
-                <div class="card">
-                    <div class="card-header">
-                        <div class="card-icon" style="background: var(--success-gradient);">
-                            <i data-lucide="shopping-cart"></i>
-                        </div>
-                        <h3 class="card-title">Qual a sua meta de vendas mensal?</h3>
-                    </div>
-                    <p>Este número é essencial para calcularmos seus custos por cada produto vendido.</p>
-                    <div class="form-group" style="margin-top: 1rem;">
-                        <label for="monthly-sales-goal">Itens a vender por mês</label>
-                        <input type="number" id="monthly-sales-goal" class="form-input" placeholder="Ex: 100" value="${user.monthlySalesGoal || ''}">
-                    </div>
+                <!-- CARD EXPLICATIVO DO FLUXO -->
+                <div class="card" style="background: linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%); border-left: 4px solid #3b82f6;">
+                    <p style="color: #1e40af; font-size: 14px; line-height: 1.8; margin: 0;">
+                        <strong>📍 Como usar esta página:</strong><br><br>
+                        1️⃣ <strong>Cadastre seus custos fixos</strong> (aluguel, luz, internet...)<br>
+                        2️⃣ <strong>Informe seu lucro médio por peça</strong> (quanto sobra no bolso por venda)<br>
+                        3️⃣ <strong>Descubra quantas peças</strong> precisa vender para pagar as contas!<br><br>
+                        🔗 <em>Os custos cadastrados aqui são usados automaticamente na Precificação!</em>
+                    </p>
                 </div>
                 
+                <!-- PASSO 1: CUSTOS FIXOS -->
                 <div class="card">
                     <div class="card-header">
                         <div class="card-icon"><i data-lucide="building"></i></div>
-                        <h3 class="card-title">Custos Fixos Mensais</h3>
+                        <h3 class="card-title">1️⃣ Custos Fixos Mensais</h3>
                     </div>
+                    <p style="color: var(--elegant-gray); font-size: 13px; margin-bottom: 12px;">
+                        Contas que você paga todo mês, vendendo ou não: aluguel, internet, luz, sistema, etc.
+                    </p>
                     
                     ${billsAsFixedCosts.length > 0 ? `
                         <div class="costs-section">
@@ -3148,29 +3418,40 @@ const LucroCertoApp = (function() {
                     ` : ''}
                     
                     ${billsAsFixedCosts.length === 0 && manualFixedCosts.length === 0 ? `
-                        <p style="color: var(--elegant-gray); padding: 12px; text-align: center;">
-                            Nenhum custo fixo cadastrado. Adicione abaixo ou cadastre no <a href="#" data-action="navigate" data-route="financeiro" style="color: var(--primary);">Financeiro</a>.
+                        <p style="color: var(--elegant-gray); padding: 12px; text-align: center; background: #f8fafc; border-radius: 8px;">
+                            Nenhum custo fixo cadastrado ainda.
                         </p>
                     ` : ''}
                     
-                    <p style="font-size:14px; text-align:right; margin-top:12px; padding-top: 12px; border-top: 1px solid #eee;">
-                        Total: <strong style="color: var(--primary);">R$ ${totalFixedCosts.toFixed(2)}</strong>
-                    </p>
+                    ${costs.shipping > 0 ? `
+                        <div class="cost-list-item" style="margin-top: 8px; background: #f0fdf4; border-radius: 8px; padding: 8px 12px;">
+                            <span>🚚 Frete mensal</span>
+                            <strong>R$ ${costs.shipping.toFixed(2)}</strong>
+                        </div>
+                    ` : ''}
+                    
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 16px; border-radius: 10px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 14px;">Total de Custos Fixos:</span>
+                        <strong style="font-size: 20px;">R$ ${totalFixedCosts.toFixed(2)}</strong>
+                    </div>
                     
                     <form class="add-cost-form" id="add-fixed-cost-form" style="margin-top: 16px;">
-                        <p style="font-size: 13px; color: var(--elegant-gray); margin-bottom: 8px;">
-                            💡 Dica: Cadastre contas no <strong>Financeiro</strong> como "recorrente" para aparecer automaticamente aqui.
-                        </p>
                         <div class="input-group">
-                            <input type="text" id="fixed-cost-name" class="form-input" placeholder="Nome da Despesa" required>
-                            <input type="number" step="0.01" id="fixed-cost-value" class="form-input" placeholder="Valor (R$)" required>
+                            <input type="text" id="fixed-cost-name" class="form-input" placeholder="Ex: Aluguel" required>
+                            <input type="number" step="0.01" id="fixed-cost-value" class="form-input" placeholder="Valor R$" required>
                         </div>
                         <button type="submit" class="btn btn-secondary btn-full" style="margin-top:10px;">
-                            Adicionar Custo Fixo Manual
+                            + Adicionar Custo Fixo
                         </button>
                     </form>
+                    
+                    <div class="form-group" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #eee;">
+                        <label for="monthly-shipping-cost">🚚 Frete mensal com fornecedor (R$)</label>
+                        <input type="number" step="0.01" id="monthly-shipping-cost" class="form-input" placeholder="Ex: 150.00" value="${costs.shipping || ''}">
+                    </div>
                 </div>
                 
+                <!-- CUSTOS VARIÁVEIS (sempre visível) -->
                 <div class="card">
                     <div class="card-header">
                         <div class="card-icon" style="background: var(--secondary-gradient);">
@@ -3178,57 +3459,113 @@ const LucroCertoApp = (function() {
                         </div>
                         <h3 class="card-title">Custos Variáveis por Venda</h3>
                     </div>
-                    <div id="variable-costs-list" style="margin-top: 1rem;">${variableCostsHTML}</div>
-                    <form class="add-cost-form" id="add-variable-cost-form">
+                    <p style="color: var(--elegant-gray); font-size: 13px; margin-bottom: 12px;">
+                        Custos que você tem a cada venda: embalagens, taxas de cartão, comissões, etc.
+                    </p>
+                    
+                    ${costs.variable && costs.variable.length > 0 ? `
+                        <div id="variable-costs-list">${variableCostsHTML}</div>
+                    ` : `
+                        <p style="color: var(--elegant-gray); padding: 12px; text-align: center; background: #f8fafc; border-radius: 8px;">
+                            Nenhum custo variável cadastrado ainda.
+                        </p>
+                    `}
+                    
+                    <form class="add-cost-form" id="add-variable-cost-form" style="margin-top: 16px;">
                         <div class="input-group">
-                            <input type="text" id="variable-cost-name" class="form-input" placeholder="Nome da Despesa" required>
+                            <input type="text" id="variable-cost-name" class="form-input" placeholder="Ex: Embalagem" required>
                             <input type="number" step="0.01" id="variable-cost-value" class="form-input" placeholder="Valor" required>
                             <select id="variable-cost-type" class="form-select" style="width: 80px;">
-                                <option value="percentage">%</option>
                                 <option value="fixed">R$</option>
+                                <option value="percentage">%</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-secondary btn-full" style="margin-top:10px;">
-                            Adicionar Custo Variável
+                            + Adicionar Custo Variável
                         </button>
                     </form>
                 </div>
                 
-                <div class="card">
+                <!-- PRÓXIMO PASSO -->
+                <div class="card" style="border: 2px solid #8B5CF6; background: linear-gradient(135deg, #EDE9FE 0%, #F5F3FF 100%);">
                     <div class="card-header">
-                        <div class="card-icon" style="background: var(--info);">
-                            <i data-lucide="truck"></i>
+                        <div class="card-icon" style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);">
+                            <i data-lucide="arrow-right"></i>
                         </div>
-                        <h3 class="card-title">Custo com Frete da Compra</h3>
+                        <h3 class="card-title" style="color: #5B21B6;">2️⃣ Próximo Passo: Cadastrar Produtos</h3>
                     </div>
-                    <p>Se você compra de fornecedores, insira o valor total do frete pago no mês.</p>
-                    <div class="form-group" style="margin-top: 1rem;">
-                        <label for="monthly-shipping-cost">Custo total do frete mensal</label>
-                        <input type="number" id="monthly-shipping-cost" class="form-input" placeholder="Ex: 150.00" value="${costs.shipping || ''}">
+                    
+                    <p style="color: #6D28D9; font-size: 14px; line-height: 1.6; margin-bottom: 16px;">
+                        Agora que você cadastrou seus custos, vá para <strong>Produtos</strong> e cadastre seus itens.<br>
+                        Lá você vai ver o <strong>Semáforo de Preços</strong> 🚦 que mostra se seu preço está bom!
+                    </p>
+                    
+                    <button class="btn btn-primary btn-full" data-action="navigate" data-route="produtos" style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); padding: 16px; font-size: 16px;">
+                        <i data-lucide="package"></i> Ir para Produtos
+                    </button>
+                </div>
+                
+                <!-- INFO: INTEGRAÇÃO COM PRECIFICAÇÃO -->
+                <div class="card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border-left: 4px solid #22c55e;">
+                    <div style="display: flex; align-items: flex-start; gap: 12px;">
+                        <span style="font-size: 28px;">🔗</span>
+                        <div>
+                            <h4 style="color: #166534; margin: 0 0 8px 0;">Os custos cadastrados aqui são usados automaticamente!</h4>
+                            <p style="color: #15803d; font-size: 13px; line-height: 1.6; margin: 0;">
+                                Quando você for <strong>cadastrar produtos</strong> ou usar a <strong>Precificação</strong>, 
+                                o sistema já vai considerar esses custos fixos e variáveis para sugerir o preço ideal de cada produto.
+                            </p>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- EXEMPLO -->
+                <details class="card" style="background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%);">
+                    <summary style="color: #92400e; font-weight: 600; cursor: pointer;">
+                        📚 Ver exemplo prático
+                    </summary>
+                    <div style="margin-top: 12px; color: #78350f; font-size: 14px; line-height: 1.7;">
+                        <p><strong>Maria vende bolsas:</strong></p>
+                        <ul style="margin: 8px 0; padding-left: 20px;">
+                            <li>Custos fixos: <strong>R$ 600/mês</strong></li>
+                            <li>Lucro médio por bolsa: <strong>R$ 40</strong></li>
+                        </ul>
+                        <p style="background: white; padding: 12px; border-radius: 8px; margin-top: 8px;">
+                            <strong>Cálculo:</strong><br>
+                            Ponto de Equilíbrio = R$ 600 ÷ R$ 40 = <strong>15 bolsas/mês</strong><br><br>
+                            ✅ Maria precisa vender <strong>pelo menos 15 bolsas</strong> para pagar as contas!<br>
+                            A partir da 16ª bolsa, começa o LUCRO! 🎉
+                        </p>
+                    </div>
+                </details>
             `;
         },
         
         bindDespesasEvents() {
-            const salesGoalInput = document.getElementById('monthly-sales-goal');
-            if (salesGoalInput) salesGoalInput.addEventListener('change', () => StateManager.setState({ user: { ...StateManager.getState().user, monthlySalesGoal: parseFloat(salesGoalInput.value) || 0 } }));
             const shippingCostInput = document.getElementById('monthly-shipping-cost');
-            if (shippingCostInput) shippingCostInput.addEventListener('change', () => StateManager.setState({ costs: { ...StateManager.getState().costs, shipping: parseFloat(shippingCostInput.value) || 0 } }));
+            if (shippingCostInput) shippingCostInput.addEventListener('change', () => {
+                StateManager.setState({ costs: { ...StateManager.getState().costs, shipping: parseFloat(shippingCostInput.value) || 0 } });
+            });
+            
             const addFixedCostForm = document.getElementById('add-fixed-cost-form');
-            if (addFixedCostForm) addFixedCostForm.addEventListener('submit', (e) => { e.preventDefault(); CostManager.addFixedCost(document.getElementById('fixed-cost-name').value, parseFloat(document.getElementById('fixed-cost-value').value)); e.target.reset(); });
+            if (addFixedCostForm) addFixedCostForm.addEventListener('submit', (e) => { 
+                e.preventDefault(); 
+                CostManager.addFixedCost(document.getElementById('fixed-cost-name').value, parseFloat(document.getElementById('fixed-cost-value').value)); 
+                e.target.reset(); 
+            });
+            
             const addVariableCostForm = document.getElementById('add-variable-cost-form');
             if (addVariableCostForm) addVariableCostForm.addEventListener('submit', (e) => { e.preventDefault(); CostManager.addVariableCost(document.getElementById('variable-cost-name').value, parseFloat(document.getElementById('variable-cost-value').value), document.getElementById('variable-cost-type').value); e.target.reset(); });
         },
 
         getPrecificarHTML() {
-            const totalUnitCost = SmartPricing.getTotalUnitCost(0);
+            const directCost = SmartPricing.getDirectUnitCost(0);
             return `
                 <h2>Precificação Inteligente ✨</h2>
-                <p class="sub-header">Calcule o preço de venda ideal e maximize seu lucro.</p>
+                <p class="sub-header">Calcule o preço de venda ideal usando Custeio Variável.</p>
                 <div class="card"><div class="form-group"><label for="product-cost">Custo do Produto (R$)</label><input type="number" id="product-cost" class="form-input" placeholder="Ex: 25.50"></div><div class="form-group"><label for="profit-margin">Margem de Lucro Desejada (%)</label><input type="range" id="profit-margin" min="10" max="300" value="100" class="slider"><div style="display:flex; justify-content: space-between; margin-top: 8px; font-weight:600;"><span>10%</span><span id="profit-margin-value">100%</span><span>300%</span></div></div></div>
-                <div class="card"><h3>Composição do Custo Unitário</h3><div id="pricing-breakdown"><div class="cost-list-item"><span>Custo do Produto</span> <strong id="breakdown-product">R$ 0,00</strong></div><div class="cost-list-item"><span>Custos Fixos/Unidade</span> <strong id="breakdown-fixed">R$ ${totalUnitCost.fixed.toFixed(2)}</strong></div><div class="cost-list-item"><span>Custos Variáveis (R$)/Unidade</span> <strong id="breakdown-variable">R$ ${totalUnitCost.variable.toFixed(2)}</strong></div><div class="cost-list-item"><span>Frete/Unidade</span> <strong id="breakdown-shipping">R$ ${totalUnitCost.shipping.toFixed(2)}</strong></div><hr style="margin: 10px 0; border-color: #eee;"><div class="cost-list-item"><span>Custo Total por Unidade</span> <strong id="breakdown-total-cost" style="color: var(--alert)">R$ ${totalUnitCost.total.toFixed(2)}</strong></div></div></div>
-                <div class="card" style="background: var(--primary-gradient); color: white;"><h3 style="color: white;">Resultado da Precificação</h3><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><span>Preço de Venda Sugerido:</span><span id="selling-price" class="financial-value" style="font-size: 24px;">R$ 0,00</span></div><div style="display: flex; justify-content: space-between; align-items: center;"><span>Lucro Bruto por Unidade:</span><span id="gross-profit" class="financial-value">R$ 0,00</span></div></div>
+                <div class="card"><h3>Composição do Custo Direto</h3><div id="pricing-breakdown"><div class="cost-list-item"><span>Custo do Produto</span> <strong id="breakdown-product">R$ 0,00</strong></div><div class="cost-list-item"><span>Embalagem/Etiquetas</span> <strong id="breakdown-variable">R$ ${directCost.packagingCosts.toFixed(2)}</strong></div><hr style="margin: 10px 0; border-color: #eee;"><div class="cost-list-item"><span>Custo Direto Total</span> <strong id="breakdown-total-cost" style="color: var(--alert)">R$ ${directCost.total.toFixed(2)}</strong></div></div></div>
+                <div class="card" style="background: var(--primary-gradient); color: white;"><h3 style="color: white;">Resultado da Precificação</h3><div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;"><span>Preço de Venda Sugerido:</span><span id="selling-price" class="financial-value" style="font-size: 24px;">R$ 0,00</span></div><div style="display: flex; justify-content: space-between; align-items: center;"><span>Margem de Contribuição:</span><span id="gross-profit" class="financial-value">R$ 0,00</span></div></div>
             `;
         },
         
@@ -3256,19 +3593,376 @@ const LucroCertoApp = (function() {
         },
         
         getMetasHTML() { 
-             return `
-                <h2>Metas e Coaching 👑</h2>
-                <p class="sub-header">Defina seus objetivos e receba motivação para alcançá-los.</p>
-                 <div class="card">
-                    <div class="card-header"><div class="card-icon" style="background: var(--success-gradient);"><i data-lucide="gem"></i></div><h3 class="card-title">Sua Grande Meta</h3></div>
-                    <p>Defina uma meta de faturamento mensal que te inspire a crescer!</p>
-                    <div class="form-group" style="margin-top:1rem;">
-                        <label for="monthly-goal">Meta de Faturamento Mensal (R$)</label>
-                        <input type="number" id="monthly-goal" class="form-input" placeholder="Ex: 8000" value="${StateManager.getState().user.monthlyGoal}">
+            const { products, user, costs } = StateManager.getState();
+            
+            // Pega custos fixos do sistema
+            const totalFixedCosts = SmartPricing.getTotalMonthlyFixedCosts() + (costs.shipping || 0);
+            const hasFixedCosts = totalFixedCosts > 0;
+            
+            // Calcula ponto de equilíbrio baseado nos produtos (se tiver)
+            const breakEvenData = SmartPricing.calculateBreakEvenFromProducts();
+            
+            return `
+                <h2>Ponto de Equilíbrio ⚖️</h2>
+                <p class="sub-header">Descubra quantas peças você precisa vender para não ter prejuízo!</p>
+                
+                <!-- CARD EDUCATIVO - O QUE É PONTO DE EQUILÍBRIO -->
+                <div class="card" style="background: linear-gradient(135deg, #fef3c7 0%, #fef9c3 100%); border-left: 4px solid #f59e0b;">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+                            <i data-lucide="lightbulb"></i>
+                        </div>
+                        <h3 class="card-title">💡 O que é Ponto de Equilíbrio?</h3>
+                    </div>
+                    <p style="color: #92400e; line-height: 1.6;">
+                        É a <strong>quantidade mínima de peças</strong> que você precisa vender para pagar todas as suas contas do mês (aluguel, internet, embalagens, etc).
+                    </p>
+                    <p style="color: #92400e; line-height: 1.6; margin-top: 8px;">
+                        <strong>Abaixo desse número</strong> = Prejuízo 📉<br>
+                        <strong>Acima desse número</strong> = Lucro! 📈
+                    </p>
+                </div>
+                
+                <!-- CALCULADORA PASSO A PASSO -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i data-lucide="calculator"></i>
+                        </div>
+                        <h3 class="card-title">🧮 Calcule seu Ponto de Equilíbrio</h3>
+                    </div>
+                    
+                    <p style="color: var(--elegant-gray); margin-bottom: 20px;">
+                        Preencha os campos abaixo para descobrir quantas peças você precisa vender:
+                    </p>
+                    
+                    <!-- PASSO 1: CUSTOS FIXOS -->
+                    <div style="background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <span style="background: var(--primary); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">1</span>
+                            <h4 style="margin: 0; color: var(--dark-gray);">Seus Custos Fixos Mensais</h4>
+                        </div>
+                        <p style="font-size: 13px; color: var(--elegant-gray); margin-bottom: 12px;">
+                            São as contas que você paga todo mês, vendendo ou não: aluguel, internet, luz, sistema, etc.
+                        </p>
+                        
+                        ${hasFixedCosts ? `
+                            <div style="background: #d1fae5; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                                <p style="font-size: 13px; color: #059669; margin: 0;">
+                                    ✅ <strong>Já cadastrados no sistema:</strong> R$ ${totalFixedCosts.toFixed(2)}
+                                </p>
+                            </div>
+                        ` : `
+                            <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+                                <p style="font-size: 13px; color: #92400e; margin: 0;">
+                                    ⚠️ Você ainda não cadastrou custos fixos. 
+                                    <a href="#" data-action="navigate" data-route="despesas" style="color: #d97706; font-weight: 600;">Cadastrar agora</a>
+                                </p>
+                            </div>
+                        `}
+                        
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="pe-custos-fixos">Total de Custos Fixos (R$/mês)</label>
+                            <input type="number" step="0.01" id="pe-custos-fixos" class="form-input" 
+                                   placeholder="Ex: 500.00" 
+                                   value="${hasFixedCosts ? totalFixedCosts.toFixed(2) : ''}">
+                            <small style="color: var(--elegant-gray);">Ex: Aluguel R$ 300 + Internet R$ 100 + Luz R$ 100 = R$ 500</small>
+                        </div>
+                    </div>
+                    
+                    <!-- PASSO 2: CUSTO DO PRODUTO -->
+                    <div style="background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <span style="background: var(--primary); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">2</span>
+                            <h4 style="margin: 0; color: var(--dark-gray);">Custo do Produto</h4>
+                        </div>
+                        <p style="font-size: 13px; color: var(--elegant-gray); margin-bottom: 12px;">
+                            Quanto você <strong>paga</strong> pelo produto? (custo de compra + embalagem + frete do fornecedor)
+                        </p>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="pe-custo-produto">Custo por unidade (R$)</label>
+                            <input type="number" step="0.01" id="pe-custo-produto" class="form-input" 
+                                   placeholder="Ex: 25.00"
+                                   value="${breakEvenData.hasProducts ? breakEvenData.avgCost.toFixed(2) : ''}">
+                            <small style="color: var(--elegant-gray);">Se vende produtos diferentes, use o custo médio</small>
+                        </div>
+                    </div>
+                    
+                    <!-- PASSO 3: PREÇO DE VENDA -->
+                    <div style="background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                            <span style="background: var(--primary); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px;">3</span>
+                            <h4 style="margin: 0; color: var(--dark-gray);">Preço de Venda</h4>
+                        </div>
+                        <p style="font-size: 13px; color: var(--elegant-gray); margin-bottom: 12px;">
+                            Por quanto você <strong>vende</strong> o produto para a cliente?
+                        </p>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label for="pe-preco-venda">Preço de venda (R$)</label>
+                            <input type="number" step="0.01" id="pe-preco-venda" class="form-input" 
+                                   placeholder="Ex: 59.90"
+                                   value="${breakEvenData.hasProducts ? breakEvenData.avgSellingPrice.toFixed(2) : ''}">
+                            <small style="color: var(--elegant-gray);">Se vende produtos diferentes, use o preço médio</small>
+                        </div>
+                    </div>
+                    
+                    <!-- BOTÃO CALCULAR -->
+                    <button class="btn btn-primary btn-full" id="btn-calcular-pe" style="margin-top: 8px; padding: 16px; font-size: 16px;">
+                        <i data-lucide="calculator"></i> CALCULAR PONTO DE EQUILÍBRIO
+                    </button>
+                    
+                    <!-- RESULTADO -->
+                    <div id="resultado-ponto-equilibrio" style="margin-top: 20px;"></div>
+                </div>
+                
+                <!-- EXEMPLO PRÁTICO -->
+                <div class="card" style="background: linear-gradient(135deg, #ede9fe 0%, #f5f3ff 100%);">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+                            <i data-lucide="book-open"></i>
+                        </div>
+                        <h3 class="card-title">📚 Exemplo Prático</h3>
+                    </div>
+                    
+                    <div style="color: #5b21b6;">
+                        <p><strong>Maria vende bolsas:</strong></p>
+                        <ul style="margin: 12px 0; padding-left: 20px; line-height: 1.8;">
+                            <li>Custos fixos mensais: <strong>R$ 600</strong> (aluguel + luz + internet)</li>
+                            <li>Custo de cada bolsa: <strong>R$ 40</strong></li>
+                            <li>Preço de venda: <strong>R$ 80</strong></li>
+                        </ul>
+                        
+                        <div style="background: white; padding: 16px; border-radius: 10px; margin-top: 12px;">
+                            <p style="margin-bottom: 8px;"><strong>Cálculo:</strong></p>
+                            <p style="font-size: 14px; margin-bottom: 4px;">
+                                Lucro por bolsa = R$ 80 - R$ 40 = <strong>R$ 40</strong>
+                            </p>
+                            <p style="font-size: 14px; margin-bottom: 4px;">
+                                Ponto de Equilíbrio = R$ 600 ÷ R$ 40 = <strong>15 bolsas</strong>
+                            </p>
+                            <p style="font-size: 14px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+                                ✅ Maria precisa vender <strong>pelo menos 15 bolsas/mês</strong> para pagar as contas.<br>
+                                🎯 A partir da 16ª bolsa, é <strong>lucro puro!</strong>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                ${breakEvenData.hasProducts && breakEvenData.isViable ? `
+                <!-- RESULTADO AUTOMÁTICO DOS PRODUTOS -->
+                <div class="card" style="border: 2px solid var(--primary);">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: var(--primary-gradient);">
+                            <i data-lucide="sparkles"></i>
+                        </div>
+                        <h3 class="card-title">✨ Seus Produtos Cadastrados</h3>
+                    </div>
+                    
+                    <p style="color: var(--elegant-gray); margin-bottom: 16px;">
+                        Com base nos <strong>${breakEvenData.totalProducts} produtos</strong> que você já cadastrou:
+                    </p>
+                    
+                    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; padding: 20px; color: white; text-align: center;">
+                        <p style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">Seu Ponto de Equilíbrio é</p>
+                        <p style="font-size: 48px; font-weight: 700; margin: 8px 0;">${breakEvenData.breakEvenUnits}</p>
+                        <p style="font-size: 16px; opacity: 0.9;">peças por mês</p>
+                        <p style="font-size: 13px; margin-top: 12px; opacity: 0.8;">
+                            = R$ ${breakEvenData.breakEvenRevenue.toFixed(2)} em faturamento mínimo
+                        </p>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+                        <div style="background: #f0fdf4; padding: 12px; border-radius: 10px; text-align: center;">
+                            <p style="font-size: 12px; color: #166534; margin-bottom: 4px;">Meta Sugerida (+20%)</p>
+                            <p style="font-size: 24px; font-weight: bold; color: #15803d;">${Math.ceil(breakEvenData.breakEvenUnits * 1.2)}</p>
+                            <p style="font-size: 11px; color: #166534;">peças/mês</p>
+                        </div>
+                        <div style="background: #fef3c7; padding: 12px; border-radius: 10px; text-align: center;">
+                            <p style="font-size: 12px; color: #92400e; margin-bottom: 4px;">Lucro por peça</p>
+                            <p style="font-size: 24px; font-weight: bold; color: #d97706;">R$ ${breakEvenData.contributionMargin.toFixed(2)}</p>
+                            <p style="font-size: 11px; color: #92400e;">após o PE</p>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+                
+                <!-- META DE FATURAMENTO -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-icon" style="background: var(--success-gradient);">
+                            <i data-lucide="target"></i>
+                        </div>
+                        <h3 class="card-title">🎯 Sua Meta Mensal</h3>
+                    </div>
+                    <p style="color: var(--elegant-gray);">Defina uma meta de faturamento para acompanhar seu progresso:</p>
+                    <div class="form-group" style="margin-top: 12px;">
+                        <label for="monthly-goal">Meta de Faturamento (R$/mês)</label>
+                        <input type="number" id="monthly-goal" class="form-input" placeholder="Ex: 3000" value="${user.monthlyGoal || ''}">
                     </div>
                     <button class="btn btn-primary btn-full" data-action="save-goal">Salvar Meta</button>
                 </div>
             `;
+        },
+        
+        bindMetasEvents() {
+            // Botão de calcular ponto de equilíbrio
+            const btnCalcular = document.getElementById('btn-calcular-pe');
+            if (btnCalcular) {
+                btnCalcular.addEventListener('click', () => {
+                    const custosFixos = parseFloat(document.getElementById('pe-custos-fixos').value) || 0;
+                    const custoProduto = parseFloat(document.getElementById('pe-custo-produto').value) || 0;
+                    const precoVenda = parseFloat(document.getElementById('pe-preco-venda').value) || 0;
+                    const resultDiv = document.getElementById('resultado-ponto-equilibrio');
+                    
+                    // Validações
+                    if (custosFixos <= 0) {
+                        resultDiv.innerHTML = `
+                            <div style="padding: 16px; background: #fef3c7; border-radius: 10px; color: #92400e;">
+                                <strong>⚠️ Informe seus custos fixos mensais</strong><br>
+                                <span style="font-size: 13px;">Ex: aluguel, internet, luz, sistema...</span>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    if (custoProduto <= 0) {
+                        resultDiv.innerHTML = `
+                            <div style="padding: 16px; background: #fef3c7; border-radius: 10px; color: #92400e;">
+                                <strong>⚠️ Informe o custo do produto</strong><br>
+                                <span style="font-size: 13px;">Quanto você paga pelo produto?</span>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    if (precoVenda <= 0) {
+                        resultDiv.innerHTML = `
+                            <div style="padding: 16px; background: #fef3c7; border-radius: 10px; color: #92400e;">
+                                <strong>⚠️ Informe o preço de venda</strong><br>
+                                <span style="font-size: 13px;">Por quanto você vende o produto?</span>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // Calcula a margem de contribuição (lucro por unidade)
+                    const margemContribuicao = precoVenda - custoProduto;
+                    
+                    if (margemContribuicao <= 0) {
+                        resultDiv.innerHTML = `
+                            <div style="padding: 20px; background: #fee2e2; border-radius: 12px; color: #dc2626;">
+                                <div style="text-align: center; margin-bottom: 12px;">
+                                    <span style="font-size: 48px;">😰</span>
+                                </div>
+                                <strong style="font-size: 16px;">Ops! Você está vendendo no prejuízo!</strong>
+                                <p style="margin-top: 8px; font-size: 14px;">
+                                    Seu preço de venda (R$ ${precoVenda.toFixed(2)}) é menor ou igual ao custo (R$ ${custoProduto.toFixed(2)}).
+                                </p>
+                                <p style="margin-top: 8px; font-size: 14px;">
+                                    <strong>Solução:</strong> Aumente o preço de venda para pelo menos <strong>R$ ${(custoProduto * 1.5).toFixed(2)}</strong> (50% de margem).
+                                </p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    // Calcula o ponto de equilíbrio
+                    const pontoEquilibrio = Math.ceil(custosFixos / margemContribuicao);
+                    const faturamentoMinimo = pontoEquilibrio * precoVenda;
+                    const margemPercentual = ((margemContribuicao / precoVenda) * 100).toFixed(1);
+                    
+                    // Cenários
+                    const metaMinima = Math.ceil(pontoEquilibrio * 1.2);
+                    const metaIdeal = Math.ceil(pontoEquilibrio * 1.5);
+                    const lucroMetaMinima = (metaMinima - pontoEquilibrio) * margemContribuicao;
+                    const lucroMetaIdeal = (metaIdeal - pontoEquilibrio) * margemContribuicao;
+                    
+                    resultDiv.innerHTML = `
+                        <!-- RESULTADO PRINCIPAL -->
+                        <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 16px; padding: 24px; color: white; text-align: center; margin-bottom: 20px;">
+                            <p style="font-size: 14px; opacity: 0.9; margin-bottom: 4px;">🎉 Seu Ponto de Equilíbrio é</p>
+                            <p style="font-size: 56px; font-weight: 700; margin: 8px 0; line-height: 1;">${pontoEquilibrio}</p>
+                            <p style="font-size: 18px; opacity: 0.95;">peças por mês</p>
+                            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.3);">
+                                <p style="font-size: 14px; opacity: 0.9;">
+                                    Faturamento mínimo: <strong>R$ ${faturamentoMinimo.toFixed(2)}</strong>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- DETALHAMENTO DO CÁLCULO -->
+                        <div style="background: #f8fafc; border-radius: 12px; padding: 16px; margin-bottom: 20px;">
+                            <h4 style="font-size: 14px; color: var(--dark-gray); margin-bottom: 12px;">📊 Como calculamos:</h4>
+                            
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                                <span>Custos Fixos Mensais</span>
+                                <strong style="color: #dc2626;">R$ ${custosFixos.toFixed(2)}</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                                <span>Preço de Venda</span>
+                                <strong>R$ ${precoVenda.toFixed(2)}</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                                <span>Custo do Produto</span>
+                                <strong>R$ ${custoProduto.toFixed(2)}</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e5e7eb;">
+                                <span>Lucro por Peça</span>
+                                <strong style="color: #059669;">R$ ${margemContribuicao.toFixed(2)} (${margemPercentual}%)</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; padding: 12px 0; background: #fef3c7; margin: 8px -16px -16px -16px; padding: 12px 16px; border-radius: 0 0 12px 12px;">
+                                <span><strong>Fórmula:</strong></span>
+                                <strong>R$ ${custosFixos.toFixed(2)} ÷ R$ ${margemContribuicao.toFixed(2)} = ${pontoEquilibrio} peças</strong>
+                            </div>
+                        </div>
+                        
+                        <!-- CENÁRIOS DE META -->
+                        <h4 style="font-size: 14px; color: var(--dark-gray); margin-bottom: 12px;">🎯 Defina sua meta:</h4>
+                        <div style="display: grid; gap: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px; background: #fef3c7; border-radius: 10px; border-left: 4px solid #f59e0b;">
+                                <div>
+                                    <span style="font-size: 20px; margin-right: 8px;">⚖️</span>
+                                    <strong>Ponto de Equilíbrio</strong>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 700; font-size: 18px;">${pontoEquilibrio} peças</div>
+                                    <div style="font-size: 12px; color: #92400e;">Sem lucro, sem prejuízo</div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px; background: #d1fae5; border-radius: 10px; border-left: 4px solid #10b981;">
+                                <div>
+                                    <span style="font-size: 20px; margin-right: 8px;">🎯</span>
+                                    <strong>Meta Mínima (+20%)</strong>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 700; font-size: 18px;">${metaMinima} peças</div>
+                                    <div style="font-size: 12px; color: #059669;">Lucro: R$ ${lucroMetaMinima.toFixed(2)}</div>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px; background: #dbeafe; border-radius: 10px; border-left: 4px solid #3b82f6;">
+                                <div>
+                                    <span style="font-size: 20px; margin-right: 8px;">🚀</span>
+                                    <strong>Meta Ideal (+50%)</strong>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-weight: 700; font-size: 18px;">${metaIdeal} peças</div>
+                                    <div style="font-size: 12px; color: #1d4ed8;">Lucro: R$ ${lucroMetaIdeal.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- DICA -->
+                        <div style="margin-top: 20px; padding: 16px; background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%); border-radius: 12px; border-left: 4px solid #0ea5e9;">
+                            <p style="font-size: 13px; color: #0369a1; margin: 0;">
+                                <strong>💡 Dica:</strong> Comece com a meta de <strong>${metaMinima} peças</strong>. 
+                                Isso te dá uma folga de segurança e garante R$ ${lucroMetaMinima.toFixed(2)} de lucro!
+                            </p>
+                        </div>
+                    `;
+                });
+            }
         },
         
         getRelatoriosHTML() { 
@@ -3299,12 +3993,18 @@ const LucroCertoApp = (function() {
             // Produtos mais vendidos
             const productSales = {};
             monthSales.forEach(s => {
-                (s.items || []).forEach(item => {
-                    if (!productSales[item.productId]) {
-                        productSales[item.productId] = { name: item.productName, qty: 0, revenue: 0 };
+                const items = s.items || s.products || [];
+                items.forEach(item => {
+                    const productId = item.productId || item.product_id;
+                    const productName = item.productName || item.name || 'Produto';
+                    const quantity = item.quantity || 1;
+                    const subtotal = item.subtotal || (item.price * quantity) || 0;
+                    
+                    if (!productSales[productId]) {
+                        productSales[productId] = { name: productName, qty: 0, revenue: 0 };
                     }
-                    productSales[item.productId].qty += item.quantity;
-                    productSales[item.productId].revenue += item.subtotal;
+                    productSales[productId].qty += quantity;
+                    productSales[productId].revenue += subtotal;
                 });
             });
             const topProducts = Object.values(productSales).sort((a, b) => b.revenue - a.revenue).slice(0, 5);
@@ -3846,6 +4546,7 @@ const LucroCertoApp = (function() {
             const { user } = StateManager.getState();
             const authData = Storage.get('auth', {});
             const profilePhoto = user.profilePhoto || '';
+            const margemPadraoSalva = Storage.get('margem_padrao_negocio');
             
             return `
                 <h2>⚙️ Configurações</h2>
@@ -3931,9 +4632,64 @@ const LucroCertoApp = (function() {
                     </div>
                 </div>
                 
+                <!-- MARGEM PADRÃO DO NEGÓCIO -->
+                <div class="card" style="border: 2px solid #E8F5E9; background: linear-gradient(135deg, #F1F8E9, #E8F5E9);">
+                    <h3><i data-lucide="percent" style="width: 20px; height: 20px; vertical-align: middle; color: #388E3C;"></i> Margem Padrão do Negócio</h3>
+                    <p style="font-size: 13px; color: #2E7D32; margin-bottom: 16px;">
+                        Esta margem é usada como <strong>sugestão automática</strong> quando você cadastra novos produtos. 
+                        ${margemPadraoSalva ? 'Foi definida pelo seu primeiro produto.' : 'Será definida quando você cadastrar seu primeiro produto.'}
+                    </p>
+                    
+                    <div class="form-group">
+                        <label for="profile-margem-padrao" style="color: #2E7D32;">
+                            <i data-lucide="trending-up" style="width: 16px; height: 16px;"></i> Margem de Markup Padrão
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <input type="number" id="profile-margem-padrao" class="form-input" 
+                                   placeholder="67" 
+                                   min="10" max="200"
+                                   value="${margemPadraoSalva || ''}"
+                                   style="flex: 1; max-width: 150px;">
+                            <span style="color: #388E3C; font-weight: 600;">%</span>
+                        </div>
+                        <small style="color: #558B2F;">
+                            💡 Exemplo: Com 67% de margem, um produto de R$ 30 de custo será vendido por R$ 50.10
+                        </small>
+                    </div>
+                </div>
+                
                 <button class="btn btn-primary btn-full" data-action="save-profile" style="margin-top: 20px;">
                     <i data-lucide="check" style="width: 18px; height: 18px;"></i> Salvar Configurações
                 </button>
+                
+                <!-- DEFINIR SENHA - Para usuários trial sem senha -->
+                <div class="card" id="set-password-card" style="margin-top: 20px; background: linear-gradient(135deg, #FFF3E0, #FFE0B2); border: 2px solid #FF9800; display: none;">
+                    <h3><i data-lucide="lock" style="width: 20px; height: 20px; vertical-align: middle; color: #E65100;"></i> Definir Senha</h3>
+                    <p style="font-size: 13px; color: #E65100; margin-bottom: 16px;">
+                        <strong>⚠️ Você ainda não tem uma senha!</strong><br>
+                        Defina uma senha para poder acessar sua conta de qualquer dispositivo.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label for="set-password-input" style="color: #E65100;">
+                            <i data-lucide="key" style="width: 16px; height: 16px;"></i> Nova Senha
+                        </label>
+                        <input type="password" id="set-password-input" class="form-input" 
+                               placeholder="Mínimo 6 caracteres" minlength="6">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="set-password-confirm" style="color: #E65100;">
+                            <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i> Confirmar Senha
+                        </label>
+                        <input type="password" id="set-password-confirm" class="form-input" 
+                               placeholder="Digite novamente">
+                    </div>
+                    
+                    <button class="btn btn-full" id="btn-set-password" style="background: linear-gradient(135deg, #FF9800, #F57C00); color: white; margin-top: 12px;">
+                        <i data-lucide="shield-check" style="width: 18px; height: 18px;"></i> Definir Minha Senha
+                    </button>
+                </div>
                 
                 ${authData.plano !== 'trial' ? `
                     <div class="card" style="margin-top: 30px; background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%); border: 2px solid var(--primary-light);">
@@ -3950,11 +4706,11 @@ const LucroCertoApp = (function() {
                         <a href="#" class="settings-link" data-action="navigate" data-route="financeiro">
                             <i data-lucide="wallet"></i> Controle Financeiro
                         </a>
-                        <a href="#" class="settings-link" data-action="navigate" data-route="precificar">
-                            <i data-lucide="calculator"></i> Precificação
+                        <a href="#" class="settings-link" data-action="navigate" data-route="produtos">
+                            <i data-lucide="package"></i> Meus Produtos
                         </a>
-                        <a href="#" class="settings-link" data-action="navigate" data-route="metas">
-                            <i data-lucide="trophy"></i> Metas e Conquistas
+                        <a href="#" class="settings-link" data-action="navigate" data-route="despesas">
+                            <i data-lucide="scale"></i> Custos Fixos
                         </a>
                     </div>
                 </div>
@@ -3963,7 +4719,80 @@ const LucroCertoApp = (function() {
         
         bindConfiguracoesEvents() {
             const { user } = StateManager.getState();
+            const authData = Storage.get('auth', {});
             let currentProfilePhoto = user.profilePhoto || '';
+            
+            // ═══════════════════════════════════════════════════════════
+            // VERIFICAR SE USUÁRIO PRECISA DEFINIR SENHA
+            // ═══════════════════════════════════════════════════════════
+            const setPasswordCard = document.getElementById('set-password-card');
+            if (setPasswordCard) {
+                // Verificar se tem senha definida
+                const temSenhaSalva = Storage.get('has_password') || authData.hasPassword;
+                
+                // Se não tem senha, mostrar card
+                if (!temSenhaSalva) {
+                    setPasswordCard.style.display = 'block';
+                    
+                    // Botão definir senha
+                    const btnSetPassword = document.getElementById('btn-set-password');
+                    if (btnSetPassword) {
+                        btnSetPassword.addEventListener('click', async () => {
+                            const senha = document.getElementById('set-password-input').value;
+                            const confirma = document.getElementById('set-password-confirm').value;
+                            
+                            if (!senha || senha.length < 6) {
+                                alert('❌ A senha deve ter no mínimo 6 caracteres!');
+                                return;
+                            }
+                            
+                            if (senha !== confirma) {
+                                alert('❌ As senhas não conferem!');
+                                return;
+                            }
+                            
+                            // Mostrar loading
+                            btnSetPassword.disabled = true;
+                            btnSetPassword.innerHTML = '<i data-lucide="loader-2" class="spin"></i> Salvando...';
+                            
+                            try {
+                                const response = await fetch('/.netlify/functions/set-password', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        email: authData.email || user.email,
+                                        userId: authData.userId || Storage.get('user_id'),
+                                        password: senha
+                                    })
+                                });
+                                
+                                const result = await response.json();
+                                
+                                if (!response.ok) {
+                                    throw new Error(result.error || 'Erro ao definir senha');
+                                }
+                                
+                                // Salvar que tem senha
+                                Storage.set('has_password', true);
+                                authData.hasPassword = true;
+                                Storage.set('auth', authData);
+                                
+                                alert('✅ Senha definida com sucesso!\\n\\nAgora você pode fazer login de qualquer dispositivo usando:\\n📧 ' + (authData.email || user.email));
+                                
+                                // Esconder card
+                                setPasswordCard.style.display = 'none';
+                                
+                            } catch (error) {
+                                console.error('Erro:', error);
+                                alert('❌ ' + error.message);
+                                btnSetPassword.disabled = false;
+                                btnSetPassword.innerHTML = '<i data-lucide="shield-check" style="width: 18px; height: 18px;"></i> Definir Minha Senha';
+                                lucide.createIcons();
+                            }
+                        });
+                    }
+                }
+            }
             
             // Upload de foto de perfil
             const photoInput = document.getElementById('profile-photo-input');
@@ -4009,6 +4838,18 @@ const LucroCertoApp = (function() {
                     monthlySalesGoal: parseFloat(document.getElementById('profile-sales-goal').value) || 0,
                     profilePhoto: currentProfilePhoto
                 };
+                
+                // ═══════════════════════════════════════════════════════════
+                // SALVAR MARGEM PADRÃO DO NEGÓCIO
+                // ═══════════════════════════════════════════════════════════
+                const margemPadraoInput = document.getElementById('profile-margem-padrao');
+                if (margemPadraoInput && margemPadraoInput.value) {
+                    const novaMargem = parseInt(margemPadraoInput.value);
+                    if (novaMargem >= 10 && novaMargem <= 200) {
+                        Storage.set('margem_padrao_negocio', novaMargem);
+                        console.log('💰 Margem padrão do negócio atualizada:', novaMargem + '%');
+                    }
+                }
                 
                 // Salvar RÁPIDO (só localStorage)
                 setTimeout(() => {
@@ -4368,6 +5209,11 @@ const LucroCertoApp = (function() {
                 const todaySales = sortedSales.filter(s => new Date(s.date).toDateString() === today);
                 const todayRevenue = todaySales.reduce((acc, s) => acc + s.total, 0);
                 
+                // Conta PEÇAS vendidas hoje (não pedidos!)
+                const todayPieces = todaySales.reduce((acc, s) => {
+                    return acc + (s.items || s.products || []).reduce((sum, item) => sum + (item.quantity || item.quantidade || 1), 0);
+                }, 0);
+                
                 const thisMonth = new Date().getMonth();
                 const thisYear = new Date().getFullYear();
                 const monthSales = sortedSales.filter(s => {
@@ -4375,6 +5221,11 @@ const LucroCertoApp = (function() {
                     return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
                 });
                 const monthRevenue = monthSales.reduce((acc, s) => acc + s.total, 0);
+                
+                // Conta PEÇAS vendidas no mês (não pedidos!)
+                const monthPieces = monthSales.reduce((acc, s) => {
+                    return acc + (s.items || s.products || []).reduce((sum, item) => sum + (item.quantity || item.quantidade || 1), 0);
+                }, 0);
                 
                 const salesHTML = sortedSales.slice(0, 20).map(s => {
                     try {
@@ -4398,7 +5249,7 @@ const LucroCertoApp = (function() {
                                 </div>
                                 <div class="sale-details">
                                     ${s.clientName ? `<span class="sale-client"><i data-lucide="user"></i> ${s.clientName}</span>` : ''}
-                                    <span class="sale-items">${(s.items || s.products || []).length} ${(s.items || s.products || []).length === 1 ? 'item' : 'itens'}</span>
+                                    <span class="sale-items">${(s.items || s.products || []).reduce((sum, item) => sum + (item.quantity || item.quantidade || 1), 0)} ${(s.items || s.products || []).reduce((sum, item) => sum + (item.quantity || item.quantidade || 1), 0) === 1 ? 'peça' : 'peças'}</span>
                                     <span class="sale-payment"><i data-lucide="credit-card"></i> ${s.paymentMethod || 'Não informado'}</span>
                                 </div>
                                 <div class="sale-products">
@@ -4429,7 +5280,7 @@ const LucroCertoApp = (function() {
                         <div class="summary-info">
                             <span class="summary-label">Hoje</span>
                             <span class="summary-value">R$ ${todayRevenue.toFixed(2)}</span>
-                            <span class="summary-count">${todaySales.length} vendas</span>
+                            <span class="summary-count">${todayPieces} ${todayPieces === 1 ? 'peça' : 'peças'}</span>
                         </div>
                     </div>
                     <div class="summary-card month">
@@ -4437,7 +5288,7 @@ const LucroCertoApp = (function() {
                         <div class="summary-info">
                             <span class="summary-label">Este Mês</span>
                             <span class="summary-value">R$ ${monthRevenue.toFixed(2)}</span>
-                            <span class="summary-count">${monthSales.length} vendas</span>
+                            <span class="summary-count">${monthPieces} ${monthPieces === 1 ? 'peça' : 'peças'}</span>
                         </div>
                     </div>
                 </div>
@@ -6021,7 +6872,16 @@ const LucroCertoApp = (function() {
         removeVariableCost(index) { const s = StateManager.getState(); s.costs.variable.splice(index, 1); StateManager.setState({costs: s.costs}); }
     };
     const EmotionalIA = { generateInsight: () => "Você está no controle. Continue brilhando! ✨" };
+    // ==========================================
+    // SMART PRICING - CUSTEIO VARIÁVEL (Margem de Contribuição)
+    // ==========================================
+    // FILOSOFIA: O preço cobre os CUSTOS DIRETOS + TAXAS.
+    // O que sobra (Margem de Contribuição) paga os custos fixos.
+    // O Break-Even é um OUTPUT ("venda X peças"), não um INPUT.
+    // ==========================================
     const SmartPricing = {
+        // Retorna o total de custos fixos mensais (aluguel, internet, etc.)
+        // Esses custos NÃO entram no cálculo do preço unitário!
         getTotalMonthlyFixedCosts() {
             const { costs, bills } = StateManager.getState();
             
@@ -6033,27 +6893,159 @@ const LucroCertoApp = (function() {
                 .filter(b => b.recurring && b.isBusinessCost)
                 .reduce((acc, b) => acc + b.amount, 0);
             
-            return manualCosts + billsCosts;
+            // Frete mensal também é custo fixo (não varia com quantidade)
+            const shippingCost = costs?.shipping || 0;
+            
+            return manualCosts + billsCosts + shippingCost;
         },
-        getTotalUnitCost(productCost) {
-            const { user, costs } = StateManager.getState();
-            const salesGoal = user.monthlySalesGoal || 1;
-            const fixedCostPerUnit = this.getTotalMonthlyFixedCosts() / salesGoal;
-            const variableCostPerUnit = (costs.variable || []).filter(c => c.type === 'fixed').reduce((acc, cost) => acc + cost.value, 0);
-            const shippingCostPerUnit = (costs.shipping || 0) / salesGoal;
-            const total = productCost + fixedCostPerUnit + variableCostPerUnit + shippingCostPerUnit;
-            return { fixed: fixedCostPerUnit, variable: variableCostPerUnit, shipping: shippingCostPerUnit, total: total };
-        },
-        calculate(productCost, profitMarginPercentage) {
+        
+        // CUSTO DIRETO: Apenas o que sai junto com o produto
+        // NÃO inclui rateio de aluguel/fixos!
+        getDirectUnitCost(productCost) {
             const { costs } = StateManager.getState();
-            const totalUnitCost = this.getTotalUnitCost(productCost).total;
-            const variablePercentageSum = (costs.variable || []).filter(c => c.type === 'percentage').reduce((acc, cost) => acc + cost.value, 0);
-            const numerator = totalUnitCost * (1 + profitMarginPercentage / 100);
-            const denominator = 1 - (variablePercentageSum / 100);
-            const price = numerator / (denominator || 1);
-            const profit = price - totalUnitCost - (price * variablePercentageSum / 100);
-            return { price: isNaN(price) ? 0 : price, profit: isNaN(profit) ? 0 : profit };
+            
+            // Custos variáveis FIXOS por unidade (embalagem, etiqueta, etc.)
+            const packagingCosts = (costs?.variable || [])
+                .filter(c => c.type === 'fixed')
+                .reduce((acc, cost) => acc + cost.value, 0);
+            
+            const directCost = productCost + packagingCosts;
+            
+            return { 
+                productCost,
+                packagingCosts,
+                total: directCost 
+            };
         },
+        
+        // TAXAS PERCENTUAIS: Calculadas sobre o preço de venda
+        getPercentageCosts() {
+            const { costs } = StateManager.getState();
+            return (costs?.variable || [])
+                .filter(c => c.type === 'percentage')
+                .reduce((acc, cost) => acc + cost.value, 0);
+        },
+        
+        // CÁLCULO DO PREÇO COM CUSTEIO VARIÁVEL
+        // Fórmula: Preço = (CustoDireto × (1 + Margem%)) ÷ (1 - Taxas%)
+        calculate(productCost, profitMarginPercentage) {
+            const directCost = this.getDirectUnitCost(productCost).total;
+            const taxPercentage = this.getPercentageCosts();
+            
+            // Fórmula que protege a margem das taxas
+            const numerator = directCost * (1 + profitMarginPercentage / 100);
+            const denominator = 1 - (taxPercentage / 100);
+            const price = numerator / (denominator || 1);
+            
+            // Margem de Contribuição = Preço - Custo Direto - Taxas sobre venda
+            const taxValue = price * taxPercentage / 100;
+            const contributionMargin = price - directCost - taxValue;
+            
+            return { 
+                price: isNaN(price) ? 0 : price, 
+                profit: isNaN(contributionMargin) ? 0 : contributionMargin,
+                contributionMargin: isNaN(contributionMargin) ? 0 : contributionMargin,
+                directCost,
+                taxValue,
+                taxPercentage
+            };
+        },
+        
+        // Mantém compatibilidade com código existente
+        // Agora retorna apenas custos DIRETOS (sem rateio de fixos!)
+        getTotalUnitCost(productCost) {
+            const direct = this.getDirectUnitCost(productCost);
+            return { 
+                fixed: 0, // NÃO rateia mais custos fixos!
+                variable: direct.packagingCosts, 
+                shipping: 0, // Frete é custo fixo mensal, não por unidade
+                total: direct.total 
+            };
+        },
+        
+        // ==========================================
+        // PONTO DE EQUILÍBRIO (Break-Even)
+        // ==========================================
+        // NOVA LÓGICA: É um OUTPUT, não um INPUT!
+        // Dado o PREÇO, calcula QUANTAS peças precisa vender.
+        // ==========================================
+        calculateBreakEven(sellingPrice, productCost) {
+            const totalFixedCosts = this.getTotalMonthlyFixedCosts();
+            
+            // Custo direto = custo do produto + embalagens
+            const directCost = this.getDirectUnitCost(productCost).total;
+            
+            // Taxas sobre o preço de venda
+            const taxPercentage = this.getPercentageCosts();
+            const taxValue = sellingPrice * taxPercentage / 100;
+            
+            // MARGEM DE CONTRIBUIÇÃO = O que sobra para pagar os fixos
+            // MC = Preço - Custo Direto - Taxas
+            const contributionMargin = sellingPrice - directCost - taxValue;
+            
+            // BREAK-EVEN = Custos Fixos ÷ Margem de Contribuição
+            const breakEvenUnits = contributionMargin > 0 
+                ? Math.ceil(totalFixedCosts / contributionMargin) 
+                : Infinity;
+            const breakEvenRevenue = breakEvenUnits * sellingPrice;
+            
+            // Análise de viabilidade
+            const isViable = contributionMargin > 0;
+            const contributionMarginPercent = sellingPrice > 0 
+                ? (contributionMargin / sellingPrice * 100) 
+                : 0;
+            
+            let message;
+            if (!isViable) {
+                message = '⚠️ Preço não cobre os custos diretos! Aumente o preço.';
+            } else if (breakEvenUnits === Infinity) {
+                message = '⚠️ Impossível calcular - margem zero ou negativa';
+            } else {
+                message = `✅ Venda ${breakEvenUnits} peças para pagar os custos fixos`;
+            }
+            
+            return {
+                // Dados principais
+                breakEvenUnits: breakEvenUnits === Infinity ? 0 : breakEvenUnits,
+                breakEvenRevenue: breakEvenUnits === Infinity ? 0 : breakEvenRevenue,
+                
+                // Margem de Contribuição
+                contributionMargin,
+                contributionMarginPercent,
+                profitPerUnit: contributionMargin, // Alias para compatibilidade
+                
+                // Detalhamento
+                sellingPrice,
+                productCost,
+                directCost,
+                taxValue,
+                taxPercentage,
+                totalFixedCosts,
+                
+                // Status
+                isViable,
+                message
+            };
+        },
+        calculateBreakEvenFromProducts() {
+            const { products } = StateManager.getState();
+            
+            if (!products || products.length === 0) {
+                return { hasProducts: false, message: 'Cadastre produtos para calcular' };
+            }
+            
+            const totalProducts = products.length;
+            const avgSellingPrice = products.reduce((acc, p) => acc + (p.finalPrice || p.price || 0), 0) / totalProducts;
+            const avgCost = products.reduce((acc, p) => acc + (p.baseCost || p.cost || 0), 0) / totalProducts;
+            
+            return {
+                hasProducts: true,
+                avgSellingPrice,
+                avgCost,
+                totalProducts,
+                ...this.calculateBreakEven(avgSellingPrice, avgCost)
+            };
+        }
     };
 
     const AchievementSystem = {

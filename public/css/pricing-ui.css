@@ -1,0 +1,466 @@
+/**
+ * =====================================================
+ * PRICING UI - Estilos do Semáforo Emocional
+ * =====================================================
+ */
+
+/* ═══════════════════════════════════════════════════════════
+   CONTAINER PRINCIPAL
+   ═══════════════════════════════════════════════════════════ */
+
+.pricing-container {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.pricing-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.pricing-header h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0 0 4px 0;
+}
+
+.pricing-subtitle {
+    font-size: 14px;
+    color: #6B7280;
+    margin: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EXIBIÇÃO DO CUSTO
+   ═══════════════════════════════════════════════════════════ */
+
+.pricing-cost-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F3F4F6;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.cost-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #6B7280;
+}
+
+.cost-icon {
+    font-size: 18px;
+}
+
+.cost-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #EF4444;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CAMPO DE PREÇO
+   ═══════════════════════════════════════════════════════════ */
+
+.pricing-input-section {
+    margin-bottom: 20px;
+}
+
+.pricing-label {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.pricing-input-wrapper {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 4px 16px;
+    transition: all 0.2s ease;
+}
+
+.pricing-input-wrapper:focus-within {
+    border-color: #8B5CF6;
+    box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+
+.pricing-currency {
+    font-size: 20px;
+    font-weight: 600;
+    color: #9CA3AF;
+    margin-right: 8px;
+}
+
+.pricing-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1F2937;
+    padding: 12px 0;
+    background: transparent;
+}
+
+.pricing-input::placeholder {
+    color: #D1D5DB;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SEMÁFORO VISUAL
+   ═══════════════════════════════════════════════════════════ */
+
+.pricing-semaforo-container {
+    background: #F0FDF4;
+    border: 2px solid #10B981;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+}
+
+.semaforo-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.semaforo-emoji {
+    font-size: 28px;
+}
+
+.semaforo-titulo {
+    font-size: 18px;
+    font-weight: 700;
+    color: #10B981;
+}
+
+.semaforo-barra-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.semaforo-barra {
+    flex: 1;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.semaforo-barra-fill {
+    height: 100%;
+    background: #10B981;
+    border-radius: 6px;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+.semaforo-percentual {
+    font-size: 16px;
+    font-weight: 700;
+    color: #10B981;
+    min-width: 45px;
+    text-align: right;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FEEDBACK TEXTUAL
+   ═══════════════════════════════════════════════════════════ */
+
+.pricing-feedback {
+    background: #F9FAFB;
+    border-left: 4px solid #10B981;
+    border-radius: 0 12px 12px 0;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.feedback-principal {
+    font-size: 16px;
+    font-weight: 700;
+    color: #10B981;
+    margin-bottom: 4px;
+}
+
+.feedback-secundario {
+    font-size: 14px;
+    color: #4B5563;
+    margin-bottom: 8px;
+}
+
+.feedback-sugestao {
+    font-size: 13px;
+    color: #9CA3AF;
+    font-style: italic;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESULTADO (LUCRO E MARGEM)
+   ═══════════════════════════════════════════════════════════ */
+
+.pricing-resultado {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+/* CARD VERDE COM TEXTO BRANCO */
+.pricing-resultado-verde {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.pricing-resultado-verde .resultado-item {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.pricing-resultado-verde .resultado-label {
+    display: block;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.85);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.pricing-resultado-verde .resultado-valor {
+    font-size: 24px;
+    font-weight: 700;
+    color: white !important;
+}
+
+/* TOOLTIP INTERROGAÇÃO */
+.tooltip-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    font-size: 12px;
+    cursor: help;
+    vertical-align: middle;
+    margin-left: 4px;
+    opacity: 0.7;
+}
+
+.tooltip-icon:hover {
+    opacity: 1;
+}
+
+.resultado-item {
+    flex: 1;
+    background: #F9FAFB;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.resultado-label {
+    display: block;
+    font-size: 12px;
+    color: #9CA3AF;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.resultado-valor {
+    font-size: 24px;
+    font-weight: 700;
+    color: #10B981;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   META DE VENDAS
+   ═══════════════════════════════════════════════════════════ */
+
+.pricing-meta {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #F0FDF4;
+    border: 1px solid #10B981;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.meta-icone {
+    font-size: 24px;
+}
+
+.meta-texto {
+    flex: 1;
+    font-size: 14px;
+    color: #065F46;
+    line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CENÁRIOS DE VENDA
+   ═══════════════════════════════════════════════════════════ */
+
+.pricing-cenarios {
+    background: #F9FAFB;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.cenarios-titulo {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 12px 0;
+}
+
+.cenarios-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.cenario-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid #E5E7EB;
+}
+
+.cenario-qtd {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 50px;
+}
+
+.cenario-numero {
+    font-size: 20px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.cenario-label {
+    font-size: 10px;
+    color: #9CA3AF;
+    text-transform: uppercase;
+}
+
+.cenario-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.cenario-lucro {
+    font-size: 14px;
+    font-weight: 600;
+    color: #059669;
+}
+
+.cenario-descricao {
+    font-size: 12px;
+    color: #6B7280;
+}
+
+.cenario-barra {
+    width: 60px;
+    height: 8px;
+    background: #E5E7EB;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.cenario-barra-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10B981, #059669);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CORES DO SEMÁFORO (VARIAÇÕES)
+   ═══════════════════════════════════════════════════════════ */
+
+/* Vermelho */
+.pricing-semaforo-container[data-status="vermelho"] {
+    background: #FEE2E2;
+    border-color: #EF4444;
+}
+
+/* Amarelo -> Laranja */
+.pricing-semaforo-container[data-status="amarelo"] {
+    background: #FED7AA;
+    border-color: #EA580C;
+}
+
+/* Verde */
+.pricing-semaforo-container[data-status="verde"] {
+    background: #D1FAE5;
+    border-color: #10B981;
+}
+
+/* Roxo */
+.pricing-semaforo-container[data-status="roxo"] {
+    background: #EDE9FE;
+    border-color: #8B5CF6;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ANIMAÇÕES
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.semaforo-emoji {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVO
+   ═══════════════════════════════════════════════════════════ */
+
+@media (max-width: 480px) {
+    .pricing-container {
+        padding: 16px;
+    }
+
+    .pricing-input {
+        font-size: 24px;
+    }
+
+    .pricing-resultado {
+        flex-direction: column;
+    }
+
+    .cenario-item {
+        flex-wrap: wrap;
+    }
+
+    .cenario-barra {
+        width: 100%;
+        margin-top: 8px;
+    }
+}

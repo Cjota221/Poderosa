@@ -9,9 +9,9 @@
     --secondary-light: #BA68C8;
     --secondary-gradient: linear-gradient(135deg, #9C27B0 0%, #BA68C8 100%);
 
-    --success: #FFD700;
-    --success-light: #FFF176;
-    --success-gradient: linear-gradient(135deg, #FFD700 0%, #FFF176 100%);
+    --success: #10B981;
+    --success-light: #34D399;
+    --success-gradient: linear-gradient(135deg, #10B981 0%, #34D399 100%);
     
     --growth: #4CAF50;
     --alert: #FF5722;

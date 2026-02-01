@@ -91,12 +91,8 @@ export function renderDashboard() {
                 <span>Precificar</span>
             </button>
             <button class="action-btn" data-action="navigate" data-route="despesas">
-                <i data-lucide="wallet"></i>
-                <span>Despesas</span>
-            </button>
-            <button class="action-btn" data-action="navigate" data-route="metas">
-                <i data-lucide="target"></i>
-                <span>Metas</span>
+                <i data-lucide="scale"></i>
+                <span>Equilíbrio</span>
             </button>
         </div>
 
